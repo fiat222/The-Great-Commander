@@ -1,0 +1,95 @@
+name: Discord Notifications
+
+on:
+  pull_request:
+    types: [opened, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on PR Created
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🔔 New Pull Request",
+                "description": "**[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})**",
+                "color": 3447003,
+                "fields": [
+                  {
+                    "name": "Author",
+                    "value": "${{ github.event.pull_request.user.login }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Branch",
+                    "value": "`${{ github.event.pull_request.head.ref }}` → `main`",
+                    "inline": true
+                  }
+                ],
+                "timestamp": "${{ github.event.pull_request.created_at }}"
+              }]
+            }' \
+            $DISCORD_WEBHOOK
+
+      - name: Notify on PR Merged
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "✅ Pull Request Merged",
+                "description": "**[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})**",
+                "color": 5763719,
+                "fields": [
+                  {
+                    "name": "Merged by",
+                    "value": "${{ github.event.pull_request.merged_by.login }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Branch",
+                    "value": "`${{ github.event.pull_request.head.ref }}` → `main`",
+                    "inline": true
+                  }
+                ],
+                "timestamp": "${{ github.event.pull_request.merged_at }}"
+              }]
+            }' \
+            $DISCORD_WEBHOOK
+
+      - name: Notify on PR Rejected
+        if: github.event.action == 'closed' && github.event.pull_request.merged == false
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Pull Request Closed (Not Merged)",
+                "description": "**[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})**",
+                "color": 15158332,
+                "fields": [
+                  {
+                    "name": "Closed by",
+                    "value": "${{ github.actor }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Branch",
+                    "value": "`${{ github.event.pull_request.head.ref }}` → `main`",
+                    "inline": true
+                  }
+                ],
+                "timestamp": "${{ github.event.pull_request.closed_at }}"
+              }]
+            }' \
+            $DISCORD_WEBHOOK

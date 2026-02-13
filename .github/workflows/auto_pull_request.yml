@@ -1,0 +1,29 @@
+name: Auto PR from PR branches
+
+on:
+  push:
+    branches:
+      - 'PR/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # ลองสร้าง PR ถ้ายังไม่มี
+          gh pr create \
+            --base main \
+            --head ${{ github.ref_name }} \
+            --title "Merge ${{ github.ref_name }} to main" \
+            --body "Auto-generated PR for merging ${{ github.ref_name }} into main branch" \
+            || gh pr view ${{ github.ref_name }} --json url --jq '.url'
