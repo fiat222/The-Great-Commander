@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using Unity.Cinemachine;
 
 public enum GamePhase
 {
@@ -9,6 +10,9 @@ public enum GamePhase
 }
 public class GameManager : NetworkBehaviour
 {
+    [SerializeField] private CinemachineCamera planningCam;
+    [SerializeField] private CinemachineCamera combatCam;
+
     public static GameManager Instance { get; private set; }
 
     public TextMeshProUGUI phaseStatusText;
@@ -39,13 +43,28 @@ public class GameManager : NetworkBehaviour
         p1PendingEnemies.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
 
         UpdatePhaseUI(currentPhase.Value);
+        SwitchCamera(currentPhase.Value);
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
     {
         UpdatePhaseUI(newValue);
+        SwitchCamera(newValue);
     }
 
+    private void SwitchCamera(GamePhase current)
+    {
+        if (current == GamePhase.Planning)
+        {
+            planningCam.Priority.Value = 20;
+            combatCam.Priority.Value = 10;
+        }
+        else
+        {
+            planningCam.Priority.Value = 10;
+            combatCam.Priority.Value = 20;
+        }
+    }
     private void UpdatePhaseUI(GamePhase phase)
     {
         string status = phase.ToString() + " Phase\n";
@@ -87,7 +106,7 @@ public class GameManager : NetworkBehaviour
                 
                 // Client (ID 1) ส่งไปหา Host (ID 0)
                 globalSpawner.SpawnEnemiesRpc(p1PendingEnemies.Value, 0);
-            }
+            } 
 
             currentPhase.Value = GamePhase.Combat;
         }
