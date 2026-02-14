@@ -1143,7 +1143,7 @@ GameObject:
   - component: {fileID: 501729775}
   - component: {fileID: 501729777}
   m_Layer: 0
-  m_Name: Planning Cam
+  m_Name: Planning Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
