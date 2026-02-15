@@ -44,12 +44,46 @@ public class GameManager : NetworkBehaviour
 
         UpdatePhaseUI(currentPhase.Value);
         SwitchCamera(currentPhase.Value);
+        UpdateCursorState(currentPhase.Value);
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
     {
         UpdatePhaseUI(newValue);
         SwitchCamera(newValue);
+        UpdateCursorState(newValue);
+    }
+
+    private void Update()
+    {
+        // ถ้าอยู่ในเฟส Combat และกด Esc ให้ปลดล็อกเมาส์มาชั่วคราวเพื่อกดปุ่มได้
+        if (currentPhase.Value == GamePhase.Combat && Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+    }
+
+    private void UpdateCursorState(GamePhase phase)
+    {
+        if (phase == GamePhase.Planning)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     private void SwitchCamera(GamePhase current)
