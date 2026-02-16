@@ -11,7 +11,7 @@ public class BaseHealth : MonoBehaviour
 
         if (health <= 0)
         {
-            Debug.LogError("ฐานพังแล้ว! จบเกม")
+            Debug.LogError("ฐานพังแล้ว! จบเกม");
         }
     }
 }
