@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2912456600999082829}
   - component: {fileID: 8310766046990976130}
   - component: {fileID: 7306427562441635072}
+  - component: {fileID: 5864872777342100785}
   m_Layer: 0
   m_Name: Tower Mage
   m_TagString: Base
@@ -39,6 +40,7 @@ Transform:
   - {fileID: 7053574273110812346}
   - {fileID: 700072464471012340}
   - {fileID: 8809134097782965185}
+  - {fileID: 4797919708698352431}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7903259616555390202
@@ -75,7 +77,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2973884678
+  GlobalObjectIdHash: 2865786553
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -100,11 +102,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c80e026fe1165049abd6171f1e48dd4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerAttack
-  range: 30
-  fireRate: 10
+  range: 20
+  fireRate: 2
   damage: 10
   projectilePrefab: {fileID: 3291307516724230401, guid: 414695386c65ebe4cab7a6defd0c976e, type: 3}
-  firePoint: {fileID: 0}
+  firePoint: {fileID: 4797919708698352431}
 --- !u!114 &7306427562441635072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,6 +120,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
   health: 100
+--- !u!136 &5864872777342100785
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1878320753386832747}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.28
+  m_Height: 1.8231028
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.5729554, z: 0}
 --- !u!1 &2957136993702639793
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,6 +413,37 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &3533353477719183633
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4797919708698352431}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4797919708698352431
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3533353477719183633}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.422, z: 0}
+  m_LocalScale: {x: 0.625, y: 0.45454544, z: 0.625}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7734917166540654247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4432054448342673426
 GameObject:
   m_ObjectHideFlags: 0
