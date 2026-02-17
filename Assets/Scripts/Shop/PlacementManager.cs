@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using UnityEngine.EventSystems;
 
 public class PlacementManager : MonoBehaviour
@@ -6,13 +6,13 @@ public class PlacementManager : MonoBehaviour
     public static PlacementManager Instance;
     public System.Action<int> OnMoneyChanged;
 
-    [SerializeField] private GameObject minionPrefab;
     [SerializeField] private LayerMask buildLayer;
-    [SerializeField] private int minionCost = 50;
 
     private GameObject ghost;
     private bool isPlacing = false;
     public bool IsPlacing => isPlacing;
+
+    private MinionData currentMinionData;   // ‚≠ê ‡∏ï‡∏±‡∏ß‡∏ó‡∏µ‡πà‡∏Å‡∏≥‡∏•‡∏±‡∏á‡∏à‡∏∞‡∏ß‡∏≤‡∏á
 
     public int Money = 200;
 
@@ -44,37 +44,40 @@ public class PlacementManager : MonoBehaviour
 
         if (isSellingMode)
         {
-            // „ÀÈ overlay µ“¡‡¡“ Ï
             sellCursorRect.position = Input.mousePosition + new Vector3(40, -35, 0);
 
-            // §≈‘°¢«“ÕÕ°®“°‚À¡¥¢“¬
             if (Input.GetMouseButtonDown(1))
                 ToggleSellMode();
         }
     }
 
-    // ===== BUY =====
-    public void StartPlacing()
+    // ==============================
+    // ===== START PLACING (SO) =====
+    // ==============================
+    public void StartPlacing(MinionData data)
     {
-        // ∂È“Õ¬ŸË„π‚À¡¥¢“¬ „ÀÈª‘¥°ËÕπ
         if (isSellingMode)
             ToggleSellMode();
 
-        if (Money < minionCost) return;
+        if (data == null) return;
+        if (Money < data.cost) return;
         if (isPlacing) return;
 
+        currentMinionData = data;
         isPlacing = true;
 
-        ghost = Instantiate(minionPrefab);
+        ghost = Instantiate(data.prefab);
 
+        // ‡∏õ‡∏¥‡∏î collider
         foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
             c.enabled = false;
 
+        // ‡∏ó‡∏≥‡πÇ‡∏õ‡∏£‡πà‡∏á‡πÉ‡∏™
         foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
         {
-            Color c = r.material.color;
-            c.a = 0.5f;
-            r.material.color = c;
+            Color col = r.material.color;
+            col.a = 0.5f;
+            r.material.color = col;
         }
     }
 
@@ -103,18 +106,24 @@ public class PlacementManager : MonoBehaviour
             CancelPlacement();
         }
     }
-
     void PlaceMinion(Vector3 pos)
     {
-        if (Money < minionCost) return;
+        if (currentMinionData == null) return;
+        if (Money < currentMinionData.cost) return;
 
-        Money -= minionCost;
+        Money -= currentMinionData.cost;
         OnMoneyChanged?.Invoke(Money);
 
-        Instantiate(minionPrefab, pos, Quaternion.identity);
+        GameObject obj = Instantiate(currentMinionData.prefab, pos, Quaternion.identity);
+
+        // ‚≠ê ‡πÄ‡∏û‡∏¥‡πà‡∏° 4 ‡∏ö‡∏£‡∏£‡∏ó‡∏±‡∏î‡∏ô‡∏µ‡πâ
+        SellMinion sell = obj.GetComponent<SellMinion>();
+        if (sell != null)
+            sell.Setup(currentMinionData);
 
         Destroy(ghost);
         isPlacing = false;
+        currentMinionData = null;
     }
 
     // ===== CANCEL =====
@@ -124,9 +133,10 @@ public class PlacementManager : MonoBehaviour
 
         Destroy(ghost);
         isPlacing = false;
+        currentMinionData = null;
     }
 
-    // ===== SELL FUNCTION =====
+    // ===== SELL =====
     public void SellMinion(int value)
     {
         Money += value;

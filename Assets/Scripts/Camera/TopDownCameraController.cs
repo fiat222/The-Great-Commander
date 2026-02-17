@@ -3,8 +3,8 @@ using UnityEngine.InputSystem;
 
 public class TopDownCameraController : MonoBehaviour
 {
-    public float moveSpeed = 200f;
-    public float zoomSpeed = 8000f;
+    public float moveSpeed = 500f;
+    public float zoomSpeed = 10000f;
     public float rotateSpeed = 100f;
     public float minY = 10f;
     public float maxY = 60f;
