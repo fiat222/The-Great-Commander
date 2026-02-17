@@ -6,10 +6,8 @@ public class TopDownCameraController : MonoBehaviour
     public float moveSpeed = 200f;
     public float zoomSpeed = 8000f;
     public float rotateSpeed = 100f;
-
     public float minY = 10f;
     public float maxY = 60f;
-
     public Vector2 minBounds;
     public Vector2 maxBounds;
 
@@ -20,17 +18,16 @@ public class TopDownCameraController : MonoBehaviour
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-            // ทำให้เลื่อนตามพื้นเสมอ
-            Vector3 right = transform.right;
-            right.y = 0f;
-            right.Normalize();
+            // ดึงเฉพาะ yaw (หมุนรอบแกน Y) เพื่อคำนวณทิศที่แม่นยำ
+            float yaw = transform.eulerAngles.y;
+            Quaternion flatRotation = Quaternion.Euler(0f, yaw, 0f);
 
-            Vector3 forward = transform.forward;
-            forward.y = 0f;
-            forward.Normalize();
+            Vector3 right = flatRotation * Vector3.right;
+            Vector3 forward = flatRotation * Vector3.forward;
 
             Vector3 move =
-                (-right * mouseDelta.x + -forward * mouseDelta.y)
+                (-right * mouseDelta.x +
+                 -forward * mouseDelta.y)
                 * moveSpeed * 0.02f * Time.deltaTime;
 
             transform.position += move;
@@ -38,7 +35,6 @@ public class TopDownCameraController : MonoBehaviour
 
         // ---------- ZOOM (Scroll) ----------
         float scroll = Mouse.current.scroll.ReadValue().y;
-
         Vector3 pos = transform.position;
         pos.y -= scroll * zoomSpeed * 0.01f * Time.deltaTime;
         pos.y = Mathf.Clamp(pos.y, minY, maxY);
@@ -47,7 +43,6 @@ public class TopDownCameraController : MonoBehaviour
         // ---------- ROTATE (Q / E) ----------
         if (Keyboard.current.qKey.isPressed)
             transform.Rotate(Vector3.up, -rotateSpeed * Time.deltaTime, Space.World);
-
         if (Keyboard.current.eKey.isPressed)
             transform.Rotate(Vector3.up, rotateSpeed * Time.deltaTime, Space.World);
 
