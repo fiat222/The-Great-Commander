@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -24,7 +25,15 @@ public class PlayerController : MonoBehaviour
     private Vector3 currentDashVelocity;
     private Vector3 rollDirection; // เก็บพิกัดที่จะกลิ้งไป
     private bool alreadyAppliedForce; 
-    private bool bufferCombo; // เก็บค่าว่าผู้เล่นกดคลิกค้างไว้เพื่อต่อคอมโบไหม
+    private bool bufferCombo; 
+
+    [Header("Target Lock Settings")]
+    public float lockRange = 15f;
+    // targetCamera removed, now handled by CameraManager
+    public CinemachineTargetGroup targetGroup; // (Optional) ลาก Target Group มาใส่ถ้าอยากได้สไตล์ Monster Hunter
+    public Transform cameraPivot; // ลาก CamaraFocus มาใส่ที่นี่ครับ
+    private Transform currentTarget;
+    private bool isLockedOn;
 
     [Header("References")]
     private CharacterController controller;
@@ -52,10 +61,118 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        HandleRollInput(); // เช็คการกลิ้ง (ปุ่ม Alt)
+        HandleTargetLockInput(); // เช็คปุ่มล็อคเป้า (เมาส์กลาง)
+        HandleRollInput(); 
         HandleAttackInput();
-        CheckAnimationLogic(); // ใช้หลักการที่พี่ส่งมาคุมจังหวะ
+        CheckAnimationLogic(); 
         Move();
+    }
+
+    private void LateUpdate()
+    {
+        // --- ระบบจัดระเบียบกล้อง (หมุน Pivot ให้ตรงแนว Enemy -> Player เสมอ) ---
+        // เราทำใน LateUpdate เพื่อความชัวร์ว่าตัวละครขยับเสร็จแล้วค่อยหันกล้องครับ
+        if (isLockedOn && currentTarget != null && cameraPivot != null)
+        {
+            Vector3 lookDir = currentTarget.position - cameraPivot.position;
+            lookDir.y = 0;
+            if (lookDir.magnitude > 0.1f)
+            {
+                // ใช้การหมุนแบบ World Space เพื่อไม่ให้สนว่า Player จะหันหน้าไปทางไหนครับ
+                cameraPivot.rotation = Quaternion.LookRotation(lookDir);
+            }
+        }
+    }
+
+    private void HandleTargetLockInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Tab)) // เปลี่ยนจากเมาส์กลางเป็นปุ่ม Tab ครับ
+        {
+            if (isLockedOn)
+            {
+                UnlockTarget();
+            }
+            else
+            {
+                FindNearestTarget();
+            }
+        }
+
+        // หลุดล็อคถ้าเป้าหมายตายหรืออยู่ไกลเกินไป
+        if (isLockedOn && currentTarget == null) UnlockTarget();
+        if (isLockedOn && currentTarget != null && Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f) UnlockTarget();
+    }
+
+    private void FindNearestTarget()
+    {
+        // ใช้ OverlapSphere เพื่อหาศัตรูในรัศมีรอบตัว (แม่นยำและประหยัดทรัพยากรกว่าครับ)
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, lockRange);
+        float closestDistance = lockRange;
+        Transform closestEnemy = null;
+
+        foreach (var hitCollider in hitColliders)
+        {
+            // เช็คว่ามี Tag เป็น Enemy ไหม
+            if (hitCollider.CompareTag("Enemy"))
+            {
+                float dist = Vector3.Distance(transform.position, hitCollider.transform.position);
+                if (dist < closestDistance)
+                {
+                    closestDistance = dist;
+                    closestEnemy = hitCollider.transform;
+                }
+            }
+        }
+
+        if (closestEnemy != null)
+        {
+            currentTarget = closestEnemy;
+            isLockedOn = true;
+
+            // --- จัดการกล้องผ่าน CameraManager ---
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.SetTargetLock(true);
+                var vcam = CameraManager.Instance.TargetLockCamera;
+
+                // --- สไตล์ Monster Hunter (ใช้ Target Group) ---
+                if (targetGroup != null)
+                {
+                    // ล้างเป้าหมายเดิมออกก่อน (ถ้ามีเหลือติดมา)
+                    while (targetGroup.Targets.Count > 1) 
+                        targetGroup.RemoveMember(targetGroup.Targets[1].Object);
+                    
+                    // เพิ่มศัตรูเข้ากลุ่ม 
+                    targetGroup.AddMember(currentTarget, 1f, 0f);
+                    if (vcam != null) vcam.LookAt = targetGroup.transform;
+                }
+                else
+                {
+                    // แบบ Elden Ring (มองศัตรูตรงๆ)
+                    if (vcam != null) vcam.LookAt = currentTarget;
+                }
+            }
+        }
+    }
+
+    public void UnlockTarget()
+    {
+        isLockedOn = false;
+
+        // เอาศัตรูออกจาก Target Group
+        if (targetGroup != null && currentTarget != null)
+        {
+            targetGroup.RemoveMember(currentTarget);
+        }
+
+        currentTarget = null;
+        if (CameraManager.Instance != null) CameraManager.Instance.SetTargetLock(false);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lockRange);
     }
 
     private void HandleRollInput()
@@ -65,6 +182,9 @@ public class PlayerController : MonoBehaviour
                                           animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
                                           animator.GetNextAnimatorStateInfo(0).IsTag("Attack") || 
                                           animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
+
+        // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ
+        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded && !isBusy)
         {
@@ -99,6 +219,9 @@ public class PlayerController : MonoBehaviour
 
     private void HandleAttackInput()
     {
+        // โจมตีได้เฉพาะเฟสต่อสู้เท่านั้นครับ
+        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+
         if (Input.GetMouseButtonDown(0))
         {
             lastClickTime = Time.time;
@@ -283,12 +406,15 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // ถ้าไม่ได้โดนล็อคอยู่ ถึงจะเดินและกระโดดได้
+        // เคลื่อนที่และหมุนตัว (ถ้าไม่ได้โดนล็อค Animation อยู่)
         if (!isLocked)
         {
             if (direction.magnitude >= 0.1f)
             {
+                // คำนวณหาทิศทางที่จะไปอ้างอิงจากมุมกล้อง
                 float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
+                
+                // หันหน้าตัวละครไปตามทิศที่จะเดิน (ไม่ว่าจะเป็น Lock-on หรือไม่ เพื่อให้เป็นสไตล์ Monster Hunter ครับ)
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotationVelocity, 1f / rotationSpeed);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
