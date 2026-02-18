@@ -10,8 +10,7 @@ public enum GamePhase
 }
 public class GameManager : NetworkBehaviour
 {
-    [SerializeField] private CinemachineCamera planningCam;
-    [SerializeField] private CinemachineCamera combatCam;
+// Camera references removed, now handled by CameraManager
 
     public static GameManager Instance { get; private set; }
 
@@ -19,6 +18,7 @@ public class GameManager : NetworkBehaviour
 
     // เก็บสถานะ Phase ปัจจุบัน : Server เขียนได้, ทุกคนอ่านได้
     private NetworkVariable<GamePhase> currentPhase = new NetworkVariable<GamePhase>(GamePhase.Planning);
+    public GamePhase CurrentPhase => currentPhase.Value;
 
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
@@ -43,14 +43,14 @@ public class GameManager : NetworkBehaviour
         p1PendingEnemies.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
 
         UpdatePhaseUI(currentPhase.Value);
-        SwitchCamera(currentPhase.Value);
+        if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(currentPhase.Value);
         UpdateCursorState(currentPhase.Value);
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
     {
         UpdatePhaseUI(newValue);
-        SwitchCamera(newValue);
+        if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
         UpdateCursorState(newValue);
     }
 
@@ -86,19 +86,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private void SwitchCamera(GamePhase current)
-    {
-        if (current == GamePhase.Planning)
-        {
-            planningCam.Priority.Value = 20;
-            combatCam.Priority.Value = 10;
-        }
-        else
-        {
-            planningCam.Priority.Value = 10;
-            combatCam.Priority.Value = 20;
-        }
-    }
+    // SwitchCamera logic moved to CameraManager
     private void UpdatePhaseUI(GamePhase phase)
     {
         string status = phase.ToString() + " Phase\n";
