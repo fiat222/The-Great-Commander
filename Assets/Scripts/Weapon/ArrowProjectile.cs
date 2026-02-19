@@ -3,7 +3,7 @@
 public class ArrowProjectile : MonoBehaviour
 {
     [Header("Projectile Settings")]
-    public float gravity = 5f;
+    public float gravity = 9.81f; // ปรับให้เท่าแรงโน้มถ่วงโลกเพื่อความสมจริงครับ
     public float lifetime = 5f;
 
     private float speed;
@@ -43,16 +43,26 @@ public class ArrowProjectile : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!isFlying) return;
-        if (other.CompareTag("Enemy")) return;
+
+        // ป้องกันไม่ให้โดนตัวเองตอนยิง
+        if (other.CompareTag("Player")) return;
 
         isFlying = false;
 
-        // ตัวอย่างถ้าจะใช้ damage
-        // other.GetComponent<EnemyHealth>()?.TakeDamage(damage);
+        // ถ้าโดนศัตรู ให้ทำ Damage (ดึง Script Health ของศัตรูมาใช้)
+        if (other.CompareTag("Enemy"))
+        {
+            // สมมติว่าศัตรูมีสคริปต์ชื่อ EnemyHealth หรือ BaseHealth นะครับ
+            // other.GetComponent<BaseHealth>()?.TakeDamage(damage);
+            Debug.Log($"<color=red>[Arrow]</color> Hit Enemy! Damage: {damage}");
+        }
 
+        // ปักค้างไว้ที่วัตถุที่โดน
         transform.SetParent(other.transform);
-        GetComponent<Collider>().enabled = false;
+        
+        // ปิด Collider เพื่อไม่ให้โดนซ้ำ
+        if (TryGetComponent<Collider>(out var col)) col.enabled = false;
 
-        Destroy(gameObject, 3f);
+        Destroy(gameObject, 10f); // ให้ลูกธนูปักอยู่นานขึ้นหน่อยเพื่อความเท่ครับ
     }
 }

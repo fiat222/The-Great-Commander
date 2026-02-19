@@ -5,6 +5,7 @@
   <Project Path="ParrelSync.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="Gilzoide.SqliteNet.csproj" />
+  <Project Path="OccaSoftware.Crosshairs.Editor.csproj" />
   <Project Path="Gilzoide.SqliteNet.Tests.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
