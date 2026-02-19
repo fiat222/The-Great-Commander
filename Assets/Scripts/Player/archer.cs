@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Unity.Cinemachine;
 
 public class Archer : MonoBehaviour
 {
@@ -35,6 +36,13 @@ public class Archer : MonoBehaviour
     public float dashDecay = 10f;
     [Range(0, 1)] public float forceTime = 0.2f;
 
+    [Header("Target Lock Settings")]
+    public float lockRange = 15f;
+    public CinemachineTargetGroup targetGroup;
+    public Transform cameraPivot;
+    private Transform currentTarget;
+    private bool isLockedOn;
+
     [Header("References")]
     private CharacterController controller;
     private Animator animator;
@@ -56,6 +64,7 @@ public class Archer : MonoBehaviour
     // Aim / Shoot State
     private bool isAiming = false;
     private bool hasFiredThisAim = false;
+    private float lastAccuracy; // เก็บค่าไว้ก่อนโดน Reset ครับ
 
     private void Awake()
     {
@@ -64,13 +73,116 @@ public class Archer : MonoBehaviour
 
         if (Camera.main != null)
             mainCameraTransform = Camera.main.transform;
+
+        // --- ค้นหา Crosshair อัตโนมัติจาก Tag "Crosshair" ---
+        GameObject crosshairObj = GameObject.FindWithTag("Crosshair");
+        if (crosshairObj != null)
+        {
+            crosshair = crosshairObj.GetComponent<AimCrosshair>();
+        }
+        else
+        {
+            Debug.LogWarning("<color=red>[Archer]</color> ไม่พบ GameObject ที่มี Tag 'Crosshair' ในซีนครับ!");
+        }
     }
 
     private void Update()
     {
+        HandleTargetLockInput();
         HandleRollInput();
         HandleAimAndShootInput();
+        CheckAnimationLogic();
         Move();
+    }
+
+    private void HandleTargetLockInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            if (isLockedOn) UnlockTarget();
+            else FindNearestTarget();
+        }
+
+        if (isLockedOn)
+        {
+            if (currentTarget == null) UnlockTarget();
+            else if (Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f) UnlockTarget();
+        }
+    }
+
+    private void FindNearestTarget()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, lockRange);
+        float closestDistance = lockRange;
+        Transform closestEnemy = null;
+
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Enemy"))
+            {
+                float dist = Vector3.Distance(transform.position, hitCollider.transform.position);
+                if (dist < closestDistance)
+                {
+                    closestDistance = dist;
+                    closestEnemy = hitCollider.transform;
+                }
+            }
+        }
+
+        if (closestEnemy != null)
+        {
+            currentTarget = closestEnemy;
+            isLockedOn = true;
+
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.SetTargetLock(true);
+                var vcam = CameraManager.Instance.TargetLockCamera;
+
+                if (cameraPivot != null)
+                {
+                    var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+                    if (aligner != null) aligner.SetTarget(currentTarget);
+                }
+
+                if (targetGroup != null)
+                {
+                    while (targetGroup.Targets.Count > 1) 
+                        targetGroup.RemoveMember(targetGroup.Targets[1].Object);
+                    targetGroup.AddMember(currentTarget, 1f, 0f);
+                    if (vcam != null) vcam.LookAt = targetGroup.transform;
+                }
+                else
+                {
+                    if (vcam != null) vcam.LookAt = currentTarget;
+                }
+            }
+        }
+    }
+
+    public void UnlockTarget()
+    {
+        isLockedOn = false;
+
+        if (targetGroup != null && currentTarget != null)
+        {
+            targetGroup.RemoveMember(currentTarget);
+        }
+
+        currentTarget = null;
+        if (CameraManager.Instance != null) CameraManager.Instance.SetTargetLock(false);
+
+        if (cameraPivot != null)
+        {
+            var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+            if (aligner != null) aligner.SetTarget(null);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lockRange);
     }
 
     // ==================== ROLL ====================
@@ -83,6 +195,9 @@ public class Archer : MonoBehaviour
                        animator.GetNextAnimatorStateInfo(0).IsTag("Attack") ||
                        animator.GetNextAnimatorStateInfo(0).IsTag("Roll") ||
                        isAiming);
+
+        // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ +++++++
+        //if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded && !isBusy)
         {
@@ -115,6 +230,9 @@ public class Archer : MonoBehaviour
 
     private void HandleAimAndShootInput()
     {
+        // โจมตีได้เฉพาะเฟสต่อสู้เท่านั้นครับ!!!!!!!!!!!!!!!!!!!!!!
+        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+
         // กดค้าง Left Mouse → เล็ง
         if (Input.GetMouseButtonDown(0))
         {
@@ -175,6 +293,9 @@ public class Archer : MonoBehaviour
     {
         hasFiredThisAim = true;
 
+        // --- หัวใจสำคัญ: เก็บค่าความแม่นยำไว้ "ก่อน" ที่จะสั่ง StopAiming() ครับ ---
+        lastAccuracy = crosshair != null ? crosshair.GetAccuracy() : 1f;
+
         if (animator != null)
             animator.SetTrigger("Shoot");
 
@@ -186,30 +307,37 @@ public class Archer : MonoBehaviour
     {
         if (arrowPrefab == null || arrowSpawnPoint == null) return;
 
-        float accuracy = crosshair != null ? crosshair.GetAccuracy() : 1f;
+        // ใช้ค่าที่เก็บไว้ตอนกดปล่อยเมาส์ครับ
+        float accuracy = lastAccuracy; 
+        
+        // 🎯 ระบบคำนวณทิศทางให้ตรงกับศูนย์เลขา (Crosshair)
+        Vector3 targetPoint;
+        Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
+        RaycastHit hit;
 
-        // 🎯 Spread
-        float spreadAngle = Mathf.Lerp(maxSpreadAngle, 0f, accuracy);
+        // ลองยิง Raycast ออกจากใจกลางกล้องเพื่อหาว่าเรากำลังเล็งอะไรอยู่
+        if (Physics.Raycast(ray, out hit, 100f, groundMask | LayerMask.GetMask("Enemy")))
+        {
+            // ถ้าเจอเป้าหมาย (พื้นหรือศัตรู) ให้ยิงไปที่จุดนั้นเลยครับ
+            targetPoint = hit.point;
+        }
+        else
+        {
+            // ถ้าไม่เจออะไรเลย ให้ยิงพุ่งตรงไปไกลๆ ในอากาศครับ
+            targetPoint = ray.GetPoint(100f);
+        }
 
-        Vector3 baseDirection = mainCameraTransform != null
-            ? mainCameraTransform.forward
-            : transform.forward;
-
-        baseDirection.Normalize();
-
-        Quaternion spreadRotation = Quaternion.Euler(
-            Random.Range(-spreadAngle, spreadAngle),
-            Random.Range(-spreadAngle, spreadAngle),
-            0f
-        );
-
-        Vector3 finalDirection = spreadRotation * baseDirection;
+        // คำนวณหาทิศทางจากจุดเกิดลูกธนูไปยังจุดที่เล็งไว้
+        Vector3 finalDirection = (targetPoint - arrowSpawnPoint.position).normalized;
 
         // ⚡ Speed
         float finalSpeed = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, accuracy);
 
         // 💥 Damage
         int finalDamage = Mathf.RoundToInt(Mathf.Lerp(minDamage, maxDamage, accuracy));
+
+        // --- เพิ่ม Log เพื่อเช็คความแรงครับ ---
+        Debug.Log($"<color=cyan>[Archer]</color> <b>ยิงธนู!</b> | Accuracy: {accuracy:P0} | Speed: {finalSpeed:F1} | Damage: {finalDamage}");
 
         GameObject arrow = Instantiate(
             arrowPrefab,
@@ -273,6 +401,13 @@ public class Archer : MonoBehaviour
             yield return null;
         }
         transform.rotation = targetRotation;
+    }
+
+    // เรียกจาก Move() หรือ Update() เพื่อคุมความสัมพันธ์ของแอนิเมชัน
+    private void CheckAnimationLogic()
+    {
+        // Archer ในปัจจุบันยังไม่มีระบบ Combo Window แบบ PlayerController 
+        // แต่ใส่ไว้เผื่อขยายงานในอนาคตครับ
     }
 
     // ==================== MOVE ====================

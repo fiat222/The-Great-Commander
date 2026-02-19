@@ -68,22 +68,6 @@ public class PlayerController : MonoBehaviour
         Move();
     }
 
-    private void LateUpdate()
-    {
-        // --- ระบบจัดระเบียบกล้อง (หมุน Pivot ให้ตรงแนว Enemy -> Player เสมอ) ---
-        // เราทำใน LateUpdate เพื่อความชัวร์ว่าตัวละครขยับเสร็จแล้วค่อยหันกล้องครับ
-        if (isLockedOn && currentTarget != null && cameraPivot != null)
-        {
-            Vector3 lookDir = currentTarget.position - cameraPivot.position;
-            lookDir.y = 0;
-            if (lookDir.magnitude > 0.1f)
-            {
-                // ใช้การหมุนแบบ World Space เพื่อไม่ให้สนว่า Player จะหันหน้าไปทางไหนครับ
-                cameraPivot.rotation = Quaternion.LookRotation(lookDir);
-            }
-        }
-    }
-
     private void HandleTargetLockInput()
     {
         if (Input.GetKeyDown(KeyCode.Tab)) // เปลี่ยนจากเมาส์กลางเป็นปุ่ม Tab ครับ
@@ -135,6 +119,13 @@ public class PlayerController : MonoBehaviour
                 CameraManager.Instance.SetTargetLock(true);
                 var vcam = CameraManager.Instance.TargetLockCamera;
 
+                // --- สั่งให้ Pivot หันหาศัตรูผ่าน Component ตัวใหม่ที่แยกออกมาครับ ---
+                if (cameraPivot != null)
+                {
+                    var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+                    if (aligner != null) aligner.SetTarget(currentTarget);
+                }
+
                 // --- สไตล์ Monster Hunter (ใช้ Target Group) ---
                 if (targetGroup != null)
                 {
@@ -167,6 +158,13 @@ public class PlayerController : MonoBehaviour
 
         currentTarget = null;
         if (CameraManager.Instance != null) CameraManager.Instance.SetTargetLock(false);
+
+        // หยุดการหันหาศัตรู
+        if (cameraPivot != null)
+        {
+            var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+            if (aligner != null) aligner.SetTarget(null);
+        }
     }
 
     private void OnDrawGizmosSelected()

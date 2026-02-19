@@ -45,6 +45,8 @@ public class GameManager : NetworkBehaviour
         UpdatePhaseUI(currentPhase.Value);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(currentPhase.Value);
         UpdateCursorState(currentPhase.Value);
+
+        Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b>");
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
