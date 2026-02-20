@@ -46,6 +46,7 @@ public class ArrowProjectile : MonoBehaviour
 
         // ป้องกันไม่ให้โดนตัวเองตอนยิง
         if (other.CompareTag("Player")) return;
+        if (other.CompareTag("Minion")) return;
 
         isFlying = false;
 
