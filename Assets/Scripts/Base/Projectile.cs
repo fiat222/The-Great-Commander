@@ -62,7 +62,7 @@ public class Projectile : MonoBehaviour
     {
         if (target != null)
         {
-            BaseHealth hp = target.GetComponent<BaseHealth>();
+            HealthSystem hp = target.GetComponent<HealthSystem>();
             if (hp != null) hp.TakeDamage(damage);
 
             if (hitVFXPrefab != null)
