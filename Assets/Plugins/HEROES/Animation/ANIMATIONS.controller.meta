@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 59b03fc272f2f9e44b7a3bb3a744ce0d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315151
+  packageName: HEROES PACK
+  packageVersion: 1.0
+  assetPath: Assets/HEROES/Animation/ANIMATIONS.controller
+  uploadId: 743588

@@ -5,10 +5,10 @@ TagManager:
   serializedVersion: 3
   tags:
   - Enemy
-  - Ally
   - Base
   - Weapon
   - Crosshair
+  - Minion
   layers:
   - Default
   - TransparentFX
