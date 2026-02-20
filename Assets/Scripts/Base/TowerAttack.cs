@@ -3,8 +3,8 @@ using UnityEngine;
 public class TowerAttack : MonoBehaviour
 {
     [Header("Tower Stats")]
-    public float range = 15f;
-    public float fireRate = 2f;
+    public float range = 33f;
+    public float fireRate = 0.7f;
     public int damage = 10;
 
     [Header("VFX Prefabs")]
