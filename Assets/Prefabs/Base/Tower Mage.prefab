@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 2912456600999082829}
   - component: {fileID: 8310766046990976130}
   - component: {fileID: 7306427562441635072}
-  m_Layer: 0
+  - component: {fileID: 1479696439018026851}
+  m_Layer: 7
   m_Name: Tower Mage
   m_TagString: Base
   m_Icon: {fileID: 0}
@@ -101,10 +102,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerAttack
   range: 30
-  fireRate: 10
+  fireRate: 0.8
   damage: 10
-  projectilePrefab: {fileID: 3291307516724230401, guid: 414695386c65ebe4cab7a6defd0c976e, type: 3}
-  firePoint: {fileID: 0}
+  projectileVFXPrefab: {fileID: 6916111140770829, guid: 1d2d52f4a3c0b76418741231e406bafe, type: 3}
+  muzzleFlashVFXPrefab: {fileID: 0}
+  rangeVFXPrefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
+  firePoint: {fileID: 4713960969608377347}
+  attackLaser: {fileID: 1479696439018026851}
+  vfxDefaultSize: 3
 --- !u!114 &7306427562441635072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,6 +123,116 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
   health: 100
+--- !u!120 &1479696439018026851
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1878320753386832747}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 514819eb75568d04abe3c239459f28e3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.091098785
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.6830188, g: 0.03502661, b: 0, a: 1}
+      key1: {r: 0.91764706, g: 0.047058824, b: 0, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 1}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 65535
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
+  m_ApplyActiveColorSpace: 1
 --- !u!1 &2957136993702639793
 GameObject:
   m_ObjectHideFlags: 0
@@ -129,7 +244,7 @@ GameObject:
   - component: {fileID: 6368282168110491630}
   - component: {fileID: 5522394191772720919}
   - component: {fileID: 8323078398314961789}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Blocks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -219,7 +334,7 @@ GameObject:
   - component: {fileID: 7973737279653039308}
   - component: {fileID: 3719367690770133822}
   - component: {fileID: 4634405519048632233}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Banners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +424,7 @@ GameObject:
   - component: {fileID: 700072464471012340}
   - component: {fileID: 8348382087868572275}
   - component: {fileID: 5541032198636168470}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Walls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -388,6 +503,37 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &3649624889536201424
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4713960969608377347}
+  m_Layer: 7
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4713960969608377347
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649624889536201424}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.0703}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8609411912407513764}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4432054448342673426
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,7 +545,7 @@ GameObject:
   - component: {fileID: 7053574273110812346}
   - component: {fileID: 2501801385839359079}
   - component: {fileID: 1059347139283928710}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Enterance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -489,7 +635,7 @@ GameObject:
   - component: {fileID: 8809134097782965185}
   - component: {fileID: 2021949817607192169}
   - component: {fileID: 16487879372387566}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Woods
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -579,7 +725,7 @@ GameObject:
   - component: {fileID: 8609411912407513764}
   - component: {fileID: 1245966504962339879}
   - component: {fileID: 8304389253181280031}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Crystal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -598,7 +744,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 5.9986496, y: 5.9986496, z: 18.737053}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4713960969608377347}
   m_Father: {fileID: 7734917166540654247}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1245966504962339879
