@@ -52,8 +52,10 @@ public class ArrowProjectile : MonoBehaviour
         // ถ้าโดนศัตรู ให้ทำ Damage (ดึง Script Health ของศัตรูมาใช้)
         if (other.CompareTag("Enemy"))
         {
-            // สมมติว่าศัตรูมีสคริปต์ชื่อ EnemyHealth หรือ BaseHealth นะครับ
-            // other.GetComponent<BaseHealth>()?.TakeDamage(damage);
+            // สมมติว่าศัตรูมีสคริปต์ชื่อ HealthSystem นะครับ
+            HealthSystem hp = other.GetComponent<HealthSystem>();
+            if(hp != null) hp.TakeDamage(damage);
+
             Debug.Log($"<color=red>[Arrow]</color> Hit Enemy! Damage: {damage}");
         }
 
