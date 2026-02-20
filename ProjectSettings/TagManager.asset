@@ -7,6 +7,8 @@ TagManager:
   - Enemy
   - Ally
   - Base
+  - Weapon
+  - Crosshair
   layers:
   - Default
   - TransparentFX
@@ -16,8 +18,8 @@ TagManager:
   - UI
   - Projectile
   - Base
-  - 
-  - 
+  - Ground
+  - BuildArea
   - 
   - 
   - 
