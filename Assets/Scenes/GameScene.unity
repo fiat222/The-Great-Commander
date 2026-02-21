@@ -1731,6 +1731,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8827161945562319959, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: crosshair
+      value: 
+      objectReference: {fileID: 1578629130}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4277,8 +4281,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShopManager
   minionDataList:
   - {fileID: 11400000, guid: 14b38f23bcdb24546953a7099cf2ac90, type: 2}
-  - {fileID: 11400000, guid: c6d21a5e97fc27241b11d53a4dade9bc, type: 2}
-  - {fileID: 11400000, guid: 5f31d94150894cf4b82de020afa02e0a, type: 2}
+  - {fileID: 11400000, guid: 98305398f2dbc0a489e8d7e0539a9e0b, type: 2}
+  - {fileID: 11400000, guid: b584eb5dd906daa4593159b49ea80890, type: 2}
+  - {fileID: 11400000, guid: 09cd65bdd919e224b8dfe43d13ac6fdb, type: 2}
+  - {fileID: 11400000, guid: 63befe7b08d67a141905431b343d130f, type: 2}
   shopItemCardPrefab: {fileID: 4018968599614317913, guid: 4742b156d75f79c488f8a86f0fb427c9, type: 3}
   shopContainer: {fileID: 1943467090}
 --- !u!4 &1552978890
@@ -4415,6 +4421,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8e2fb184aee1d6c4093458a39c29c900, type: 3}
+--- !u!114 &1578629130 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 748512064809922771, guid: e86a3c4e0ddcbc549896c04ebac62b64, type: 3}
+  m_PrefabInstance: {fileID: 296000264}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f4885b3547c53b43bea2a7c0a37dbdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AimCrosshair
 --- !u!1 &1579802167
 GameObject:
   m_ObjectHideFlags: 0

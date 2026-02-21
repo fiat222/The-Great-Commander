@@ -6,16 +6,12 @@ public class ArcherAI : MonoBehaviour
 {
     public NavMeshAgent agent;
     public Animator animator;
-
-    [Header("Attack Settings")]
-    public float attackRange = 10f;
-    public float attackCooldown = 2f;
-    public float arrowSpeed = 30f;
-    public int arrowDamage = 2;
+    public MinionData data;
 
     [Header("Arrow Settings")]
     public GameObject arrowPrefab;
     public Transform shootPoint;
+    public float arrowSpeed = 30f;
 
     private Transform currentTarget;
     private float lastAttackTime;
@@ -24,6 +20,10 @@ public class ArcherAI : MonoBehaviour
 
     void Start()
     {
+        if (data != null)
+        {
+            agent.speed = data.speed;
+        }
         SetAttack(false);
         SetRunning(false);
     }
@@ -41,11 +41,14 @@ public class ArcherAI : MonoBehaviour
             return;
         }
 
-        float distance = Vector3.Distance(transform.position, currentTarget.position);
+        Vector3 flat = currentTarget.position - transform.position;
+        flat.y = 0;
+        float distance = flat.magnitude;
 
-        if (distance > attackRange)
+        float range = data != null ? data.attackrange : 10f;
+
+        if (distance > range)
         {
-            // ===== นอกระยะ → วิ่งเข้าหา =====
             if (isInRange)
             {
                 isInRange = false;
@@ -59,8 +62,8 @@ public class ArcherAI : MonoBehaviour
         }
         else
         {
-            // ===== ในระยะ → หยุดยิง =====
             agent.isStopped = true;
+            agent.velocity = Vector3.zero;
 
             Vector3 dir = currentTarget.position - transform.position;
             dir.y = 0;
@@ -76,7 +79,8 @@ public class ArcherAI : MonoBehaviour
                 SetAttack(true);
             }
 
-            if (Time.time - lastAttackTime > attackCooldown)
+            float cooldown = data != null ? 1f / data.speed : 2f; // ใช้ speed แทน cooldown
+            if (Time.time - lastAttackTime > cooldown)
             {
                 lastAttackTime = Time.time;
                 animator.SetTrigger("Shoot");
@@ -84,26 +88,24 @@ public class ArcherAI : MonoBehaviour
         }
     }
 
-    // เรียกจาก Animation Event ใน clip Shoot
     public void SpawnArrow()
     {
         if (arrowPrefab == null || shootPoint == null || currentTarget == null) return;
 
-        // เล็งไปที่ center mass ของ enemy (เพิ่ม Y นิดนึงกันยิงพื้น)
         Vector3 targetPos = currentTarget.position + Vector3.up * 1f;
         Vector3 direction = (targetPos - shootPoint.position).normalized;
 
         GameObject arrow = Instantiate(arrowPrefab, shootPoint.position, Quaternion.LookRotation(direction));
-        arrow.GetComponent<ArrowProjectile>()?.Launch(direction, arrowSpeed, arrowDamage);
+        int dmg = data != null ? data.damage : 1;
+        arrow.GetComponent<ArrowProjectile>()?.Launch(direction, arrowSpeed, dmg);
     }
 
     void SetAttack(bool value) => animator.SetBool("Attack", value);
     void SetRunning(bool value) => animator.SetBool("Run", value);
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int dmg)
     {
-        // TODO: ลด HP
-        //animator.SetTrigger("Damage");
+        // TODO: ลด HP ด้วย data.hp
         // if (currentHP <= 0) Die();
     }
 
@@ -115,23 +117,16 @@ public class ArcherAI : MonoBehaviour
         agent.isStopped = true;
         SetAttack(false);
         SetRunning(false);
-        animator.SetBool("Death",true);
-
-        // TODO: Destroy หรือ return to pool
+        animator.SetBool("Death", true);
     }
 
     void FindClosestEnemy()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        if (enemies.Length == 0)
-        {
-            currentTarget = null;
-            return;
-        }
+        if (enemies.Length == 0) { currentTarget = null; return; }
 
         currentTarget = enemies
             .OrderBy(e => Vector3.Distance(transform.position, e.transform.position))
-            .First()
-            .transform;
+            .First().transform;
     }
 }
