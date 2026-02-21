@@ -94,7 +94,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1239423642676418781}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 1.2800253e-16, y: 0.859588, z: 180}
 --- !u!1 &1691670953364687052
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,8 +483,9 @@ GameObject:
   - component: {fileID: 5206069628616497855}
   - component: {fileID: 6621343489609299827}
   - component: {fileID: -2088059056055060562}
+  - component: {fileID: 8667399461880456352}
   m_Layer: 0
-  m_Name: minion
+  m_Name: Balancer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -500,8 +501,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 208.21912, y: -540, z: 2199.0251}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.63, y: 1.63, z: 1.63}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7405482735570671243}
   - {fileID: 4370556020504080684}
@@ -541,7 +542,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 629764838
+  GlobalObjectIdHash: 2746051939
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -638,6 +639,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &8667399461880456352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6541299993499996113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b909332f70bbe2d4a88f9483d53b4da9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionAI
+  agent: {fileID: 7130901068580258734}
+  animator: {fileID: 8596125847731679317}
+  data: {fileID: 11400000, guid: 14b38f23bcdb24546953a7099cf2ac90, type: 2}
 --- !u!1 &6686041189584697305
 GameObject:
   m_ObjectHideFlags: 0
@@ -668,7 +684,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4370556020504080684}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 63.634014, y: -141.13152, z: -53.277737}
 --- !u!1 &6930869852462691397
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +779,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4370556020504080684}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 27.57922, y: 150.34535, z: -129.88591}
 --- !u!1 &7560438808996480691
 GameObject:
   m_ObjectHideFlags: 0
@@ -794,7 +810,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4704779478314739460}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -85.39225, y: 23.257072, z: 69.2916}
 --- !u!1 &7727066035388624586
 GameObject:
   m_ObjectHideFlags: 0
@@ -889,7 +905,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2053536592893335845}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -0.85957026, z: 0}
 --- !u!1 &8142941678528030221
 GameObject:
   m_ObjectHideFlags: 0
@@ -1018,4 +1034,4 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4704779478314739460}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 68.92218, y: 174.30879, z: 102.948204}
