@@ -245,7 +245,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efe554cde10bfed4287d0b1d4102d06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::archer
-  moveSpeed: 12
+  moveSpeed: 15
   rotationSpeed: 13
   jumpHeight: 3
   gravity: -19.62
@@ -1165,8 +1165,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3813345238951539526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.068068966, y: -0.091569506, z: 0.006274138, w: 0.99344975}
-  m_LocalPosition: {x: 1.2502445, y: 1.9835924, z: -3.2569976}
+  m_LocalRotation: {x: 0.06807248, y: 0.09100569, z: -0.006235504, w: 0.9935015}
+  m_LocalPosition: {x: 0, y: 1.9835926, z: -3.4887183}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
