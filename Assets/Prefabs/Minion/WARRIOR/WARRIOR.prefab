@@ -1340,6 +1340,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6557184907645240327}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3144590402037783608}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -9026091687338579751}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1319929358526813301}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8375677533798823744}
     - targetCorrespondingSourceObject: {fileID: 9217234437682292332, guid: 19bc36341b9e4d341baf1ae2a12fb97d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1366687993752706068}
@@ -1400,9 +1412,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionAI
   agent: {fileID: 6557184907645240327}
   animator: {fileID: 383862125231279767}
-  attackRange: 2
-  attackCooldown: 1.5
-  damage: 3
+  data: {fileID: 11400000, guid: b584eb5dd906daa4593159b49ea80890, type: 2}
 --- !u!195 &6557184907645240327
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1425,3 +1435,90 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &-3144590402037783608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6410941043921817175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1532558002
+  InScenePlacedSourceGlobalObjectIdHash: 2266564534
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-9026091687338579751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6410941043921817175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad4dcc5887d1b194484d78ac503313e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SellMinion
+--- !u!54 &1319929358526813301
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6410941043921817175}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!136 &-8375677533798823744
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6410941043921817175}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.15, z: 0}
