@@ -174,9 +174,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8755337586904310436}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5539686681921949247}
   m_SourcePrefab: {fileID: 100100000, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
 --- !u!4 &8122862581548669132 stripped
 Transform:
@@ -267,7 +264,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 893840622
+  GlobalObjectIdHash: 2228405350
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -315,30 +312,3 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.78, z: 0}
---- !u!54 &5539686681921949247
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8931171151178433142}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
