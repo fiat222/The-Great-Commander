@@ -17,21 +17,31 @@ public class AimCrosshair : MonoBehaviour
     private float aimTimer = 0f;
     private bool isShowing = false;
 
+    private void Start()
+    {
+        if (crosshairRect != null)
+            crosshairRect.gameObject.SetActive(true);
+    }
+
     // เรียกจาก PlayerController
     public void StartAim()
     {
         aimTimer = 0f;
         isShowing = true;
-        if (crosshairRect != null)
-            crosshairRect.gameObject.SetActive(true);
     }
 
     public void StopAim()
     {
         isShowing = false;
         aimTimer = 0f;
+
+        // รีเซ็ตขนาดกลับไปใหญ่สุด
         if (crosshairRect != null)
-            crosshairRect.gameObject.SetActive(false);
+            crosshairRect.sizeDelta = new Vector2(maxSize, maxSize);
+
+        // รีเซ็ตสี
+        if (crosshairImage != null)
+            crosshairImage.color = defaultColor;
     }
 
     // คืนค่า accuracy 0-1 (0 = เพิ่งเล็ง, 1 = เล็งเต็มแล้ว)
