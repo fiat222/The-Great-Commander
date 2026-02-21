@@ -19,5 +19,5 @@ MonoBehaviour:
   defense: 5
   damage: 5
   hp: 5
-  speed: 2
+  speed: 10
   attackrange: 5
