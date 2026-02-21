@@ -29,12 +29,16 @@ public class PlacementManager : MonoBehaviour
         Instance = this;
     }
 
+    [Header("Grid Visuals")]
+    public HexGridVisualizer gridVisual; // ลาก GridVisual มาใส่ช่องนี้
+
     void Start()
     {
-        if (sellCursorOverlay != null)
+        // สร้าง Mesh รอไว้เลยแต่แรก
+        if (gridVisual != null)
         {
-            sellCursorRect = sellCursorOverlay.GetComponent<RectTransform>();
-            sellCursorOverlay.SetActive(false);
+            gridVisual.CreateGridMesh();
+            gridVisual.gameObject.SetActive(false); // ปิดไว้ก่อน
         }
     }
 
@@ -80,6 +84,7 @@ public class PlacementManager : MonoBehaviour
             col.a = 0.5f;
             r.material.color = col;
         }
+        if (gridVisual != null) gridVisual.gameObject.SetActive(true);
     }
 
     void HandlePlacing()
@@ -141,6 +146,7 @@ public class PlacementManager : MonoBehaviour
     public void CancelPlacement()
     {
         if (!isPlacing) return;
+        if (gridVisual != null) gridVisual.gameObject.SetActive(false);
 
         Destroy(ghost);
         isPlacing = false;
