@@ -56,7 +56,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Footman
+  m_Name: Turtle
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Speed
@@ -151,7 +151,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Attack02
+  m_Name: Attack
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -165,7 +165,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: d58e075e3ed3ce645a2f1062901052b1, type: 2}
+  m_Motion: {fileID: 7400000, guid: 30df834d8f569ec40b9418f1e3dea843, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -180,16 +180,16 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 0f2a68232db40c3489d8f12c1fc4a631, type: 2}
-    m_Threshold: 7.5
+    m_Motion: {fileID: 7400000, guid: 89d7d60a7e9e67242ac08c5370effcdc, type: 2}
+    m_Threshold: 4.5
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: Speed
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 76324f8797bd0b64d9c932b43c8ced95, type: 2}
-    m_Threshold: 10
+    m_Motion: {fileID: 7400000, guid: 79bf3f22f335e7446acd9093c656edbf, type: 2}
+    m_Threshold: 7.5
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
@@ -197,8 +197,8 @@ BlendTree:
     m_Mirror: 0
   m_BlendParameter: Speed
   m_BlendParameterY: Speed
-  m_MinThreshold: 7.5
-  m_MaxThreshold: 10
+  m_MinThreshold: 4.5
+  m_MaxThreshold: 7.5
   m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
   m_BlendType: 0
@@ -209,7 +209,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FootmanMovement
+  m_Name: TurtleMovement
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -249,7 +249,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 36ca4baaef8e22547af623aa7e895396, type: 2}
+  m_Motion: {fileID: 7400000, guid: bc64eb31d2f909f4cb129165385dec92, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
