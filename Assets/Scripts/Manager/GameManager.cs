@@ -27,9 +27,13 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<int> p0PendingEnemies = new NetworkVariable<int>(0);
     private NetworkVariable<int> p1PendingEnemies = new NetworkVariable<int>(0);
 
+    // Crosshair สำหรับปิด/เปิด ในแต่ละเฟส
+    [SerializeField] private GameObject crosshairObject;
     private void Awake()
     {
         Instance = this;
+        //if (crosshairObject != null)
+        //    crosshairObject.SetActive(false);
     }
 
     public override void OnNetworkSpawn()
@@ -80,11 +84,17 @@ public class GameManager : NetworkBehaviour
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            // ปิด crosshair ในเฟส Planning
+            if (crosshairObject != null)
+                crosshairObject.SetActive(false);
         }
         else
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            // เปิด crosshair ในเฟส Combat
+            if (crosshairObject != null)
+                crosshairObject.SetActive(true);
         }
     }
 

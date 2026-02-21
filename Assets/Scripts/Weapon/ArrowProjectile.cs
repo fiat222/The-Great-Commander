@@ -46,14 +46,17 @@ public class ArrowProjectile : MonoBehaviour
 
         // ป้องกันไม่ให้โดนตัวเองตอนยิง
         if (other.CompareTag("Player")) return;
+        if (other.CompareTag("Minion")) return;
 
         isFlying = false;
 
         // ถ้าโดนศัตรู ให้ทำ Damage (ดึง Script Health ของศัตรูมาใช้)
         if (other.CompareTag("Enemy"))
         {
-            // สมมติว่าศัตรูมีสคริปต์ชื่อ EnemyHealth หรือ BaseHealth นะครับ
-            // other.GetComponent<BaseHealth>()?.TakeDamage(damage);
+            // สมมติว่าศัตรูมีสคริปต์ชื่อ HealthSystem นะครับ
+            HealthSystem hp = other.GetComponent<HealthSystem>();
+            if(hp != null) hp.TakeDamage(damage);
+
             Debug.Log($"<color=red>[Arrow]</color> Hit Enemy! Damage: {damage}");
         }
 

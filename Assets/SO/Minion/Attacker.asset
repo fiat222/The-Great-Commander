@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
+  m_Name: Attacker
+  m_EditorClassIdentifier: Assembly-CSharp::MinionData
+  minionName: Attacker
+  prefab: {fileID: 6410941043921817175, guid: a3a6cdde6bb202d4b8cd7290709daff1, type: 3}
+  icon: {fileID: -1929614544, guid: a5b6858c4b3e9b6408998b560eaa85b0, type: 3}
+  cost: 12
+  defense: 1
+  damage: 6
+  hp: 3
+  speed: 2
+  attackrange: 1
