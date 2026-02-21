@@ -2,54 +2,60 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    [Header("VFX Settings")]
+    public GameObject hitVFXPrefab;
+    public float speed = 35f;
+
     private Transform target;
+    private Transform towerTransform;
+    private float towerRange;
     private int damage;
-    private Transform towerTransform; // เก็บตำแหน่งป้อม
-    private float towerRange;          // เก็บระยะยิงของป้อม
+    private float distanceTraveled = 0f;
 
-    public float speed = 30f;
-
-    // รับค่าเพิ่ม: ตำแหน่งป้อม และ ระยะยิง
     public void Seek(Transform _target, int _damage, Transform _tower, float _range)
     {
         target = _target;
         damage = _damage;
         towerTransform = _tower;
         towerRange = _range;
+        distanceTraveled = 0f;
     }
 
     void Update()
     {
-        // ถ้าเป้าหมายหายไป ให้ลบกระสุนทิ้ง
-        if (target == null)
+        if (target == null || towerTransform == null)
         {
             Destroy(gameObject);
             return;
         }
 
-        // เช็กว่าศัตรูวิ่งออกจากวงยิงของป้อมยัง
-        if (towerTransform != null)
+        // เช็กว่าเป้าหมายอยุ่ในขอบเขตไหม
+        float distToTower = Vector3.Distance(towerTransform.position, target.position);
+        if (distToTower > towerRange)
         {
-            float distanceToTower = Vector3.Distance(towerTransform.position, target.position);
-            if (distanceToTower > towerRange)
-            {
-                Debug.Log("ศัตรูออกจากระยะ");
-                Destroy(gameObject); // หยุดยิงและทำลายลูกกระสุน
-                return;
-            }
-        }
-
-        // การเคลื่อนที่ตามปกติ
-        Vector3 dir = target.position - transform.position;
-        float distanceThisFrame = speed * Time.deltaTime;
-
-        if (dir.magnitude <= distanceThisFrame)
-        {
-            HitTarget();
+            Destroy(gameObject);
             return;
         }
 
-        transform.Translate(dir.normalized * distanceThisFrame, Space.World);
+        // ล็อกตำแหน่งบนเส้นตรงระหว่างป้อมกับเป้าหมาย
+        distanceTraveled += speed * Time.deltaTime;
+        float progress = distanceTraveled / distToTower;
+
+        transform.position = Vector3.Lerp(towerTransform.position, target.position, progress);
+
+        if (progress >= 1.0f)
+        {
+            HitTarget();
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        // เลือกชนเฉพาะเป้าหมาย
+        if (other.CompareTag("Enemy"))
+        {
+            HitTarget();
+        }
     }
 
     void HitTarget()
@@ -58,6 +64,12 @@ public class Projectile : MonoBehaviour
         {
             HealthSystem hp = target.GetComponent<HealthSystem>();
             if (hp != null) hp.TakeDamage(damage);
+
+            if (hitVFXPrefab != null)
+            {
+                GameObject hitEffect = Instantiate(hitVFXPrefab, target.position, Quaternion.identity);
+                Destroy(hitEffect, 2f);
+            }
         }
         Destroy(gameObject);
     }
