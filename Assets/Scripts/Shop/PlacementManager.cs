@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
-
+using DT.GridSystem;
 public class PlacementManager : MonoBehaviour
 {
+    public HexGrid hexGrid;
     public static PlacementManager Instance;
     public System.Action<int> OnMoneyChanged;
 
@@ -87,20 +88,30 @@ public class PlacementManager : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, buildLayer))
         {
-            ghost.transform.position = hit.point;
-        }
+            if (hexGrid == null) return;
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (EventSystem.current.IsPointerOverGameObject())
-                return;
+            // แปลงตำแหน่งเมาส์เป็นพิกัดช่อง (X, Y)
+            hexGrid.GetGridPosition(hit.point, out int x, out int y);
 
-            if (Physics.Raycast(ray, out hit, 100f, buildLayer))
+            //  หาพิกัดกึ่งกลางหกเหลี่ยม
+            // ใส่ true เพื่อให้ได้ตำแหน่งที่ Snap ลงจุดศูนย์กลาง
+            Vector3 snappedPos = hexGrid.GetWorldPosition(x, y, true);
+
+            //  ย้าย Ghost ไปที่ตำแหน่งที่ Snap แล้ว
+            ghost.transform.position = snappedPos;
+
+            // ถ้าคลิกซ้ายให้วางตัวละคร 
+            if (Input.GetMouseButtonDown(0))
             {
-                PlaceMinion(hit.point);
+                // กันการคลิกทะลุ UI
+                if (EventSystem.current.IsPointerOverGameObject()) return;
+
+                // วางทหารลงที่ตำแหน่ง snappedPos 
+                PlaceMinion(snappedPos);
             }
         }
 
+        // คลิกขวาเพื่อยกเลิกการวาง (อยู่นอก Raycast เพราะไม่ต้องเช็กตำแหน่งพื้น)
         if (Input.GetMouseButtonDown(1))
         {
             CancelPlacement();

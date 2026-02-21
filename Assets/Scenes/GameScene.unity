@@ -842,7 +842,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 6128577521265529253, guid: 54c9c2454addad949b9c53e44375a0d3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1974424356}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 54c9c2454addad949b9c53e44375a0d3, type: 3}
 --- !u!4 &192950785 stripped
@@ -1548,7 +1551,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.06807249, y: 0.0910057, z: -0.0062355055, w: 0.99350154}
+  m_LocalRotation: {x: 0.06807211, y: 0.09106659, z: -0.006239679, w: 0.99349594}
   m_LocalPosition: {x: -0.18248612, y: 4.958981, z: -36.344326}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1667,19 +1670,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3473402417917431278, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9935015
+      value: 0.99349594
       objectReference: {fileID: 0}
     - target: {fileID: 3473402417917431278, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.06807248
+      value: 0.06807211
       objectReference: {fileID: 0}
     - target: {fileID: 3473402417917431278, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.09100569
+      value: 0.09106659
       objectReference: {fileID: 0}
     - target: {fileID: 3473402417917431278, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.006235504
+      value: -0.0062396782
       objectReference: {fileID: 0}
     - target: {fileID: 4335324387086569942, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3650,6 +3653,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3015375059937757730, guid: 6136a922450ef28478502286ef7129fb, type: 3}
+      propertyPath: hexGrid
+      value: 
+      objectReference: {fileID: 1974424357}
+    - target: {fileID: 3015375059937757730, guid: 6136a922450ef28478502286ef7129fb, type: 3}
       propertyPath: sellCursorOverlay
       value: 
       objectReference: {fileID: 296000266}
@@ -5283,6 +5290,220 @@ MonoBehaviour:
   OnDie:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1974424355
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1974424356}
+  - component: {fileID: 1974424357}
+  m_Layer: 0
+  m_Name: HexgridManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1974424356
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974424355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -67.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 192950785}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1974424357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974424355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04569365eb20e16438cfa46c6f43c1eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HexGrid
+  gridSize: {x: 20, y: 8}
+  cellSize: 4
+  snap: 0
+  drawGizmos: 1
+  showGridIndex: 0
+  gridArray:
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  OnGridUpdated:
+    m_PersistentCalls:
+      m_Calls: []
+  hexOrientation: 0
 --- !u!4 &2000807241 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7456685920448981494, guid: 8e2fb184aee1d6c4093458a39c29c900, type: 3}
