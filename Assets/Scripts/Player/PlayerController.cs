@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour
     private float rotationVelocity;
     private Vector3 verticalVelocity;
     private bool isGrounded;
+    private bool isInvincible = false; // สำหรับระบบอมตะ (I-frames)
     private Coroutine rotationCoroutine; // สำหรับคุมการหมุนนุ่มๆ
 
     private void Awake()
@@ -430,5 +431,32 @@ public class PlayerController : MonoBehaviour
         // แรงโน้มถ่วง (ทำงานตลอดเวลา)
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
+    }
+
+    // ==================== ANIMATION EVENTS ====================
+
+    // เรียกใช้จาก Animator Event เพื่อเริ่มภาวะอมตะ (เช่น ตอนเริ่มกลิ้ง)
+    public void EnableInvincibility()
+    {
+        isInvincible = true;
+    }
+
+    // เรียกใช้จาก Animator Event เพื่อจบภาวะอมตะ
+    public void DisableInvincibility()
+    {
+        isInvincible = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("EnemyAtk"))
+        {
+            if (isInvincible){
+                Debug.Log("กูหลบได้");
+                return;
+            }
+            Debug.Log("<color=red>[Player]</color> <b>โดนEnemy โจมตี!</b>");
+            // พี่สามารถหักเลือด (HP) หรือเล่นท่าโดนตี (Get Hit) ตรงนี้ได้นะครับ
+        }
     }
 }
