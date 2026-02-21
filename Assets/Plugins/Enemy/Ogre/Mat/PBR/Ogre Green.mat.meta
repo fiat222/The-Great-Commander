@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a526a94670711ab4399857e3b47014e7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159080
+  packageName: RPG - Ogre Pack
+  packageVersion: 1.0
+  assetPath: Assets/Ogre/Mat/PBR/Ogre Green.mat
+  uploadId: 342905

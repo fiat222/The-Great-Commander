@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Attacker
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Attacker
-  prefab: {fileID: 6410941043921817175, guid: a3a6cdde6bb202d4b8cd7290709daff1, type: 3}
-  icon: {fileID: -1929614544, guid: a5b6858c4b3e9b6408998b560eaa85b0, type: 3}
+  prefab: {fileID: 2448984051500991235, guid: 3b688fab747fda84d9be021d977c04c9, type: 3}
+  icon: {fileID: -1440859645, guid: becd462bd88d8b148a77f316419a26d1, type: 3}
   cost: 12
   defense: 1
   damage: 6
   hp: 3
   speed: 10
-  attackrange: 3
+  attackrange: 4

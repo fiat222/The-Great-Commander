@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7e38136a601fead4a9e3d91f1163ff27
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159080
+  packageName: RPG - Ogre Pack
+  packageVersion: 1.0
+  assetPath: Assets/Ogre/Prefabs/PBR/Ogre Generic.prefab
+  uploadId: 342905

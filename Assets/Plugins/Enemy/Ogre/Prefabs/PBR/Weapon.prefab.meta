@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1f7b1b9b5856ecd40b5c7743b6676c3b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159080
+  packageName: RPG - Ogre Pack
+  packageVersion: 1.0
+  assetPath: Assets/Ogre/Prefabs/PBR/Weapon.prefab
+  uploadId: 342905

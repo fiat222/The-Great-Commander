@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Tank
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Tank
-  prefab: {fileID: 2084282679548051665, guid: e5e74c26f23d497438c1432ad5819c78, type: 3}
-  icon: {fileID: 1195127401, guid: 19a1d1f8bb8272442a4e9c677fd4b326, type: 3}
+  prefab: {fileID: 994335374302502111, guid: f86da21f859afd044b9a12580d75f7a0, type: 3}
+  icon: {fileID: -1222185758, guid: 3fce3956420fa6e47ae1144368bdeddc, type: 3}
   cost: 12
   defense: 6
   damage: 1
   hp: 3
   speed: 10
-  attackrange: 3
+  attackrange: 4
