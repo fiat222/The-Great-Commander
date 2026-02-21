@@ -1,7 +1,7 @@
 name: Discord Notifications
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, closed]
     branches:
       - main
@@ -9,6 +9,7 @@ on:
 jobs:
   notify-discord:
     runs-on: ubuntu-latest
+
     steps:
       - name: Notify on PR Created
         if: github.event.action == 'opened' || github.event.action == 'reopened'
