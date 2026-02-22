@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Balancer
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Balancer
-  prefab: {fileID: 6541299993499996113, guid: 461a9b67259f4de4ea68e5af3595602a, type: 3}
-  icon: {fileID: 1548683415, guid: b200797d116e50c458962b383b317371, type: 3}
+  prefab: {fileID: 6300062666072225749, guid: effd4ff60a6aa7d4fb15084ecbeb4478, type: 3}
+  icon: {fileID: -348746762, guid: 47009d8641c0e9841ab4abb9f3ef598a, type: 3}
   cost: 12
   defense: 3
   damage: 3
   hp: 3
   speed: 10
-  attackrange: 3
+  attackrange: 4
