@@ -10,6 +10,9 @@ public class ShopItemCard : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private Button button; // ลาก Button มาใส่ หรือปล่อยว่างเดี๋ยวสคริปต์หาเอง
 
+    public enum ShopItemType { Minion, Enemy }
+    private ShopItemType itemType;
+    private int itemIndex;
     private MinionData minionData;
 
     private void Awake()
@@ -17,23 +20,27 @@ public class ShopItemCard : MonoBehaviour
         // ถ้าไม่ได้ลาก Button มาใส่ใน Inspector ให้พยายามหาใน GameObject นี้ (หรือลูกของมัน)
         if (button == null) button = GetComponentInChildren<Button>();
         
-        // ผูก Event การกดปุ่มด้วยโค้ด (Best Practice ไม่ต้องไปนั่งลาก OnClick() เองในหน้าต่าง Inspector)
+        // ผูก Event การกดปุ่มด้วยโค้ด
         if (button != null)
         {
+            // ป้องกันการเบิ้ล: ลบของเก่าออกก่อน (ถ้ามี) แล้วค่อยใส่เข้าไปใหม่ครับ
+            button.onClick.RemoveListener(OnBuyClicked);
             button.onClick.AddListener(OnBuyClicked);
         }
     }
 
-    public void Setup(MinionData data)
+    public void Setup(MinionData data, ShopItemType type, int index)
     {
         minionData = data;
+        itemType = type;
+        itemIndex = index;
 
         // อัปเดตข้อมูล UI ตาม Scriptable Object
         if (nameText != null)
             nameText.text = data.minionName;
 
         if (costText != null)
-            costText.text = data.cost.ToString() + " Bath"; // ใส่คำว่า Bath ตามในรูปของคุณ
+            costText.text = data.cost.ToString() + " Bath";
 
         if (iconImage != null && data.icon != null)
             iconImage.sprite = data.icon;
@@ -41,16 +48,23 @@ public class ShopItemCard : MonoBehaviour
 
     private void OnBuyClicked()
     {
-        Debug.Log($"Click Buy: {minionData.minionName} (Cost: {minionData.cost})");
+        Debug.Log($"Click Buy: {minionData.minionName} (Type: {itemType}, Index: {itemIndex}, Cost: {minionData.cost})");
 
-        // เรียกใช้งาน PlacementManager
-        if (PlacementManager.Instance != null)
+        if (itemType == ShopItemType.Minion)
         {
-            PlacementManager.Instance.StartPlacing(minionData);
+            // --- ซื้อทหารฝั่งเรา ---
+            if (PlacementManager.Instance != null)
+            {
+                PlacementManager.Instance.StartPlacing(minionData);
+            }
         }
         else
         {
-            Debug.LogWarning("ยังไม่มีระบบ PlacementManager ในฉากนะ!");
+            // --- ซื้อศัตรูส่งไปบุก ---
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RequestBuyEnemy(itemIndex);
+            }
         }
     }
 }
