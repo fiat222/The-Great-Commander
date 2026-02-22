@@ -1929,7 +1929,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 60.000004
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -1955,8 +1955,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 858998827}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.06807249, y: 0.0910057, z: -0.0062355055, w: 0.99350154}
-  m_LocalPosition: {x: -0.18248612, y: 4.958981, z: -36.344326}
+  m_LocalRotation: {x: 0.5, y: -0.5, z: 0.5, w: 0.5}
+  m_LocalPosition: {x: 0, y: 60, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2331,7 +2331,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyPrefab: {fileID: 8171029694780832156, guid: 16008a0c506241940a75a72a93ca1483, type: 3}
+  enemyPrefabs: []
   spawnPoints:
   - {fileID: 1909684815}
   - {fileID: 1690125258}
@@ -2622,6 +2622,14 @@ PrefabInstance:
     - target: {fileID: 6839988010179095488, guid: 80b69ccf240feb84d880ccc4a1c29958, type: 3}
       propertyPath: minBounds.y
       value: -20
+      objectReference: {fileID: 0}
+    - target: {fileID: 8404442938326016406, guid: 80b69ccf240feb84d880ccc4a1c29958, type: 3}
+      propertyPath: Priority.Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8404442938326016406, guid: 80b69ccf240feb84d880ccc4a1c29958, type: 3}
+      propertyPath: Priority.m_Value
+      value: 30
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3581,6 +3589,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 378709475414953480, guid: e86a3c4e0ddcbc549896c04ebac62b64, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1421882949416711788, guid: e86a3c4e0ddcbc549896c04ebac62b64, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1432799016155424923, guid: e86a3c4e0ddcbc549896c04ebac62b64, type: 3}

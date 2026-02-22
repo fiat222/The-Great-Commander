@@ -62,6 +62,15 @@ public class GameManager : NetworkBehaviour
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(currentPhase.Value);
         UpdateCursorState(currentPhase.Value);
 
+        // --- 🛒 เซ็ตค่าร้านค้าเริ่มต้นตอนเข้าเกม ---
+        if (ShopManager.Instance != null)
+        {
+            if (currentPhase.Value == GamePhase.Planning)
+                ShopManager.Instance.OpenShop();
+            else
+                ShopManager.Instance.CloseShop();
+        }
+
         Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b>");
     }
 
@@ -70,6 +79,15 @@ public class GameManager : NetworkBehaviour
         UpdatePhaseUI(newValue);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
         UpdateCursorState(newValue);
+        
+        // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
+        if (ShopManager.Instance != null)
+        {
+            if (newValue == GamePhase.Planning)
+                ShopManager.Instance.OpenShop();
+            else
+                ShopManager.Instance.CloseShop();
+        }
     }
 
     private void Update()
