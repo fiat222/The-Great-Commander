@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Tank
   prefab: {fileID: 994335374302502111, guid: f86da21f859afd044b9a12580d75f7a0, type: 3}
-  icon: {fileID: -1222185758, guid: 3fce3956420fa6e47ae1144368bdeddc, type: 3}
+  icon: {fileID: 21300000, guid: ee16f9b24b7c60741b3b1e1afbd770f1, type: 3}
   cost: 12
   defense: 6
   damage: 1

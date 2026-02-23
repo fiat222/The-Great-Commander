@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Attacker
   prefab: {fileID: 2448984051500991235, guid: 3b688fab747fda84d9be021d977c04c9, type: 3}
-  icon: {fileID: -1440859645, guid: becd462bd88d8b148a77f316419a26d1, type: 3}
+  icon: {fileID: 21300000, guid: ce1633819cae56043b6f0960dea0b2ec, type: 3}
   cost: 12
   defense: 1
   damage: 6
