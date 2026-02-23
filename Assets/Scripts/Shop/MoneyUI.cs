@@ -8,13 +8,20 @@ public class MoneyUI : MonoBehaviour
 
     void Start()
     {
-        placementManager.OnMoneyChanged += UpdateMoney;
-        UpdateMoney(placementManager.Money);
+        if (placementManager != null)
+        {
+            placementManager.OnMoneyChanged += UpdateMoney;
+            UpdateMoney(placementManager.Money);
+        }
+        else
+        {
+            Debug.LogError("<color=red>[MoneyUI]</color> หา PlacementManager ไม่พบ! กรุณาลากใส่ใน Inspector ของ MoneyUI ด้วยครับ");
+        }
     }
 
     void UpdateMoney(int amount)
     {
-        moneyText.text = "Money: " + amount;
+        moneyText.text = amount.ToString();
     }
     void OnDestroy()
     {

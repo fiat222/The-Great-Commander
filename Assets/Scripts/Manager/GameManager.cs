@@ -20,6 +20,10 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<GamePhase> currentPhase = new NetworkVariable<GamePhase>(GamePhase.Planning);
     public GamePhase CurrentPhase => currentPhase.Value;
 
+    [Header("Wave System")]
+    public TextMeshProUGUI waveText;
+    private NetworkVariable<int> currentWave = new NetworkVariable<int>(1);
+
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
     
@@ -58,7 +62,11 @@ public class GameManager : NetworkBehaviour
         p1Type0Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
         p1Type1Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
 
+        currentWave.OnValueChanged += (old, newVal) => UpdateWaveUI(newVal);
+
         UpdatePhaseUI(currentPhase.Value);
+        UpdateWaveUI(currentWave.Value);
+
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(currentPhase.Value);
         UpdateCursorState(currentPhase.Value);
 
@@ -136,6 +144,12 @@ public class GameManager : NetworkBehaviour
         phaseStatusText.text = status;
     }
 
+    private void UpdateWaveUI(int wave)
+    {
+        if (waveText != null)
+            waveText.text = "Wave " + wave;
+    }
+
     // แก้ฟังก์ชันนี้ให้รับ parameter เพื่อรู้ว่ากดปุ่มไหนมาครับ
     public void RequestBuyEnemy(int typeIndex)
     {
@@ -210,6 +224,10 @@ public class GameManager : NetworkBehaviour
             p0Type1Count.Value = 0;
             p1Type0Count.Value = 0;
             p1Type1Count.Value = 0;
+            
+            // --- 🌊 ขึ้นเวฟใหม่เมื่อกลับสู่ช่วงวางแผน ---
+            currentWave.Value++;
+            
             currentPhase.Value = GamePhase.Planning;
         }
     }

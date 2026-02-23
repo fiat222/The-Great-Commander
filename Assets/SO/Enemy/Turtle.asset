@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Turtle
   prefab: {fileID: 4656309701904528395, guid: 88da7342c229e284c942e5ac22579fde, type: 3}
-  icon: {fileID: 21300000, guid: 2212afcf2dbf24443b29c6ae37fd7a0a, type: 3}
+  picture: {fileID: 21300000, guid: 2212afcf2dbf24443b29c6ae37fd7a0a, type: 3}
+  icon: {fileID: 1123493871, guid: 74945980b02f98e4992ad1f7e678b457, type: 3}
   cost: 20
   defense: 1
   damage: 6

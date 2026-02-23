@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
   m_Name: Orc
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: 
-  prefab: {fileID: 0}
-  icon: {fileID: 0}
+  minionName: Orc
+  prefab: {fileID: 1220637287032465596, guid: 502fda38a6bb9d045ad874e6cd89abc2, type: 3}
+  picture: {fileID: 0}
+  icon: {fileID: -1100996209, guid: 40a7950c3080c884caec6677a538f8f6, type: 3}
   cost: 0
   defense: 0
   damage: 0

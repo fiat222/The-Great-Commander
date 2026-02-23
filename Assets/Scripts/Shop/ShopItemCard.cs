@@ -65,8 +65,8 @@ public class ShopItemCard : MonoBehaviour
         if (costText != null)
             costText.text = data.cost.ToString();
 
-        if (iconImage != null && data.icon != null)
-            iconImage.sprite = data.icon;
+        if (iconImage != null && data.picture != null)
+            iconImage.sprite = data.picture;
             
         // ตัดไฮไลต์ออกเสมอเวลารีเซ็ตข้อมูลใหม่
         if (highlightObj != null) highlightObj.SetActive(false);

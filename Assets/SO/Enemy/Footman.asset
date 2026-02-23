@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Footman
   prefab: {fileID: 8171029694780832156, guid: 16008a0c506241940a75a72a93ca1483, type: 3}
-  icon: {fileID: 21300000, guid: f2a694c8864267f4ab63323a37817f8b, type: 3}
+  picture: {fileID: 21300000, guid: f2a694c8864267f4ab63323a37817f8b, type: 3}
+  icon: {fileID: -501385968, guid: 3a6e41059dbdd5f40abd07aff030f788, type: 3}
   cost: 10
   defense: 1
   damage: 6
