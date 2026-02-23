@@ -32,7 +32,7 @@ public class ShopManager : MonoBehaviour
     void Start()
     {
         GenerateAllCards();
-        // ไม่ต้องสั่งเปิด/ปิดตรงนี้แล้วครับ เดี๋ยว GameManager จะเป็นคนสั่งตามเฟสเกมเองครับ
+        SetActiveTabVisual(0); // เซ็ตค่าเริ่มต้นให้ปุ่มแสดงสถานะ Active ตั้งแต่เริ่มครับ
     }
 
     void GenerateAllCards()

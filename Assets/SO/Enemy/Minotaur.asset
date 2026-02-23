@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
   m_Name: Minotaur
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: 
-  prefab: {fileID: 0}
-  icon: {fileID: 0}
+  minionName: Minotaur
+  prefab: {fileID: 4957598605828715311, guid: 864077222a472754ebb5f1ece50bb079, type: 3}
+  picture: {fileID: 0}
+  icon: {fileID: -1829030107, guid: 450fe47c03dbed74a8bff40e920289f9, type: 3}
   cost: 0
   defense: 0
   damage: 0
