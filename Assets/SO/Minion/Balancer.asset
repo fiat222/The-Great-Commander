@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Balancer
   prefab: {fileID: 6300062666072225749, guid: effd4ff60a6aa7d4fb15084ecbeb4478, type: 3}
-  icon: {fileID: -348746762, guid: 47009d8641c0e9841ab4abb9f3ef598a, type: 3}
+  icon: {fileID: 21300000, guid: 2fead1ce4e343a04792564adbc92714e, type: 3}
   cost: 12
   defense: 3
   damage: 3
