@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Unity.Cinemachine;
+using UnityEngine.UI;
 
 public class Archer : MonoBehaviour
 {
@@ -53,7 +54,13 @@ public class Archer : MonoBehaviour
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
 
+    [Header("Health Settings")]
+    public int maxHP = 100;      // ตั้งค่าเลือดได้ใน Inspector
+    public Slider healthBar;     // ลาก UI Slider มาใส่ใน Inspector
+
     // --- Internal State ---
+    private int currentHP;
+    private bool isDead = false;
     private Vector3 currentDashVelocity;
     private Vector3 rollDirection;
     private float rotationVelocity;
@@ -75,6 +82,14 @@ public class Archer : MonoBehaviour
         if (Camera.main != null)
             mainCameraTransform = Camera.main.transform;
 
+        // เริ่มต้น HP
+        currentHP = maxHP;
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHP;
+            healthBar.value = maxHP;
+        }
+
         // --- ค้นหา Crosshair อัตโนมัติจาก Tag "Crosshair" ---
         GameObject crosshairObj = GameObject.FindWithTag("Crosshair");
         if (crosshairObj != null)
@@ -89,6 +104,7 @@ public class Archer : MonoBehaviour
 
     private void Update()
     {
+        if (isDead) return; // ปิด input ทั้งหมดเมื่อตาย
         HandleTargetLockInput();
         HandleRollInput();
         HandleAimAndShootInput();
@@ -520,6 +536,31 @@ public class Archer : MonoBehaviour
         isInvincible = false;
     }
 
+    public void TakeDamage(int dmg)
+    {
+        if (isDead || isInvincible) return;
+
+        currentHP -= dmg;
+        currentHP = Mathf.Max(currentHP, 0);
+
+        if (healthBar != null)
+            healthBar.value = currentHP;
+
+        Debug.Log($"<color=red>[Archer]</color> โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
+
+        if (currentHP <= 0)
+            Die();
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+        Debug.Log("<color=red>[Archer]</color> ตายแล้ว!");
+        if (animator != null) animator.SetTrigger("Die");
+        // สามารถใส่ logic เพิ่มเติมได้ เช่น GameOver screen
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("EnemyAtk"))
@@ -528,8 +569,13 @@ public class Archer : MonoBehaviour
                 Debug.Log("กูหลบได้");
                 return;
             }
-            Debug.Log("<color=red>[Archer]</color> <b>โดนEnemy โจมตี!</b>");
-            // พี่สามารถหักเลือด (HP) หรือเล่นท่าโดนตี (Get Hit) ตรงนี้ได้นะครับ
+            // หา damage จากตัวโจมตี
+            int dmg = 1;
+            var minionAI = other.GetComponentInParent<MinionAI>();
+            var archerAI = other.GetComponentInParent<ArcherAI>();
+            if (minionAI != null && minionAI.data != null) dmg = minionAI.data.damage;
+            else if (archerAI != null && archerAI.data != null) dmg = archerAI.data.damage;
+            TakeDamage(dmg);
         }
     }
 }
