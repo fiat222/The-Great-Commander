@@ -9,6 +9,7 @@ TagManager:
   - Weapon
   - Crosshair
   - Minion
+  - EnemyAtk
   layers:
   - Default
   - TransparentFX
