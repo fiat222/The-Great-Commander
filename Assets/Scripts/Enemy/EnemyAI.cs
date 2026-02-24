@@ -26,8 +26,12 @@ public class EnemyAI : MonoBehaviour
 
     [Header("AI Settings")]
     public float updateRate = 0.2f;
-    public int typeIndex;           // ⭐ เพิ่มเพื่อระบุว่าเป็นตัวไหน
-    public bool countsInWaveUI;      // ⭐ เพิ่มเพื่อระบุว่าเป็นมอนสเตอร์ระบบที่ต้องนับใน UI
+    public int typeIndex;           // เพิ่มเพื่อระบุว่าเป็นตัวไหน
+    public bool countsInWaveUI;      //  เพิ่มเพื่อระบุว่าเป็นมอนสเตอร์ระบบที่ต้องนับใน UI
+
+    [Header("PowerBall Drop")]
+    [Tooltip("จำนวน PowerBall ที่ drop เมื่อตาย (0 = ไม่ drop)")]
+    public int powerBallDropAmount = 5;
     private float distanceToPlayer;
     private float distanceToBase;
     private bool isDead = false;
@@ -45,7 +49,11 @@ public class EnemyAI : MonoBehaviour
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform;
 
-        // ปิด Collider ไว้ก่อนตอนเริ่มเกมครับ
+        // เชื่อม HealthSystem.OnDie → EnemyAI.Die() เพื่อให้ drop gem ทุก kill source
+        HealthSystem hp = GetComponent<HealthSystem>();
+        if (hp != null) hp.OnDie.AddListener(Die);
+
+        // ปิด Collider ไว้ก่อนตอนเริ่มเกม
         DisableWeaponCollider();
 
         InvokeRepeating(nameof(UpdateDestination), 0f, updateRate);
@@ -251,7 +259,10 @@ public class EnemyAI : MonoBehaviour
         // ปิดอาวุธด้วยครับ
         DisableWeaponCollider();
 
-        // 4. ทำลายทิ้งหลังจากเวลาผ่านไป (เช่น 5 วินาที) 
+        // 4. Drop PowerBall ณ ตำแหน่งที่ตาย
+        PowerBallDropper.Drop(transform.position, powerBallDropAmount);
+
+        // 5. ทำลายทิ้งหลังจากเวลาผ่านไป (เช่น 5 วินาที) 
         // หรือจะใช้ CleanupEnemy() ผูกกับ Animator Event ท้ายท่าตายก็ได้ครับ
         Destroy(gameObject, 3f);
     }
