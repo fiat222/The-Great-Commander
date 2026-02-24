@@ -26,6 +26,8 @@ public class EnemyAI : MonoBehaviour
 
     [Header("AI Settings")]
     public float updateRate = 0.2f;
+    public int typeIndex;           // ⭐ เพิ่มเพื่อระบุว่าเป็นตัวไหน
+    public bool countsInWaveUI;      // ⭐ เพิ่มเพื่อระบุว่าเป็นมอนสเตอร์ระบบที่ต้องนับใน UI
     private float distanceToPlayer;
     private float distanceToBase;
     private bool isDead = false;
@@ -228,6 +230,12 @@ public class EnemyAI : MonoBehaviour
 
         // 1. เล่นอนิเมชันตาย
         if (animator != null) animator.SetTrigger("Die");
+
+        // --- 🌊 แจ้งระบบ UI ว่ามอนสเตอร์รายทางตัวนี้ตายแล้ว ---
+        if (countsInWaveUI)
+        {
+            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        }
 
         // 2. หยุดเดินและปิด AI
         if (agent != null)

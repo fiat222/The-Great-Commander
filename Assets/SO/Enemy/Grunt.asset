@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Grunt
   prefab: {fileID: 7232642560734904356, guid: fd92d43fd96d8f7489397de57770799b, type: 3}
-  picture: {fileID: 0}
+  picture: {fileID: 1852159160, guid: 9f73bb3c81f1bd24caa022ec515687bd, type: 3}
   icon: {fileID: 1852159160, guid: 9f73bb3c81f1bd24caa022ec515687bd, type: 3}
   cost: 0
   defense: 0
