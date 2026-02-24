@@ -42,7 +42,6 @@ public class EnemySpawner : NetworkBehaviour
     public void SpawnEnemiesRpc(int count, int typeIndex, ulong targetedClientId)
     {
         // เช็คว่าเราคือคนที่ต้องโดนสปอนใส่ไหม? 
-        // (เช็ค LocalClientId เทียบกับ ID ที่ Server ส่งมา)
         if (NetworkManager.Singleton.LocalClientId == targetedClientId)
         {
             Debug.Log($"<color=red>[Spawner]</color> Receiving order to spawn {count} enemies of type {typeIndex}!");
@@ -50,23 +49,84 @@ public class EnemySpawner : NetworkBehaviour
         }
     }
 
+    [Rpc(SendTo.Everyone)]
+    public void SpawnSystemEnemiesRpc(string draft)
+    {
+        Debug.Log($"<color=orange>[Spawner]</color> Receiving system wave draft: {draft}");
+        StartCoroutine(SystemSpawnRoutine(draft));
+    }
+
     private System.Collections.IEnumerator SpawnRoutine(int count, int typeIndex)
     {
         for (int i = 0; i < count; i++)
         {
-            SpawnEnemyLocally(typeIndex);
+            SpawnEnemyFromPoolIndex(typeIndex, true); // ⭐ ให้มีผลกับ UI ด้วยครับ
             yield return new WaitForSeconds(0.5f);
         }
     }
 
-    private void SpawnEnemyLocally(int typeIndex)
+    private System.Collections.IEnumerator SystemSpawnRoutine(string draft)
+    {
+        if (string.IsNullOrEmpty(draft)) yield break;
+
+        // "0:3|1:3"
+        string[] parts = draft.Split('|');
+        foreach (string p in parts)
+        {
+            string[] sub = p.Split(':');
+            if (sub.Length == 2)
+            {
+                int typeIndex = int.Parse(sub[0]);
+                int count = int.Parse(sub[1]);
+
+                if (GameManager.Instance != null && GameManager.Instance.systemEnemyPool != null)
+                {
+                    if (typeIndex < GameManager.Instance.systemEnemyPool.Length)
+                    {
+                        GameObject prefab = GameManager.Instance.systemEnemyPool[typeIndex].prefab;
+                        for (int i = 0; i < count; i++)
+                        {
+                            SpawnEnemyFromPrefab(prefab, typeIndex, true);
+                            yield return new WaitForSeconds(0.4f);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void SpawnEnemyFromPoolIndex(int typeIndex, bool isSystem = false)
     {
         if (enemyPrefabs == null || typeIndex >= enemyPrefabs.Length || enemyPrefabs[typeIndex] == null || spawnPoints.Count == 0) return;
 
         int randomIndex = Random.Range(0, spawnPoints.Count);
         Transform selectedPoint = spawnPoints[randomIndex];
 
-        // เกิดแบบ Local (ไม่สั่ง .Spawn()) ตามคอนเซปต์แยกโลก
-        Instantiate(enemyPrefabs[typeIndex], selectedPoint.position, selectedPoint.rotation);
+        GameObject enemy = Instantiate(enemyPrefabs[typeIndex], selectedPoint.position, selectedPoint.rotation);
+        
+        // เซ็ตค่าพื้นฐานถ้ามี EnemyAI
+        EnemyAI ai = enemy.GetComponent<EnemyAI>();
+        if (ai != null)
+        {
+            ai.typeIndex = typeIndex;
+            ai.countsInWaveUI = isSystem; 
+        }
+    }
+
+    private void SpawnEnemyFromPrefab(GameObject prefab, int index = -1, bool isSystem = false)
+    {
+        if (prefab == null || spawnPoints.Count == 0) return;
+
+        int randomIndex = Random.Range(0, spawnPoints.Count);
+        Transform selectedPoint = spawnPoints[randomIndex];
+
+        GameObject enemy = Instantiate(prefab, selectedPoint.position, selectedPoint.rotation);
+        
+        EnemyAI ai = enemy.GetComponent<EnemyAI>();
+        if (ai != null)
+        {
+            ai.typeIndex = index;
+            ai.countsInWaveUI = isSystem;
+        }
     }
 }

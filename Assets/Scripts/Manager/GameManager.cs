@@ -2,6 +2,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using Unity.Cinemachine;
+using Unity.Collections;
 
 public enum GamePhase
 {
@@ -13,6 +14,8 @@ public class GameManager : NetworkBehaviour
 // Camera references removed, now handled by CameraManager
 
     public static GameManager Instance { get; private set; }
+    public static System.Action<int> OnSystemEnemyDied; // สำหรับแจ้ง UI เมื่อมอนสเตอร์รายทางตายครับ
+    public static System.Action<GamePhase> OnPhaseChangedGlobal; // ⭐ สำหรับแจ้ง UI เมื่อเปลี่ยนเฟส
 
     public TextMeshProUGUI phaseStatusText;
 
@@ -24,16 +27,21 @@ public class GameManager : NetworkBehaviour
     public TextMeshProUGUI waveText;
     private NetworkVariable<int> currentWave = new NetworkVariable<int>(1);
 
+    [Header("PvE System Wave")]
+    public MinionData[] systemEnemyPool; // สุ่มจาก List นี้ครับ
+    // เก็บข้อมูลเวฟที่สุ่มได้ในรูปแบบ "index:count|index:count"
+    public NetworkVariable<FixedString512Bytes> systemWaveDraft = new NetworkVariable<FixedString512Bytes>("");
+
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
     
     // จำนวนศัตรูที่ค้างส่งแยกตามประเภท (0 = Footman, 1 = Turtle)
     // Player 0 (Host)
-    private NetworkVariable<int> p0Type0Count = new NetworkVariable<int>(0);
-    private NetworkVariable<int> p0Type1Count = new NetworkVariable<int>(0);
+    public NetworkVariable<int> p0Type0Count = new NetworkVariable<int>(0);
+    public NetworkVariable<int> p0Type1Count = new NetworkVariable<int>(0);
     // Player 1 (Client)
-    private NetworkVariable<int> p1Type0Count = new NetworkVariable<int>(0);
-    private NetworkVariable<int> p1Type1Count = new NetworkVariable<int>(0);
+    public NetworkVariable<int> p1Type0Count = new NetworkVariable<int>(0);
+    public NetworkVariable<int> p1Type1Count = new NetworkVariable<int>(0);
 
     [Header("Economy Settings")]
     public int footmanCost = 10;
@@ -79,6 +87,12 @@ public class GameManager : NetworkBehaviour
                 ShopManager.Instance.CloseShop();
         }
 
+        // --- 🌊 เซ็ตค่าเวฟต้นเกมสำหรับ Server ---
+        if (IsServer && currentWave.Value == 1)
+        {
+            GenerateSystemWave();
+        }
+
         Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b>");
     }
 
@@ -88,6 +102,12 @@ public class GameManager : NetworkBehaviour
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
         UpdateCursorState(newValue);
         
+        if (newValue == GamePhase.Planning)
+        {
+            if (IsServer) currentWave.Value++;
+            CleanupEnemies(); // ⭐ เคลียร์ศัตรูที่เหลืออยู่ครับ
+        }
+
         // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
         if (ShopManager.Instance != null)
         {
@@ -95,6 +115,17 @@ public class GameManager : NetworkBehaviour
                 ShopManager.Instance.OpenShop();
             else
                 ShopManager.Instance.CloseShop();
+        }
+
+        OnPhaseChangedGlobal?.Invoke(newValue);
+    }
+
+    private void CleanupEnemies()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject enemy in enemies)
+        {
+            Destroy(enemy);
         }
     }
 
@@ -148,6 +179,37 @@ public class GameManager : NetworkBehaviour
     {
         if (waveText != null)
             waveText.text = "Wave " + wave;
+    }
+
+    // --- 🎲 ระบบสุ่มเวฟ (PvE) ---
+    private void GenerateSystemWave()
+    {
+        if (!IsServer) return;
+        if (systemEnemyPool == null || systemEnemyPool.Length == 0) return;
+
+        int totalToSpawn = 6 + (currentWave.Value - 1) * 2;
+        int[] counts = new int[systemEnemyPool.Length];
+
+        // สุ่มแจกจ่ายจำนวนให้ครบ totalToSpawn
+        for (int i = 0; i < totalToSpawn; i++)
+        {
+            int randIndex = Random.Range(0, systemEnemyPool.Length);
+            counts[randIndex]++;
+        }
+
+        // แปลงเป็น String: "0:3|1:3"
+        string draft = "";
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] > 0)
+            {
+                if (draft != "") draft += "|";
+                draft += $"{i}:{counts[i]}";
+            }
+        }
+
+        systemWaveDraft.Value = draft;
+        Debug.Log($"<color=orange>[GameManager]</color> Generated Wave {currentWave.Value}: {draft} (Total: {totalToSpawn})");
     }
 
     // แก้ฟังก์ชันนี้ให้รับ parameter เพื่อรู้ว่ากดปุ่มไหนมาครับ
@@ -213,6 +275,9 @@ public class GameManager : NetworkBehaviour
                 // Client (ID 1) ส่งไปหา Host (ID 0)
                 if (p1Type0Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p1Type0Count.Value, 0, 0);
                 if (p1Type1Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p1Type1Count.Value, 1, 0);
+
+                // --- 🌊 สั่งสปอนศัตรูรายทาง (PvE) สำหรับทุกคน ---
+                globalSpawner.SpawnSystemEnemiesRpc(systemWaveDraft.Value.ToString());
             } 
 
             currentPhase.Value = GamePhase.Combat;
@@ -227,6 +292,7 @@ public class GameManager : NetworkBehaviour
             
             // --- 🌊 ขึ้นเวฟใหม่เมื่อกลับสู่ช่วงวางแผน ---
             currentWave.Value++;
+            GenerateSystemWave(); // สุ่มเวฟถัดไปทันที
             
             currentPhase.Value = GamePhase.Planning;
         }

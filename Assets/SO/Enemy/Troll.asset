@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Troll
   prefab: {fileID: 8378969683373002168, guid: 42d717d445b109b449d89fb3c4191517, type: 3}
-  picture: {fileID: 0}
+  picture: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
   icon: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
   cost: 0
   defense: 0
