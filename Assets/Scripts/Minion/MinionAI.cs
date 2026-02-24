@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class MinionAI : MonoBehaviour
 {
@@ -8,6 +9,10 @@ public class MinionAI : MonoBehaviour
     public Animator animator;
     public MinionData data;
 
+    [Header("Health Settings")]
+    public Slider healthBar; // ลาก UI Slider มาใส่ที่นี่ใน Inspector
+
+    private int currentHP;
     private Transform currentTarget;
     private float lastAttackTime;
     private bool isInRange = false;
@@ -18,7 +23,19 @@ public class MinionAI : MonoBehaviour
         if (data != null)
         {
             agent.speed = data.speed;
+            currentHP = data.hp;
         }
+        else
+        {
+            currentHP = 100; // ค่า default ถ้าไม่มี MinionData
+        }
+
+        if (healthBar != null)
+        {
+            healthBar.maxValue = currentHP;
+            healthBar.value = currentHP;
+        }
+
         SetWalk(false);
     }
 
@@ -92,8 +109,18 @@ public class MinionAI : MonoBehaviour
 
     public void TakeDamage(int dmg)
     {
-        // TODO: ลด HP ด้วย data.hp
-        // if (currentHP <= 0) Die();
+        if (isDead) return;
+
+        currentHP -= dmg;
+        currentHP = Mathf.Max(currentHP, 0);
+
+        if (healthBar != null)
+            healthBar.value = currentHP;
+
+        Debug.Log($"<color=orange>[MinionAI]</color> {gameObject.name} โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
+
+        if (currentHP <= 0)
+            Die();
     }
 
     public void Die()

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Cinemachine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -45,10 +46,16 @@ public class PlayerController : MonoBehaviour
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
     
+    [Header("Health Settings")]
+    public int maxHP = 100;      // ตั้งค่าเลือดได้ใน Inspector
+    public Slider healthBar;     // ลาก UI Slider มาใส่ใน Inspector
+
+    private int currentHP;
     private float rotationVelocity;
     private Vector3 verticalVelocity;
     private bool isGrounded;
     private bool isInvincible = false; // สำหรับระบบอมตะ (I-frames)
+    private bool isDead = false;
     private Coroutine rotationCoroutine; // สำหรับคุมการหมุนนุ่มๆ
 
     private void Awake()
@@ -58,10 +65,19 @@ public class PlayerController : MonoBehaviour
         
         if (Camera.main != null)
             mainCameraTransform = Camera.main.transform;
+
+        // เริ่มต้น HP
+        currentHP = maxHP;
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHP;
+            healthBar.value = maxHP;
+        }
     }
 
     private void Update()
     {
+        if (isDead) return; // ปิด input ทั้งหมดเมื่อตาย
         HandleTargetLockInput(); // เช็คปุ่มล็อคเป้า (เมาส์กลาง)
         HandleRollInput(); 
         HandleAttackInput();
@@ -447,6 +463,31 @@ public class PlayerController : MonoBehaviour
         isInvincible = false;
     }
 
+    public void TakeDamage(int dmg)
+    {
+        if (isDead || isInvincible) return;
+
+        currentHP -= dmg;
+        currentHP = Mathf.Max(currentHP, 0);
+
+        if (healthBar != null)
+            healthBar.value = currentHP;
+
+        Debug.Log($"<color=red>[Player]</color> โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
+
+        if (currentHP <= 0)
+            Die();
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+        Debug.Log("<color=red>[Player]</color> ตายแล้ว!");
+        if (animator != null) animator.SetTrigger("Die");
+        // สามารถใส่ logic เพิ่มเติมได้ เช่น GameOver screen
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("EnemyAtk"))
@@ -455,8 +496,13 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("กูหลบได้");
                 return;
             }
-            Debug.Log("<color=red>[Player]</color> <b>โดนEnemy โจมตี!</b>");
-            // พี่สามารถหักเลือด (HP) หรือเล่นท่าโดนตี (Get Hit) ตรงนี้ได้นะครับ
+            // หา damage จากตัวโจมตี (MinionAI หรือ ArcherAI)
+            int dmg = 1;
+            var minionAI = other.GetComponentInParent<MinionAI>();
+            var archerAI = other.GetComponentInParent<ArcherAI>();
+            if (minionAI != null && minionAI.data != null) dmg = minionAI.data.damage;
+            else if (archerAI != null && archerAI.data != null) dmg = archerAI.data.damage;
+            TakeDamage(dmg);
         }
     }
 }
