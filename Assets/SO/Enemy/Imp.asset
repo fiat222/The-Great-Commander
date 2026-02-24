@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Imp
   prefab: {fileID: 7969264364928350748, guid: 7c39fbdbeb10ba64e9a36bef2a92c5a5, type: 3}
-  picture: {fileID: 0}
+  picture: {fileID: -1265361500, guid: cdbdba6152284b3498045e0898913945, type: 3}
   icon: {fileID: -1265361500, guid: cdbdba6152284b3498045e0898913945, type: 3}
   cost: 0
   defense: 0
