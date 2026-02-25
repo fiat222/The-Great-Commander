@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Skeleton
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Skeleton
-  prefab: {fileID: 7496336898652197665, guid: 4041fb1de209b2546ba610a7a432adf3, type: 3}
+  prefab: {fileID: 2481845571369870494, guid: 21e7579a44187194d8e08075df8e097d, type: 3}
   picture: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
   icon: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
   cost: 0
