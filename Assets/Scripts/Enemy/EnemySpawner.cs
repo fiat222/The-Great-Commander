@@ -5,25 +5,28 @@ using UnityEngine;
 public class EnemySpawner : NetworkBehaviour
 {
     [Header("Spawner Settings")]
-    public GameObject[] enemyPrefabs; // เปลี่ยนเป็น Array เพื่อรองรับหลายประเภทครับ
     public List<Transform> spawnPoints; 
 
     public void SpawnEnemy(int typeIndex)
     {
         if (!IsServer) return; // เฉพาะ Server/Host เท่านั้นที่สั่ง Spawn ได้
 
-        if (enemyPrefabs == null || typeIndex >= enemyPrefabs.Length || enemyPrefabs[typeIndex] == null || spawnPoints.Count == 0)
+        if (GameManager.Instance == null || GameManager.Instance.systemEnemyPool == null || 
+            typeIndex >= GameManager.Instance.systemEnemyPool.Length || spawnPoints.Count == 0)
         {
-            Debug.LogWarning($"EnemySpawner: Prefab (Index {typeIndex}) หรือ SpawnPoints ยังไม่ได้เซ็ต!");
+            Debug.LogWarning($"EnemySpawner: ไม่พบข้อมูลมอนสเตอร์ (Index {typeIndex}) หรือ SpawnPoints!");
             return;
         }
 
-        // สุ่มเลือกจุดเกิดจาก List
+        GameObject prefab = GameManager.Instance.systemEnemyPool[typeIndex].prefab;
+        if (prefab == null) return;
+
+        // เลือกจุดเกิดจาก List
         int randomIndex = Random.Range(0, spawnPoints.Count);
         Transform selectedPoint = spawnPoints[randomIndex];
 
         // สร้าง Object ขึ้นมาบน Server
-        GameObject enemyInstance = Instantiate(enemyPrefabs[typeIndex], selectedPoint.position, selectedPoint.rotation);
+        GameObject enemyInstance = Instantiate(prefab, selectedPoint.position, selectedPoint.rotation);
 
         // สั่งให้ Object นี้เกิดบนหน้าจอของทุกคน (Network Sync)
         NetworkObject netObj = enemyInstance.GetComponent<NetworkObject>();
@@ -58,9 +61,14 @@ public class EnemySpawner : NetworkBehaviour
 
     private System.Collections.IEnumerator SpawnRoutine(int count, int typeIndex)
     {
+        if (GameManager.Instance == null || GameManager.Instance.systemEnemyPool == null || 
+            typeIndex >= GameManager.Instance.systemEnemyPool.Length) yield break;
+
+        GameObject prefab = GameManager.Instance.systemEnemyPool[typeIndex].prefab;
+
         for (int i = 0; i < count; i++)
         {
-            SpawnEnemyFromPoolIndex(typeIndex, true); // ⭐ ให้มีผลกับ UI ด้วยครับ
+            SpawnEnemyFromPrefab(prefab, typeIndex, false); // ⭐ ให้มีผลกับ UI (ถ้าต้องการนับ)
             yield return new WaitForSeconds(0.5f);
         }
     }
@@ -95,22 +103,14 @@ public class EnemySpawner : NetworkBehaviour
         }
     }
 
+    // ฟังก์ชันนี้ไม่ได้ถูกใช้งานแล้ว เนื่องจากเราหันไปใช้ SpawnEnemyFromPrefab แทนครับ
     private void SpawnEnemyFromPoolIndex(int typeIndex, bool isSystem = false)
     {
-        if (enemyPrefabs == null || typeIndex >= enemyPrefabs.Length || enemyPrefabs[typeIndex] == null || spawnPoints.Count == 0) return;
+        if (GameManager.Instance == null || GameManager.Instance.systemEnemyPool == null || 
+            typeIndex >= GameManager.Instance.systemEnemyPool.Length) return;
 
-        int randomIndex = Random.Range(0, spawnPoints.Count);
-        Transform selectedPoint = spawnPoints[randomIndex];
-
-        GameObject enemy = Instantiate(enemyPrefabs[typeIndex], selectedPoint.position, selectedPoint.rotation);
-        
-        // เซ็ตค่าพื้นฐานถ้ามี EnemyAI
-        EnemyAI ai = enemy.GetComponent<EnemyAI>();
-        if (ai != null)
-        {
-            ai.typeIndex = typeIndex;
-            ai.countsInWaveUI = isSystem; 
-        }
+        GameObject prefab = GameManager.Instance.systemEnemyPool[typeIndex].prefab;
+        SpawnEnemyFromPrefab(prefab, typeIndex, isSystem);
     }
 
     private void SpawnEnemyFromPrefab(GameObject prefab, int index = -1, bool isSystem = false)
