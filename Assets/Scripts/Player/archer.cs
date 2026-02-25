@@ -555,6 +555,9 @@ public class Archer : MonoBehaviour
             return;
         }
 
+        if (animator != null)
+            animator.SetTrigger("Damage");
+
         currentHP -= dmg;
         currentHP = Mathf.Max(currentHP, 0);
 
