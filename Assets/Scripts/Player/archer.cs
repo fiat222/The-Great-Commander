@@ -90,15 +90,19 @@ public class Archer : MonoBehaviour
             healthBar.value = maxHP;
         }
 
-        // --- ค้นหา Crosshair อัตโนมัติจาก Tag "Crosshair" ---
-        GameObject crosshairObj = GameObject.FindWithTag("Crosshair");
-        if (crosshairObj != null)
+        // --- ค้นหา Crosshair อัตโนมัติถ้ายังไม่ได้ลากใส่ใน Inspector ---
+        if (crosshair == null)
         {
-            crosshair = crosshairObj.GetComponent<AimCrosshair>();
+            GameObject crosshairObj = GameObject.FindWithTag("Crosshair");
+            if (crosshairObj != null)
+            {
+                crosshair = crosshairObj.GetComponent<AimCrosshair>();
+            }
         }
-        else
+
+        if (crosshair == null)
         {
-            Debug.LogWarning("<color=red>[Archer]</color> ไม่พบ GameObject ที่มี Tag 'Crosshair' ในซีนครับ!");
+            Debug.LogWarning("<color=red>[Archer]</color> ยังไม่มีการผูก Crosshair! (ให้ลากใส่ Inspector หรือติด Tag 'Crosshair' ที่ Object นั้นครับ)");
         }
     }
 
@@ -272,11 +276,13 @@ public class Archer : MonoBehaviour
             StopAiming();
         }
 
-        // อัปเดต BlendTree ตอนเล็ง (Forward/Right อ้างอิง camera-relative input)
-        if (isAiming)
+        // อัปเดต BlendTree และหันหน้าตามกล้อง (เล็งอยู่ หรือ กำลังเล่นท่าที่ติด Tag 'Attack')
+        bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
+
+        if (isAiming || isPlayingAttack)
         {
             UpdateAimBlendTree();
-            FaceCamera(); // หันหน้าตามกล้องขณะเล็ง
+            FaceCamera(); // หันหน้าตามกล้องขณะเล็งหรือกำลังยิง
         }
     }
 
@@ -292,7 +298,10 @@ public class Archer : MonoBehaviour
         }
 
         if (crosshair != null)
+        {
+            Debug.Log("<color=green>[Archer]</color> เรียกใช้ Crosshair.StartAim()");
             crosshair.StartAim();
+        }
     }
 
     private void StopAiming()
@@ -437,6 +446,9 @@ public class Archer : MonoBehaviour
         bool isRolling = animator != null &&
                          (stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll"));
 
+        bool isPlayingAttack = animator != null &&
+                              (stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack"));
+
         bool isLocked = isRolling; // Attack lock ถูกถอดออก (ธนูไม่มีคอมโบระยะประชิด)
 
         // Ground check
@@ -448,15 +460,14 @@ public class Archer : MonoBehaviour
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
+        // ความเร็วที่ใช้ (ปกติ vs เล็ง หรือยิงอยู่)
+        float currentSpeed = (isAiming || isPlayingAttack) ? aimMoveSpeed : moveSpeed;
         Vector3 direction = new Vector3(h, 0f, v).normalized;
-
-        // ความเร็วที่ใช้ (ปกติ vs เล็ง)
-        float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
 
         if (animator != null)
         {
             // FreelookSpeed ใช้สำหรับ blend idle/run ตอนไม่เล็ง
-            if (!isAiming)
+            if (!isAiming && !isPlayingAttack)
                 animator.SetFloat("FreelookSpeed", direction.magnitude, 0.05f, Time.deltaTime);
 
             animator.SetBool("isGrounded", isGrounded);
@@ -481,9 +492,9 @@ public class Archer : MonoBehaviour
         // ==================== FREE MOVEMENT ====================
         if (!isLocked)
         {
-            if (isAiming)
+            if (isAiming || isPlayingAttack)
             {
-                // ตอนเล็ง: เดินได้ทุกทิศ แต่ความเร็วช้าลง, หันตาม camera ผ่าน FaceCamera()
+                // ตอนเล็ง/ยิง: เดินได้ทุกทิศ แต่ความเร็วช้าลง, หันตาม camera ผ่าน FaceCamera()
                 if (direction.magnitude >= 0.1f)
                 {
                     float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg +
