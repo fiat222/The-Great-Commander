@@ -3,68 +3,97 @@ using UnityEngine.UI;
 
 public class AimCrosshair : MonoBehaviour
 {
-    [Header("Crosshair Settings")]
-    public RectTransform crosshairRect;     // Image �ͧ crosshair
-    public float maxSize = 120f;            // ��Ҵ�͹�������� (���ҧ)
-    public float minSize = 20f;             // ��Ҵ����ش (��秹��)
-    public float shrinkTime = 1.5f;         // �����ҡ���Թҷը֧˴�֧ minSize
+    [Header("Crosshair Panels")]
+    [SerializeField] private GameObject normalPanel;
+    [SerializeField] private GameObject fullChargePanel;
 
-    [Header("Color")]
-    public Image crosshairImage;
-    public Color defaultColor = Color.white;
-    public Color readyColor = new Color(1f, 0.8f, 0f); // ����ͧ�ͧ = ������ԧ
+    [Header("Shrink Settings (Normal)")]
+    [SerializeField] private RectTransform shrinkPart; 
+    public float maxSpread = 100f;
+    public float minSpread = 20f;
 
-    private float aimTimer = 0f;
-    private bool isShowing = false;
+    [Header("Charge Settings")]
+    public float maxChargeTime = 1.2f; // ใช้เวลากี่วินาทีถึงชาร์จเต็ม
+    
+    private float currentCharge = 0f;
+    private bool isAiming = false;
 
-    private void Start()
+
+    void Update()
     {
-        if (crosshairRect != null)
-            crosshairRect.gameObject.SetActive(true);
+        if (!isAiming)
+        {
+            // --- สถานะปกติ (ไม่ได้ง้าง) ---
+            ResetToIdle();
+            return;
+        }
+
+        // เพิ่มค่าชาร์จตามเวลา
+        currentCharge += Time.deltaTime;
+        float progress = Mathf.Clamp01(currentCharge / maxChargeTime);
+
+        if (progress < 1f)
+        {
+            // --- ช่วงกำลังชาร์จ (Normal) ---
+            ShowNormal();
+
+            // ทำเอฟเฟกต์หุบเป้า
+            if (shrinkPart != null)
+            {
+                float currentSpread = Mathf.Lerp(maxSpread, minSpread, progress);
+                shrinkPart.sizeDelta = new Vector2(currentSpread, currentSpread);
+            }
+        }
+        else
+        {
+            // --- ชาร์จเต็ม 100% (Full Charge) ---
+            ShowFullCharge();
+        }
     }
 
-    // ���¡�ҡ PlayerController
+    private void ResetToIdle()
+    {
+        ShowNormal();
+        if (shrinkPart != null)
+        {
+            shrinkPart.sizeDelta = new Vector2(maxSpread, maxSpread);
+        }
+    }
+
+    private void ShowNormal()
+    {
+        if (normalPanel != null && !normalPanel.activeSelf) normalPanel.SetActive(true);
+        if (fullChargePanel != null && fullChargePanel.activeSelf) fullChargePanel.SetActive(false);
+    }
+
+    private void ShowFullCharge()
+    {
+        if (normalPanel != null && normalPanel.activeSelf) normalPanel.SetActive(false);
+        if (fullChargePanel != null && !fullChargePanel.activeSelf) fullChargePanel.SetActive(true);
+    }
+
+    // ==================== Public Methods (เรียกจาก Archer.cs) ====================
+
     public void StartAim()
     {
-        aimTimer = 0f;
-        isShowing = true;
+        isAiming = true;
+        currentCharge = 0f;
     }
 
     public void StopAim()
     {
-        isShowing = false;
-        aimTimer = 0f;
-
-        // ���絢�Ҵ��Ѻ��˭��ش
-        if (crosshairRect != null)
-            crosshairRect.sizeDelta = new Vector2(maxSize, maxSize);
-
-        // ������
-        if (crosshairImage != null)
-            crosshairImage.color = defaultColor;
+        isAiming = false;
+        currentCharge = 0f;
+        
+        // ไม่สั่ง SetActive(false) แล้วครับ เพื่อให้เป้าค้างอยู่ตลอด
+        ResetToIdle();
     }
 
-    // �׹��� accuracy 0-1 (0 = ������, 1 = ����������)
+    /// <summary>
+    /// คืนค่าความแม่นยำ 0.0 - 1.0 (0 = ต่ำสุด, 1 = สูงสุด/ชาร์จเต็ม)
+    /// </summary>
     public float GetAccuracy()
     {
-        return Mathf.Clamp01(aimTimer / shrinkTime);
-    }
-
-    private void Update()
-    {
-        if (!isShowing) return;
-
-        aimTimer += Time.deltaTime;
-
-        float accuracy = GetAccuracy();
-
-        // ˴��Ҵ crosshair
-        float currentSize = Mathf.Lerp(maxSize, minSize, accuracy);
-        if (crosshairRect != null)
-            crosshairRect.sizeDelta = new Vector2(currentSize, currentSize);
-
-        // ����¹������;�����ԧ
-        if (crosshairImage != null)
-            crosshairImage.color = Color.Lerp(defaultColor, readyColor, accuracy);
+        return Mathf.Clamp01(currentCharge / maxChargeTime);
     }
 }
