@@ -104,7 +104,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerAttack
   range: 33
   fireRate: 0.8
-  damage: 10
+  damage: 30
   projectileVFXPrefab: {fileID: 6916111140770829, guid: 1d2d52f4a3c0b76418741231e406bafe, type: 3}
   muzzleFlashVFXPrefab: {fileID: 0}
   rangeVFXPrefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}

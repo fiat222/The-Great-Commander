@@ -29,7 +29,7 @@ public class Projectile : MonoBehaviour
             return;
         }
 
-        // เช็กว่าเป้าหมายอยุ่ในขอบเขตไหม
+        // เช็กว่าเป้าหมายอยู่ในขอบเขตไหม
         float distToTower = Vector3.Distance(towerTransform.position, target.position);
         if (distToTower > towerRange)
         {
@@ -40,7 +40,6 @@ public class Projectile : MonoBehaviour
         // ล็อกตำแหน่งบนเส้นตรงระหว่างป้อมกับเป้าหมาย
         distanceTraveled += speed * Time.deltaTime;
         float progress = distanceTraveled / distToTower;
-
         transform.position = Vector3.Lerp(towerTransform.position, target.position, progress);
 
         if (progress >= 1.0f)
@@ -51,7 +50,6 @@ public class Projectile : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // เลือกชนเฉพาะเป้าหมาย
         if (other.CompareTag("Enemy"))
         {
             HitTarget();
@@ -62,15 +60,35 @@ public class Projectile : MonoBehaviour
     {
         if (target != null)
         {
+            // ลอง HealthSystem ก่อน
             HealthSystem hp = target.GetComponent<HealthSystem>();
-            if (hp != null) hp.TakeDamage(damage);
+            if (hp != null)
+            {
+                hp.TakeDamage(damage);
+            }
+            else
+            {
+                // ถ้าไม่มี HealthSystem ให้โจมตีผ่าน EnemyAI หรือ ImpAI โดยตรง
+                EnemyAI enemyAI = target.GetComponent<EnemyAI>();
+                if (enemyAI != null)
+                {
+                    enemyAI.TakeDamage(damage);
+                }
+                else
+                {
+                    ImpAI impAI = target.GetComponent<ImpAI>();
+                    if (impAI != null) impAI.TakeDamage(damage);
+                }
+            }
 
+            // Spawn VFX
             if (hitVFXPrefab != null)
             {
                 GameObject hitEffect = Instantiate(hitVFXPrefab, target.position, Quaternion.identity);
                 Destroy(hitEffect, 2f);
             }
         }
+
         Destroy(gameObject);
     }
 }

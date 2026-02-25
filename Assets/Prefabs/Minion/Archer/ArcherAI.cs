@@ -17,7 +17,7 @@ public class ArcherAI : MonoBehaviour
     [Header("Health Settings")]
     public Slider healthBar; // ลาก UI Slider มาใส่ที่นี่ใน Inspector
 
-    private int currentHP;
+    private float currentHP;
     private Transform currentTarget;
     private float lastAttackTime;
     private bool isInRange = false;
@@ -32,7 +32,7 @@ public class ArcherAI : MonoBehaviour
         }
         else
         {
-            currentHP = 100; // ค่า default ถ้าไม่มี MinionData
+            currentHP = 100f; // ค่า default ถ้าไม่มี MinionData
         }
 
         if (healthBar != null)
@@ -113,8 +113,8 @@ public class ArcherAI : MonoBehaviour
         Vector3 direction = (targetPos - shootPoint.position).normalized;
 
         GameObject arrow = Instantiate(arrowPrefab, shootPoint.position, Quaternion.LookRotation(direction));
-        int dmg = data != null ? data.damage : 1;
-        arrow.GetComponent<ArrowProjectile>()?.Launch(direction, arrowSpeed, dmg);
+        float dmg = data != null ? data.damage : 1f;
+        arrow.GetComponent<ArrowProjectile>()?.Launch(direction, arrowSpeed, (int)dmg);
     }
 
     void SetAttack(bool value) => animator.SetBool("Attack", value);
@@ -124,13 +124,17 @@ public class ArcherAI : MonoBehaviour
     {
         if (isDead) return;
 
-        currentHP -= dmg;
+        // คำนวณ Damage หลังจาก Defense
+        float defense = data != null ? data.defense : 0f;
+        float actualDamage = Mathf.Max(1f, dmg - defense);
+
+        currentHP -= actualDamage;
         currentHP = Mathf.Max(currentHP, 0);
 
         if (healthBar != null)
             healthBar.value = currentHP;
 
-        Debug.Log($"<color=orange>[ArcherAI]</color> {gameObject.name} โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
+        Debug.Log($"<color=orange>[ArcherAI]</color> {gameObject.name} โดนตี {dmg} ดาเมจ (Defense: {defense}, Actual: {actualDamage}) | HP เหลือ: {currentHP}");
 
         if (currentHP <= 0)
             Die();
