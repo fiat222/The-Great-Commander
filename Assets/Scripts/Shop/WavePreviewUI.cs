@@ -5,18 +5,24 @@ using Unity.Netcode;
 
 public class WavePreviewUI : MonoBehaviour
 {
-    [Header("Panels")]
+    [Header("Original UI Panels")]
     [SerializeField] private GameObject planningPanel;
     [SerializeField] private GameObject combatPanel;
 
-    [Header("Settings")]
+    [Header("Original UI Settings")]
     [SerializeField] private GameObject planningIconPrefab;
     [SerializeField] private GameObject combatIconPrefab;
     [SerializeField] private Transform planningContainer;
     [SerializeField] private Transform combatContainer;
 
-    // เก็บจำนวนศัตรูที่เหลืออยู่ปัจจุบันแยกตาม Index
-    private Dictionary<int, int> currentCounts = new Dictionary<int, int>();
+    [Header("Sent Enemies UI (Optional)")]
+    [SerializeField] private GameObject sentEnemiesPanel;
+    [SerializeField] private Transform sentEnemiesContainer;
+    [SerializeField] private GameObject sentIconPrefab;
+
+    // เก็บจำนวนศัตรูแยกตามประเภท
+    private Dictionary<int, int> incomingCounts = new Dictionary<int, int>();
+    private Dictionary<int, int> sentCounts = new Dictionary<int, int>();
     private List<WaveIconItem> combatIcons = new List<WaveIconItem>();
 
     void Start()
@@ -27,22 +33,18 @@ public class WavePreviewUI : MonoBehaviour
             GameManager.OnSystemEnemyDied += HandleEnemyDeath;
             GameManager.OnPhaseChangedGlobal += RefreshLayoutOnPhaseChange;
 
-            // ✨ เพิ่มการดักจับเมื่อมีการส่งมอนสเตอร์มาเพิ่มแบบ Real-time
-            GameManager.Instance.p0Type0Count.OnValueChanged += RefreshLayoutOnCountChanged;
-            GameManager.Instance.p0Type1Count.OnValueChanged += RefreshLayoutOnCountChanged;
-            GameManager.Instance.p1Type0Count.OnValueChanged += RefreshLayoutOnCountChanged;
-            GameManager.Instance.p1Type1Count.OnValueChanged += RefreshLayoutOnCountChanged;
+            // ✨ เพิ่มการดักจับเมื่อมีการส่งมอนสเตอร์มาเพิ่มแบบ Real-time (ใช้ OnListChanged สำหรับ NetworkList)
+            GameManager.Instance.p0SentCounts.OnListChanged += OnSentListChanged;
+            GameManager.Instance.p1SentCounts.OnListChanged += OnSentListChanged;
         }
         
         // เริ่มต้นให้แสดงผลตามข้อมูลที่มีอยู่
         RefreshLayout();
     }
 
-    private void RefreshLayoutOnCountChanged(int oldVal, int newVal)
+    private void OnSentListChanged(NetworkListEvent<int> changeEvent)
     {
-        // อัปเดตเฉพาะในเฟส Combat เพราะใน Planning เราโชว์แค่ร่างเวฟระบบครับ
-        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase == GamePhase.Combat)
-            RefreshLayout();
+        RefreshLayout();
     }
 
     private void RefreshLayoutOnPhaseChange(GamePhase phase)
@@ -59,17 +61,16 @@ public class WavePreviewUI : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
 
-        string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
-        
-        // สลับ Panel ตามเฟส
         bool isPlanning = GameManager.Instance.CurrentPhase == GamePhase.Planning;
+        
+        // 1. จัดการ PanelVisibility
         if (planningPanel != null) planningPanel.SetActive(isPlanning);
         if (combatPanel != null) combatPanel.SetActive(!isPlanning);
+        if (sentEnemiesPanel != null) sentEnemiesPanel.SetActive(isPlanning); // โชว์ตัวที่เราส่งเฉพาะตอนวางแผน
 
-        // อัปเดตข้อมูลใน Dictionary
-        currentCounts.Clear();
-
-        // 1. ดึงข้อมูลจาก System Wave (รายทาง)
+        // 2. คำนวณ Incoming (ศัตรูที่จะมาบุกเรา)
+        incomingCounts.Clear();
+        string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
         if (!string.IsNullOrEmpty(draft))
         {
             string[] parts = draft.Split('|');
@@ -77,51 +78,67 @@ public class WavePreviewUI : MonoBehaviour
             {
                 string[] sub = p.Split(':');
                 if (sub.Length == 2)
-                    currentCounts[int.Parse(sub[0])] = int.Parse(sub[1]);
+                    incomingCounts[int.Parse(sub[0])] = int.Parse(sub[1]);
             }
         }
 
-        // 2. ✨ รวมยอดกับศัตรูที่ "เพื่อนส่งมาหาเรา" (เฉพาะในเฟส Combat)
+        // รวม Incoming จากที่เพื่อนส่งมา (เฉพาะใน Combat)
         if (!isPlanning)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;
-            if (myId == 0) // เราคือ Host -> นับที่ Client ส่งมา (p1)
+            if (myId == 0) // เราคือ Host (P0) -> ดูที่ Client (P1) ส่งมา
             {
-                AddSentCountToTotal(0, GameManager.Instance.p1Type0Count.Value);
-                AddSentCountToTotal(1, GameManager.Instance.p1Type1Count.Value);
+                for (int i = 0; i < GameManager.Instance.p1SentCounts.Count; i++)
+                    AddCountToDict(incomingCounts, i, GameManager.Instance.p1SentCounts[i]);
             }
-            else // เราคือ Client -> นับที่ Host ส่งมา (p0)
+            else // เราคือ Client (P1) -> ดูที่ Host (P0) ส่งมา
             {
-                AddSentCountToTotal(0, GameManager.Instance.p0Type0Count.Value);
-                AddSentCountToTotal(1, GameManager.Instance.p0Type1Count.Value);
+                for (int i = 0; i < GameManager.Instance.p0SentCounts.Count; i++)
+                    AddCountToDict(incomingCounts, i, GameManager.Instance.p0SentCounts[i]);
             }
         }
 
-        // สร้าง UI ทั้งสองฝั่ง
-        UpdateContainer(planningContainer, true);
-        UpdateContainer(combatContainer, false);
+        // 3. คำนวณ Sent (ศัตรูที่ "เรา" ส่งไปหาเพื่อน)
+        sentCounts.Clear();
+        if (isPlanning)
+        {
+            ulong myId = NetworkManager.Singleton.LocalClientId;
+            if (myId == 0) // เราคือ Host (P0) -> โชว์กองทัพ P0
+            {
+                for (int i = 0; i < GameManager.Instance.p0SentCounts.Count; i++)
+                    AddCountToDict(sentCounts, i, GameManager.Instance.p0SentCounts[i]);
+            }
+            else // เราคือ Client (P1) -> โชว์กองทัพ P1
+            {
+                for (int i = 0; i < GameManager.Instance.p1SentCounts.Count; i++)
+                    AddCountToDict(sentCounts, i, GameManager.Instance.p1SentCounts[i]);
+            }
+        }
+
+        // 4. อัปเดต UI Containers
+        UpdateContainerWithCounts(planningContainer, incomingCounts, planningIconPrefab, true);
+        UpdateContainerWithCounts(combatContainer, incomingCounts, combatIconPrefab, false);
+        UpdateContainerWithCounts(sentEnemiesContainer, sentCounts, sentIconPrefab ?? planningIconPrefab, false);
     }
 
-    private void AddSentCountToTotal(int index, int count)
+    private void AddCountToDict(Dictionary<int, int> dict, int index, int count)
     {
         if (count <= 0) return;
-        if (currentCounts.ContainsKey(index))
-            currentCounts[index] += count;
-        else
-            currentCounts[index] = count;
+        if (dict.ContainsKey(index)) dict[index] += count;
+        else dict[index] = count;
     }
 
-    private void UpdateContainer(Transform container, bool isPlanning)
+    private void UpdateContainerWithCounts(Transform container, Dictionary<int, int> counts, GameObject prefab, bool isPlanningContainer)
     {
-        GameObject prefabToUse = isPlanning ? planningIconPrefab : combatIconPrefab;
-        if (container == null || prefabToUse == null) return;
+        if (container == null || prefab == null) return;
 
         foreach (Transform child in container)
             Destroy(child.gameObject);
 
-        if (!isPlanning) combatIcons.Clear();
+        if (isPlanningContainer == false && container == combatContainer) 
+            combatIcons.Clear();
 
-        foreach (var pair in currentCounts)
+        foreach (var pair in counts)
         {
             int index = pair.Key;
             int count = pair.Value;
@@ -129,12 +146,12 @@ public class WavePreviewUI : MonoBehaviour
             if (GameManager.Instance.systemEnemyPool != null && index < GameManager.Instance.systemEnemyPool.Length)
             {
                 MinionData data = GameManager.Instance.systemEnemyPool[index];
-                GameObject obj = Instantiate(prefabToUse, container);
+                GameObject obj = Instantiate(prefab, container);
                 WaveIconItem item = obj.GetComponent<WaveIconItem>();
                 if (item != null)
                 {
                     item.Setup(data.picture != null ? data.picture : data.icon, count);
-                    if (!isPlanning) combatIcons.Add(item);
+                    if (container == combatContainer) combatIcons.Add(item);
                 }
             }
         }
@@ -145,11 +162,11 @@ public class WavePreviewUI : MonoBehaviour
         // ⚠️ เราจะลดจำนวนเฉพาะในเฟส Combat เท่านั้นครับ
         if (GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
-        if (currentCounts.ContainsKey(typeIndex))
+        if (incomingCounts.ContainsKey(typeIndex))
         {
-            if (currentCounts[typeIndex] > 0)
+            if (incomingCounts[typeIndex] > 0)
             {
-                currentCounts[typeIndex]--;
+                incomingCounts[typeIndex]--;
                 
                 // อัปเดต UI เฉพาะใน Combat Panel (เพื่อให้ดูเรียลไทม์)
                 UpdateCombatUIOnly();
@@ -161,7 +178,7 @@ public class WavePreviewUI : MonoBehaviour
     {
         // แทนที่จะสร้างใหม่หมด เราจะแค่ Update ตัวเลขใน CombatIcons ครับ
         int i = 0;
-        foreach (var pair in currentCounts)
+        foreach (var pair in incomingCounts)
         {
             if (i < combatIcons.Count)
             {
@@ -185,10 +202,8 @@ public class WavePreviewUI : MonoBehaviour
             GameManager.OnSystemEnemyDied -= HandleEnemyDeath;
             GameManager.OnPhaseChangedGlobal -= RefreshLayoutOnPhaseChange;
 
-            GameManager.Instance.p0Type0Count.OnValueChanged -= RefreshLayoutOnCountChanged;
-            GameManager.Instance.p0Type1Count.OnValueChanged -= RefreshLayoutOnCountChanged;
-            GameManager.Instance.p1Type0Count.OnValueChanged -= RefreshLayoutOnCountChanged;
-            GameManager.Instance.p1Type1Count.OnValueChanged -= RefreshLayoutOnCountChanged;
+            GameManager.Instance.p0SentCounts.OnListChanged -= OnSentListChanged;
+            GameManager.Instance.p1SentCounts.OnListChanged -= OnSentListChanged;
         }
     }
 }
