@@ -2123,7 +2123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2265767778
+  GlobalObjectIdHash: 1646504854
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2198,10 +2198,8 @@ MonoBehaviour:
   chaseRange: 28
   attackRange: 4
   baseAttackRange: 3.9
-  walkSpeed: 4.5
-  runSpeed: 7.5
   weaponCollider: {fileID: 8022787174875799952}
-  data: {fileID: 11400000, guid: 43d565b243f13ce46a5800b4b2777ec5, type: 2}
+  data: {fileID: 11400000, guid: baa79fc5c0374e44faf71dca8b784a63, type: 2}
   healthBar: {fileID: 1113915869363181131}
   updateRate: 0.2
   typeIndex: 0
