@@ -598,7 +598,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 659526755
+  GlobalObjectIdHash: 1582985431
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -701,6 +701,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Shield_01
       objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6278123915614803766, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.52
@@ -760,10 +764,30 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2485612700527072660, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2915587419807863897}
   m_SourcePrefab: {fileID: 100100000, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
 --- !u!4 &2486718325382074474 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6278123915614803766, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
   m_PrefabInstance: {fileID: 8476611589963810652}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6331026163160126152 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2485612700527072660, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+  m_PrefabInstance: {fileID: 8476611589963810652}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2915587419807863897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6331026163160126152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afa87ef291105514996b9753d0af2a01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionWeaponHitbox

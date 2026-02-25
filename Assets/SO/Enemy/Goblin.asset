@@ -16,9 +16,9 @@ MonoBehaviour:
   prefab: {fileID: 8856839914518036732, guid: 6f99e13a75128d94c9c5e8d1bed40986, type: 3}
   picture: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
   icon: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
-  cost: 0
-  defense: 0
-  damage: 0
-  hp: 0
-  speed: 0
-  attackrange: 0
+  cost: 20
+  damage: 15
+  defense: 2.5
+  speed: 5
+  hp: 40
+  attackrange: 3

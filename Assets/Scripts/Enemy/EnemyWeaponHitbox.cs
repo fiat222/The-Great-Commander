@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnemyWeaponHitbox : MonoBehaviour
 {
     private Collider hitboxCollider;
-    private EnemyAI ownerAI; // ในกรณีที่ต้องการส่งดาเมจตามตัวแปรของมอนสเตอร์
+    private EnemyAI ownerAI;
 
     void Awake()
     {
@@ -13,15 +13,15 @@ public class EnemyWeaponHitbox : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 1. เช็คว่าเจอเป้าหมายที่เราอยากโจมตีไหม
+        // ดึงค่า damage จาก MinionData ถ้ามี ถ้าไม่มีใช้ค่า default
+        int damage = (ownerAI != null && ownerAI.data != null) ? (int)ownerAI.data.damage : 10;
+
         bool hitTarget = false;
-        int damage = 1;
 
         if (other.CompareTag("Player"))
         {
             var player = other.GetComponent<PlayerController>();
             var archer = other.GetComponent<Archer>();
-
             if (player != null)
             {
                 player.TakeDamage(damage);
@@ -42,21 +42,26 @@ public class EnemyWeaponHitbox : MonoBehaviour
                 hitTarget = true;
             }
         }
-        else if (other.CompareTag("Tower"))
+        else if (other.CompareTag("Minion"))
         {
-            var towerHp = other.GetComponent<TowerHealth>();
-            if (towerHp != null)
+            var minionAI = other.GetComponent<MinionAI>();
+            var archerAI = other.GetComponent<ArcherAI>();
+            if (minionAI != null)
             {
-                towerHp.TakeDamage(damage);
+                minionAI.TakeDamage(damage);
+                hitTarget = true;
+            }
+            else if (archerAI != null)
+            {
+                archerAI.TakeDamage(damage);
                 hitTarget = true;
             }
         }
 
-        // 2. 🛡️ ถ้าโจมตีโดนเป้าหมายแล้ว ให้ปิด Collider ตัวเองทันที!
-        // เพื่อป้องกันการเกิดดาเมจซ้ำในท่าฟันเดิม (One-hit-per-swing)
+        // ถ้าโจมตีโดนเป้าหมายแล้ว ให้ปิด Collider ทันที (One-hit-per-swing)
         if (hitTarget)
         {
-            Debug.Log($"<color=red>[Hitbox]</color> Hit {other.name}! Disabling hitbox to prevent multi-hit.");
+            Debug.Log($"<color=red>[Hitbox]</color> Hit {other.name} for {damage} damage! Disabling hitbox to prevent multi-hit.");
             if (hitboxCollider != null) hitboxCollider.enabled = false;
         }
     }
