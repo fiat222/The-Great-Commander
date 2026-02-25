@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Goblin
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Goblin
-  prefab: {fileID: 7639188787013082918, guid: 51d8d12bbb3da7a4889c09fae21902d2, type: 3}
+  prefab: {fileID: 8856839914518036732, guid: 6f99e13a75128d94c9c5e8d1bed40986, type: 3}
   picture: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
   icon: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
   cost: 0

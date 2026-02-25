@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Minotaur
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Minotaur
-  prefab: {fileID: 4957598605828715311, guid: 864077222a472754ebb5f1ece50bb079, type: 3}
+  prefab: {fileID: 4338195467388019840, guid: 864077222a472754ebb5f1ece50bb079, type: 3}
   picture: {fileID: -1829030107, guid: 450fe47c03dbed74a8bff40e920289f9, type: 3}
   icon: {fileID: -1829030107, guid: 450fe47c03dbed74a8bff40e920289f9, type: 3}
   cost: 0

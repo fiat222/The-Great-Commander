@@ -549,7 +549,11 @@ public class Archer : MonoBehaviour
 
     public void TakeDamage(int dmg)
     {
-        if (isDead || isInvincible) return;
+        if (isDead || isInvincible)
+        {
+            print("ไม่โดนเว้ย");
+            return;
+        }
 
         currentHP -= dmg;
         currentHP = Mathf.Max(currentHP, 0);
@@ -572,21 +576,4 @@ public class Archer : MonoBehaviour
         // สามารถใส่ logic เพิ่มเติมได้ เช่น GameOver screen
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("EnemyAtk"))
-        {
-            if (isInvincible){
-                Debug.Log("กูหลบได้");
-                return;
-            }
-            // หา damage จากตัวโจมตี
-            int dmg = 1;
-            var minionAI = other.GetComponentInParent<MinionAI>();
-            var archerAI = other.GetComponentInParent<ArcherAI>();
-            if (minionAI != null && minionAI.data != null) dmg = minionAI.data.damage;
-            else if (archerAI != null && archerAI.data != null) dmg = archerAI.data.damage;
-            TakeDamage(dmg);
-        }
-    }
 }
