@@ -34,6 +34,10 @@ public class PlacementManager : MonoBehaviour
 
     void Start()
     {
+        // ดึง RectTransform จาก sellCursorOverlay
+        if (sellCursorOverlay != null)
+            sellCursorRect = sellCursorOverlay.GetComponent<RectTransform>();
+
         // สร้าง Mesh รอไว้เลยแต่แรก
         if (gridVisual != null)
         {
@@ -49,7 +53,8 @@ public class PlacementManager : MonoBehaviour
 
         if (isSellingMode)
         {
-            sellCursorRect.position = Input.mousePosition + new Vector3(40, -35, 0);
+            if (sellCursorRect != null) // เพิ่มการเช็คเพื่อความปลอดภัย
+                sellCursorRect.position = Input.mousePosition + new Vector3(40, -35, 0);
 
             if (Input.GetMouseButtonDown(1))
                 ToggleSellMode();

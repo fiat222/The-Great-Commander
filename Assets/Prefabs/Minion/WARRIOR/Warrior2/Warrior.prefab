@@ -1051,7 +1051,7 @@ MonoBehaviour:
   agent: {fileID: 7024836361237285116}
   animator: {fileID: 8363957252051643219}
   data: {fileID: 11400000, guid: b584eb5dd906daa4593159b49ea80890, type: 2}
-  healthBar: {fileID: 0}
+  healthBar: {fileID: 4431598803427957965}
 --- !u!136 &4205946848482960832
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1149,11 +1149,35 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 89.922
       objectReference: {fileID: 0}
+    - target: {fileID: 9088562470666235261, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 355312524381552382, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2400794247861525794}
   m_SourcePrefab: {fileID: 100100000, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+--- !u!1 &6142790411120546583 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 355312524381552382, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+  m_PrefabInstance: {fileID: 5895706204990500329}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2400794247861525794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6142790411120546583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afa87ef291105514996b9753d0af2a01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinionWeaponHitbox
 --- !u!4 &6806139677250439597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1127450730860520516, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}

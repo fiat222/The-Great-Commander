@@ -14,9 +14,9 @@ public class MinionData : ScriptableObject
     
     public int cost;
 
-    public int defense;
-    public int damage;
-    public int hp;
-    public int speed;
+    public float damage;
+    public float defense;
+    public float speed;
+    public float hp;
     public float attackrange;
 }
