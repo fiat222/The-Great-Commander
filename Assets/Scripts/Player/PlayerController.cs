@@ -199,7 +199,7 @@ public class PlayerController : MonoBehaviour
                                           animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
 
         // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ
-        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded && !isBusy)
         {
@@ -235,7 +235,7 @@ public class PlayerController : MonoBehaviour
     private void HandleAttackInput()
     {
         // โจมตีได้เฉพาะเฟสต่อสู้เท่านั้นครับ
-        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
         if (Input.GetMouseButtonDown(0))
         {
