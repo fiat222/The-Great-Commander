@@ -19,8 +19,8 @@ public class EnemyAI : MonoBehaviour
     public float baseAttackRange = 7f;  // ระยะโจมตีป้อม
 
     [Header("Movement Settings")]
-    public float walkSpeed = 4.5f;     // ความเร็วตอนเดินหาป้อม
-    public float runSpeed = 7.5f;      // ความเร็วตอนไล่กวดผู้เล่น
+    [Tooltip("ใช้ความเร็วจาก MinionData. Speed ถ้าไม่มีให้ใช้ค่า Default นี้ครับ")]
+    private float baseSpeed = 4.5f; 
 
     [Header("Combat Settings")]
     public Collider weaponCollider;    // ลาก Collider ของหอกมาใส่ตรงนี้ครับ
@@ -60,12 +60,17 @@ public class EnemyAI : MonoBehaviour
         if (data != null)
         {
             currentHP = data.hp;
-            agent.speed = walkSpeed;
+            baseSpeed = data.speed;
         }
         else
         {
             currentHP = 100f; // ค่า default ถ้าไม่มี MinionData
         }
+        
+        agent.speed = baseSpeed;
+        agent.acceleration = 60f;     // แรงเร่งสูงสุด (แตะปุ๊บวิ่งปั๊บ)
+        agent.angularSpeed = 600f;    // ความเร็วการหมุน (หมุนไวทันใจ)
+        agent.stoppingDistance = 0f;  // ไปให้ถึงเป้าหมาย ไม่ต้องชะลอ
 
         if (healthBar != null)
         {
@@ -146,7 +151,12 @@ public class EnemyAI : MonoBehaviour
     {
         if (animator == null) return;
 
-        animator.SetFloat("Speed", agent != null ? agent.velocity.magnitude : 0f);
+        // --- 🌊 ใช้ความเร็วแบบ Normalized (1.0 = เดินปกติ, 1.5 = วิ่ง) ---
+        // ทำให้ BlendTree ของเราไม่ต้องแปรผันตามค่าความเร็วเป๊ะๆ ของมอนสเตอร์แต่ละตัวครับ
+        float currentSpeed = agent != null ? agent.velocity.magnitude : 0f;
+        float normalizedSpeed = baseSpeed > 0 ? currentSpeed / baseSpeed : 0f;
+        
+        animator.SetFloat("Speed", normalizedSpeed);
 
         bool isAttacking = currentState == EnemyState.AttackPlayer || currentState == EnemyState.AttackBase;
         animator.SetBool("IsAttacking", isAttacking);
@@ -162,7 +172,7 @@ public class EnemyAI : MonoBehaviour
                 if (baseTransform != null)
                 {
                     agent.isStopped = false;
-                    agent.speed = walkSpeed;
+                    agent.speed = baseSpeed;
                     agent.SetDestination(baseTransform.position);
                 }
                 break;
@@ -171,7 +181,7 @@ public class EnemyAI : MonoBehaviour
                 if (playerTransform != null)
                 {
                     agent.isStopped = false;
-                    agent.speed = runSpeed;
+                    agent.speed = baseSpeed * 1.5f; // วิ่งไล่กวดให้เร็วขึ้นหน่อยครับ
                     agent.SetDestination(playerTransform.position);
                 }
                 break;
