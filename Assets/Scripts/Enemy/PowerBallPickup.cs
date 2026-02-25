@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 public class PowerBallPickup : MonoBehaviour
 {
     [Header("Value")]
@@ -12,6 +11,14 @@ public class PowerBallPickup : MonoBehaviour
     public float lifetime = 15f;
     [Tooltip("กี่วินาทีก่อนหมดเวลา ถ้าไม่เก็บจะลอยเข้าหาผู้เล่นอัตโนมัติ")]
     public float autoCollectTime = 3f;
+
+    [Header("Launch)")]
+    [Tooltip("สูงแค่ไหน")]
+    public float launchUpSpeed = 5f;
+    [Tooltip("กระจายออกด้านข้าง")]
+    public float launchSideSpeed = 3f;
+    [Tooltip("ตกเร็วแค่ไหน")]
+    public float gravity = 12f;
 
     [Header("Float Animation")]
     public float floatAmplitude = 0.15f;
@@ -27,66 +34,74 @@ public class PowerBallPickup : MonoBehaviour
     [Tooltip("ความเร็วลอยเข้าหาผู้เล่นตอน auto collect")]
     public float autoCollectSpeed = 14f;
 
+    // ── state ──
     private Transform playerTransform;
-    private Vector3 startPosition;
+    private Vector3 startPosition;     // ตำแหน่งลอยหลังลงพื้นแล้ว
     private float elapsed = 0f;
     private bool isAutoCollecting = false;
 
+    // ── launch ──
+    private bool isLaunching = true;
+    private Vector3 launchVelocity;
+    private float groundY;
+
     void Start()
     {
-        // ปิด gravity ให้ Rigidbody (ถ้ามี) เพื่อไม่ให้จมพื้น — script จะคุม movement เองทั้งหมด
+        // ปิด Rigidbody gravity — script คุม movement เองทั้งหมด
         Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.useGravity = false;
-            rb.isKinematic = true;
-        }
+        if (rb != null) { rb.useGravity = false; rb.isKinematic = true; }
 
-        // เริ่มที่ตำแหน่งปัจจุบัน + ยกขึ้นอีกเล็กน้อยเพื่อไม่ให้ชิดพื้น
-        startPosition = transform.position + Vector3.up * floatAmplitude;
-        transform.position = startPosition;
+        // ใช้ตำแหน่ง Y ปัจจุบันเป็น groundY 
+        groundY = transform.position.y;
 
+        // สุ่มทิศทาง launch ออกด้านข้าง
+        Vector2 side = Random.insideUnitCircle.normalized * launchSideSpeed;
+        launchVelocity = new Vector3(side.x, launchUpSpeed, side.y);
+
+        // หาผู้เล่น
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform;
     }
 
     void Update()
     {
+        // Launch
+        if (isLaunching)
+        {
+            launchVelocity.y -= gravity * Time.deltaTime;
+            transform.position += launchVelocity * Time.deltaTime;
+
+            // ออกจาก launch เฉพาะตอนกำลังตกลงมา (velocity.y < 0)
+            // ถ้าไม่เช็ค velocity ลูกบอลจะหยุดทันทีตอนพุ่งขึ้นผ่าน groundY
+            if (launchVelocity.y < 0 && transform.position.y <= groundY + floatAmplitude)
+            {
+                startPosition = new Vector3(transform.position.x, groundY + floatAmplitude, transform.position.z);
+                transform.position = startPosition;
+                isLaunching = false;
+            }
+            return; // ยังอยู่ launch phase ไม่นับเวลา lifetime
+        }
+
+        // Float / Attract / AutoCollect
         elapsed += Time.deltaTime;
 
-        // หมดเวลาแบบ manual destroy
         if (elapsed >= lifetime)
         {
-            // ถ้าไม่มีผู้เล่น ก็ทำลายทิ้งตามปกติ
-            if (playerTransform == null)
-            {
-                Destroy(gameObject);
-                return;
-            }
+            if (playerTransform == null) { Destroy(gameObject); return; }
         }
 
-        // เริ่ม Auto Collect เมื่อเหลือเวลา autoCollectTime วินาที
         if (!isAutoCollecting && elapsed >= lifetime - autoCollectTime)
-        {
             isAutoCollecting = true;
-        }
 
         if (playerTransform == null) return;
 
         if (isAutoCollecting)
         {
-            // ลอยเข้าหาผู้เล่น
             transform.position = Vector3.MoveTowards(
-                transform.position,
-                playerTransform.position,
-                autoCollectSpeed * Time.deltaTime
-            );
+                transform.position, playerTransform.position, autoCollectSpeed * Time.deltaTime);
 
-            // ถึงตัวผู้เล่นแล้วให้เก็บ
             if (Vector3.Distance(transform.position, playerTransform.position) < 0.5f)
-            {
                 Collect();
-            }
         }
         else
         {
@@ -94,16 +109,11 @@ public class PowerBallPickup : MonoBehaviour
 
             if (distToPlayer <= attractRadius)
             {
-                // โหมดดูด
                 transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    playerTransform.position,
-                    attractSpeed * Time.deltaTime
-                );
+                    transform.position, playerTransform.position, attractSpeed * Time.deltaTime);
             }
             else
             {
-                // โหมดลอย
                 float newY = startPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
                 transform.position = new Vector3(startPosition.x, newY, startPosition.z);
             }
@@ -123,7 +133,6 @@ public class PowerBallPickup : MonoBehaviour
             PlacementManager.Instance.Money += value;
             PlacementManager.Instance.OnMoneyChanged?.Invoke(PlacementManager.Instance.Money);
         }
-
         Destroy(gameObject);
     }
 }
