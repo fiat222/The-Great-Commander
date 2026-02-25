@@ -35,25 +35,21 @@ public class GameManager : NetworkBehaviour
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
     
-    // จำนวนศัตรูที่ค้างส่งแยกตามประเภท (0 = Footman, 1 = Turtle)
-    // Player 0 (Host)
-    public NetworkVariable<int> p0Type0Count = new NetworkVariable<int>(0);
-    public NetworkVariable<int> p0Type1Count = new NetworkVariable<int>(0);
-    // Player 1 (Client)
-    public NetworkVariable<int> p1Type0Count = new NetworkVariable<int>(0);
-    public NetworkVariable<int> p1Type1Count = new NetworkVariable<int>(0);
+    // จำนวนศัตรูที่ค้างส่งแยกตามประเภท (ใช้ NetworkList เพื่อรองรับไม่จำกัดประเภท)
+    public NetworkList<int> p0SentCounts; // Player 0 (Host)
+    public NetworkList<int> p1SentCounts; // Player 1 (Client)
 
-    [Header("Economy Settings")]
-    public int footmanCost = 10;
-    public int turtleCost = 20;
+    // Economy Settings ย้ายไปอยู่ใน MinionData แล้วครับ
 
     // Crosshair สำหรับปิด/เปิด ในแต่ละเฟส
     [SerializeField] private GameObject crosshairObject;
     private void Awake()
     {
         Instance = this;
-        //if (crosshairObject != null)
-        //    crosshairObject.SetActive(false);
+
+        // --- เตรียม NetworkList ตามจำนวนมอนเตอร์ที่มีใน Pool ---
+        p0SentCounts = new NetworkList<int>();
+        p1SentCounts = new NetworkList<int>();
     }
 
     public override void OnNetworkSpawn()
@@ -64,11 +60,19 @@ public class GameManager : NetworkBehaviour
 
         currentPhase.OnValueChanged += OnPhaseChanged;
         
-        // ผูก Event ให้ UI อัปเดตเมื่อค่าเปลี่ยนครับ
-        p0Type0Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
-        p0Type1Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
-        p1Type0Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
-        p1Type1Count.OnValueChanged += (old, newVal) => UpdatePhaseUI(currentPhase.Value);
+        // ผูก Event ให้ UI อัปเดตเมื่อค่าใน List เปลี่ยนครับ
+        p0SentCounts.OnListChanged += (changeEvent) => UpdatePhaseUI(currentPhase.Value);
+        p1SentCounts.OnListChanged += (changeEvent) => UpdatePhaseUI(currentPhase.Value);
+
+        // --- 🌊 เซ็ตค่าเริ่มต้นสำหรับ NetworkList (เฉพาะ Server) ---
+        if (IsServer)
+        {
+            for (int i = 0; i < systemEnemyPool.Length; i++)
+            {
+                p0SentCounts.Add(0);
+                p1SentCounts.Add(0);
+            }
+        }
 
         currentWave.OnValueChanged += (old, newVal) => UpdateWaveUI(newVal);
 
@@ -171,7 +175,12 @@ public class GameManager : NetworkBehaviour
     private void UpdatePhaseUI(GamePhase phase)
     {
         string status = phase.ToString() + " Phase\n";
-        status += $"Host Types: [{p0Type0Count.Value}, {p0Type1Count.Value}] | Client Types: [{p1Type0Count.Value}, {p1Type1Count.Value}]";
+        
+        // แสดงข้อมูลสรุปสั้นๆ (ถ้าพี่อยากโชว์ทั้งหมดต้องวนลูปครับ)
+        int hostTotal = 0; foreach(int c in p0SentCounts) hostTotal += c;
+        int clientTotal = 0; foreach(int c in p1SentCounts) clientTotal += c;
+        
+        status += $"Host Total Sent: {hostTotal} | Client Total Sent: {clientTotal}";
         phaseStatusText.text = status;
     }
 
@@ -215,20 +224,19 @@ public class GameManager : NetworkBehaviour
     // แก้ฟังก์ชันนี้ให้รับ parameter เพื่อรู้ว่ากดปุ่มไหนมาครับ
     public void RequestBuyEnemy(int typeIndex)
     {
-        // 1. เช็คราคาก่อนครับ
-        int cost = (typeIndex == 0) ? footmanCost : turtleCost;
+        // 1. เช็คว่า Index ถูกต้องและดึงราคาจาก MinionData โดยตรงครับ
+        if (systemEnemyPool == null || typeIndex >= systemEnemyPool.Length) return;
+        int cost = systemEnemyPool[typeIndex].cost;
 
-        // 2. เช็คเงินจาก PlacementManager (ระบบเงินหลักของเรา)
+        // 2. เช็คเงินจาก PlacementManager
         if (PlacementManager.Instance != null)
         {
             if (PlacementManager.Instance.Money >= cost)
             {
-                // เงินพอ -> หักตังและส่ง ServerRpc
                 PlacementManager.Instance.Money -= cost;
                 PlacementManager.Instance.OnMoneyChanged?.Invoke(PlacementManager.Instance.Money);
 
                 ulong myId = NetworkManager.Singleton.LocalClientId;
-                Debug.Log($"<color=cyan>[Shop]</color> You sent enemy type {typeIndex}! (Cost: {cost}) Money left: {PlacementManager.Instance.Money}");
                 BuyEnemyServerRpc(myId, typeIndex);
             }
             else
@@ -243,17 +251,12 @@ public class GameManager : NetworkBehaviour
     void BuyEnemyServerRpc(ulong clientId, int typeIndex)
     {
         if (currentPhase.Value != GamePhase.Planning) return;
+        if (typeIndex >= p0SentCounts.Count) return;
 
         if (clientId == 0)
-        {
-            if (typeIndex == 0) p0Type0Count.Value++;
-            else if (typeIndex == 1) p0Type1Count.Value++;
-        }
+            p0SentCounts[typeIndex]++;
         else
-        {
-            if (typeIndex == 0) p1Type0Count.Value++;
-            else if (typeIndex == 1) p1Type1Count.Value++;
-        }
+            p1SentCounts[typeIndex]++;
     }
 
     public void RequestNextPhase()
@@ -269,12 +272,16 @@ public class GameManager : NetworkBehaviour
             if (globalSpawner != null)
             {
                 // Host (ID 0) ส่งไปหา Client (ID 1)
-                if (p0Type0Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p0Type0Count.Value, 0, 1);
-                if (p0Type1Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p0Type1Count.Value, 1, 1);
+                for (int i = 0; i < p0SentCounts.Count; i++)
+                {
+                    if (p0SentCounts[i] > 0) globalSpawner.SpawnEnemiesRpc(p0SentCounts[i], i, 1);
+                }
                 
                 // Client (ID 1) ส่งไปหา Host (ID 0)
-                if (p1Type0Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p1Type0Count.Value, 0, 0);
-                if (p1Type1Count.Value > 0) globalSpawner.SpawnEnemiesRpc(p1Type1Count.Value, 1, 0);
+                for (int i = 0; i < p1SentCounts.Count; i++)
+                {
+                    if (p1SentCounts[i] > 0) globalSpawner.SpawnEnemiesRpc(p1SentCounts[i], i, 0);
+                }
 
                 // --- 🌊 สั่งสปอนศัตรูรายทาง (PvE) สำหรับทุกคน ---
                 globalSpawner.SpawnSystemEnemiesRpc(systemWaveDraft.Value.ToString());
@@ -284,11 +291,9 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-            // Reset ค่าเมื่อกลับสู่ Planning
-            p0Type0Count.Value = 0;
-            p0Type1Count.Value = 0;
-            p1Type0Count.Value = 0;
-            p1Type1Count.Value = 0;
+            // Reset ค่าใน List เป็น 0 เมื่อกลับสู่ Planning
+            for (int i = 0; i < p0SentCounts.Count; i++) p0SentCounts[i] = 0;
+            for (int i = 0; i < p1SentCounts.Count; i++) p1SentCounts[i] = 0;
             
             // --- 🌊 ขึ้นเวฟใหม่เมื่อกลับสู่ช่วงวางแผน ---
             currentWave.Value++;
