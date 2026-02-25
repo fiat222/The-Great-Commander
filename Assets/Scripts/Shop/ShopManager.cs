@@ -12,7 +12,6 @@ public class ShopManager : MonoBehaviour
 
     [Header("Data Lists")]
     [SerializeField] private MinionData[] minionDataList;
-    [SerializeField] private MinionData[] enemyDataList; // รายชื่อศัตรูที่จะส่งไปบุกครับ
 
     [Header("UI Containers")]
     [SerializeField] private GameObject shopItemCardPrefab;
@@ -37,11 +36,14 @@ public class ShopManager : MonoBehaviour
 
     void GenerateAllCards()
     {
-        // 1. สร้างการ์ดสำหรับทหารฝั่งเรา
+        // 1. สร้างการ์ดสำหรับทหารฝั่งเรา (ดึงจาก List ในตัวมันเอง)
         GenerateGroup(minionDataList, minionContainer, ShopItemCard.ShopItemType.Minion);
         
-        // 2. สร้างการ์ดสำหรับศัตรูส่งบุก
-        GenerateGroup(enemyDataList, enemyContainer, ShopItemCard.ShopItemType.Enemy);
+        // 2. 🔥 สร้างการ์ดสำหรับศัตรูส่งบุก (ดึงจาก GameManager.systemEnemyPool โดยตรง!)
+        if (GameManager.Instance != null && GameManager.Instance.systemEnemyPool != null)
+        {
+            GenerateGroup(GameManager.Instance.systemEnemyPool, enemyContainer, ShopItemCard.ShopItemType.Enemy);
+        }
     }
 
     void GenerateGroup(MinionData[] dataList, Transform container, ShopItemCard.ShopItemType type)
