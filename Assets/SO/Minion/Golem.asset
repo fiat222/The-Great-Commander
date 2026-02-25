@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Golem
   prefab: {fileID: 9018255787767008419, guid: 00f30aefdd9b32b44a1e6a76325fd2e1, type: 3}
+  picture: {fileID: 21300000, guid: ee674a87d9ee6c9478e88e43d6fc87a8, type: 3}
   icon: {fileID: 21300000, guid: ee674a87d9ee6c9478e88e43d6fc87a8, type: 3}
-  cost: 16
+  cost: 50
+  damage: 30
   defense: 5
-  damage: 5
-  hp: 5
-  speed: 10
-  attackrange: 5
+  speed: 3
+  hp: 150
+  attackrange: 6

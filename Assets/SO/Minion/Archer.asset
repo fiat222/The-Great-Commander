@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Archer
   prefab: {fileID: 8931171151178433142, guid: 064a6ea42a4be954e9f36061f79f81c3, type: 3}
+  picture: {fileID: 21300000, guid: 78d645a52ab66ad42b6bd238f4a6dbef, type: 3}
   icon: {fileID: 21300000, guid: 78d645a52ab66ad42b6bd238f4a6dbef, type: 3}
-  cost: 12
+  cost: 20
+  damage: 12
   defense: 1
-  damage: 2
-  hp: 2
-  speed: 10
-  attackrange: 12
+  speed: 6
+  hp: 30
+  attackrange: 15
