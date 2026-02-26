@@ -54,12 +54,19 @@ public class TowerAttack : MonoBehaviour
 
     void UpdateTarget()
     {
+        // ล้าง target ถ้าตายแล้ว (ไม่รอ Destroy)
+        if (target != null && IsEnemyDead(target.gameObject))
+            target = null;
+
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         float shortestDistance = Mathf.Infinity;
         GameObject nearestEnemy = null;
 
         foreach (GameObject enemy in enemies)
         {
+            // ข้าม enemy ที่กำลังเล่น animation ตาย
+            if (IsEnemyDead(enemy)) continue;
+
             Vector3 towerPos = new Vector3(transform.position.x, 0, transform.position.z);
             Vector3 enemyPos = new Vector3(enemy.transform.position.x, 0, enemy.transform.position.z);
             float dist = Vector3.Distance(towerPos, enemyPos);
@@ -74,15 +81,30 @@ public class TowerAttack : MonoBehaviour
         target = (nearestEnemy != null && shortestDistance <= range) ? nearestEnemy.transform : null;
     }
 
+    /// <summary>เช็คว่า enemy ตายแล้วหรือยัง — รองรับทั้ง HealthSystem, EnemyAI และ ImpAI</summary>
+    bool IsEnemyDead(GameObject enemy)
+    {
+        HealthSystem hs = enemy.GetComponent<HealthSystem>();
+        if (hs != null) return hs.IsDead;
+
+        EnemyAI ea = enemy.GetComponent<EnemyAI>();
+        if (ea != null) return ea.IsDead;
+
+        ImpAI imp = enemy.GetComponent<ImpAI>();
+        if (imp != null) return imp.IsDead;
+
+        return false;
+    }
+
     void HandleVisuals()
     {
         if (target != null)
         {
             attackLaser.enabled = true;
             attackLaser.SetPosition(0, firePoint.position);
-            attackLaser.SetPosition(1, target.position);
+            attackLaser.SetPosition(1, GetEnemyCenter(target)); // ชี้ไปกลางตัวเหมือนลูกไฟ
 
-            // แสดงขอบเขตค้างไว้ ไม่กะพริบ 
+            // แสดงขอบเขตค้างไว้ ไม่กะพริบ
             if (rangeInstance != null) rangeInstance.SetActive(true);
         }
         else
@@ -90,6 +112,13 @@ public class TowerAttack : MonoBehaviour
             attackLaser.enabled = false;
             if (rangeInstance != null) rangeInstance.SetActive(false);
         }
+    }
+
+    /// <summary>คืน world-space center ของ enemy จาก Collider bounds</summary>
+    Vector3 GetEnemyCenter(Transform t)
+    {
+        Collider col = t.GetComponentInChildren<Collider>();
+        return col != null ? col.bounds.center : t.position;
     }
 
     void Shoot()
