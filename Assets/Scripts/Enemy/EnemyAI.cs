@@ -78,6 +78,10 @@ public class EnemyAI : MonoBehaviour
 
         DisableWeaponCollider();
 
+        // ⭐ ถ้ามี HealthSystem ให้เชื่อม OnDie → Die() เพื่อรับ kill จากป้อมด้วย
+        HealthSystem hs = GetComponent<HealthSystem>();
+        if (hs != null) hs.OnDie.AddListener(Die);
+
         InvokeRepeating(nameof(UpdateDestination), 0f, updateRate);
     }
 
@@ -232,6 +236,8 @@ public class EnemyAI : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Damage");
 
+        VFXManager.Instance?.Play(stats?.hitVFX, transform.position);
+
         if (currentHP <= 0)
             Die();
     }
@@ -258,6 +264,7 @@ public class EnemyAI : MonoBehaviour
 
         DisableWeaponCollider();
 
+        VFXManager.Instance?.Play(stats?.deathVFX, transform.position);
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
         Destroy(gameObject, 3f);
