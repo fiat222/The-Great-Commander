@@ -7,6 +7,7 @@ public class ImpAI : MonoBehaviour
     private NavMeshAgent agent;
     private Transform playerTransform;
     private Transform baseTransform;
+    private Transform minionTransform;
     private Animator animator;
 
     [Header("Enemy Stats SO")]
@@ -17,7 +18,7 @@ public class ImpAI : MonoBehaviour
     public EnemyState currentState = EnemyState.MoveToBase;
     public float detectionRange = 17f;
     public float chaseRange = 28f;
-    public float attackRange = 12f;
+    public float attackRange = 15;
     public float baseAttackRange = 9f;
 
     [Header("Movement Settings")]
@@ -42,6 +43,7 @@ public class ImpAI : MonoBehaviour
     private float currentDefense;
     private float distanceToPlayer;
     private float distanceToBase;
+    private float distanceToMinion;
     private bool isDead = false;
     private Vector3 pendingTargetPos;
 
@@ -99,6 +101,12 @@ public class ImpAI : MonoBehaviour
         walkSpeed = stats.GetSpeed();
         runSpeed = walkSpeed * 1.5f;
         attackRange = stats.attackRange;
+
+        if (agent != null)
+        {
+            // ให้มันหยุดเดินก่อนถึงเป้าหมายเล็กน้อย (ตามระยะโจมตี) จะได้ไม่เอาหน้าไปแนบ
+            agent.stoppingDistance = Mathf.Max(2f, attackRange - 2f);
+        }
     }
 
     private void OnWaveScaled(EnemyStatsSO changedSO)
@@ -122,48 +130,151 @@ public class ImpAI : MonoBehaviour
 
     void Update()
     {
-        if (isDead || playerTransform == null) return;
+        if (isDead) return;
 
-        distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+        UpdateTargetsAndDistances();
+        HandleStateTransitions();
+        HandleMovementAndRotation();
+        UpdateAnimations();
+    }
+
+    private void HandleMovementAndRotation()
+    {
+        if (agent == null || !agent.enabled) return;
+
+        bool isAttackingState = currentState == EnemyState.AttackPlayer ||
+                                currentState == EnemyState.AttackBase ||
+                                currentState == EnemyState.AttackMinion;
+
+        // เช็คว่าแอนิเมชั่นโจมตีกำลังเล่นอยู่จริงๆ ไหม
+        bool isAnimatorFiring = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk") || 
+                                                     animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack"));
+
+        // ถ้าอยู่ในสถานะโจมตี
+        if (isAttackingState)
+        {
+            // หยุดเดินเฉพาะตอนที่กำลัง "วาดลวดลาย" โจมตีจริงๆ เท่านั้น (กันสไลด์)
+            // ถ้าเป็นช่วงรอคูลดาวน์ ให้ Agent เดินเข้าหา stoppingDistance ได้
+            agent.isStopped = isAnimatorFiring;
+            
+            if (isAnimatorFiring) agent.velocity = Vector3.zero;
+
+            agent.updateRotation = false;
+            RotateTowardsTarget();
+        }
+        else
+        {
+            // ถ้าไล่ล่า/เดินไปฐาน
+            agent.isStopped = false;
+            agent.updateRotation = true;
+        }
+    }
+
+    private void RotateTowardsTarget()
+    {
+        Transform target = null;
+        if (currentState == EnemyState.AttackBase) target = baseTransform;
+        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else target = playerTransform;
+
+        if (target != null)
+        {
+            Vector3 direction = (target.position - transform.position).normalized;
+            direction.y = 0; // ล็อกแกน Y ไม่ให้ตัวละครเงยหน้า/ก้มหน้า
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            }
+        }
+    }
+
+    private void UpdateTargetsAndDistances()
+    {
+        // อัปเดตระยะ Player
+        if (playerTransform != null)
+            distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+
+        // อัปเดตระยะ Base
         if (baseTransform != null)
             distanceToBase = Vector3.Distance(transform.position, baseTransform.position);
 
-        HandleStateTransitions();
-        UpdateAnimations();
+        // ค้นหา Minion ที่ใกล้ที่สุด
+        if (minionTransform == null || !minionTransform.gameObject.activeInHierarchy)
+        {
+            FindClosestMinion();
+        }
+
+        if (minionTransform != null)
+        {
+            distanceToMinion = Vector3.Distance(transform.position, minionTransform.position);
+            if (distanceToMinion > chaseRange) minionTransform = null;
+        }
+    }
+
+    private void FindClosestMinion()
+    {
+        GameObject[] minions = GameObject.FindGameObjectsWithTag("Minion");
+        float closestDist = detectionRange;
+        Transform closestMinion = null;
+
+        foreach (GameObject m in minions)
+        {
+            if (m == null) continue;
+            float dist = Vector3.Distance(transform.position, m.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closestMinion = m.transform;
+            }
+        }
+        minionTransform = closestMinion;
     }
 
     // ==================== STATE MACHINE (เหมือนเดิม) ====================
 
     private void HandleStateTransitions()
     {
+        // 1. ตรวจสอบการโจมตีฐานก่อน (ถ้าประชิดฐานแล้ว)
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
             currentState = EnemyState.AttackBase;
             return;
         }
 
+        // 2. จัดการสถานะตามเป้าหมาย (Priority: Minion > Player > Base)
         switch (currentState)
         {
-            case EnemyState.MoveToBase:
-                if (distanceToPlayer <= detectionRange)
-                    currentState = EnemyState.ChasePlayer;
+            case EnemyState.AttackMinion:
+                if (minionTransform == null) currentState = EnemyState.MoveToBase;
+                else if (distanceToMinion > attackRange) currentState = EnemyState.ChaseMinion;
                 break;
 
-            case EnemyState.ChasePlayer:
-                if (distanceToPlayer > chaseRange)
-                    currentState = EnemyState.MoveToBase;
-                else if (distanceToPlayer <= attackRange)
-                    currentState = EnemyState.AttackPlayer;
+            case EnemyState.ChaseMinion:
+                if (minionTransform == null) currentState = EnemyState.MoveToBase;
+                else if (distanceToMinion <= attackRange) currentState = EnemyState.AttackMinion;
                 break;
 
             case EnemyState.AttackPlayer:
-                if (distanceToPlayer > attackRange)
-                    currentState = EnemyState.ChasePlayer;
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
+                break;
+
+            case EnemyState.ChasePlayer:
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
+                else if (distanceToPlayer <= attackRange) currentState = EnemyState.AttackPlayer;
                 break;
 
             case EnemyState.AttackBase:
-                if (distanceToBase > baseAttackRange + 1f)
-                    currentState = EnemyState.MoveToBase;
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                else if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
+                break;
+
+            case EnemyState.MoveToBase:
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 break;
         }
     }
@@ -172,10 +283,11 @@ public class ImpAI : MonoBehaviour
     {
         if (animator == null) return;
 
-        animator.SetFloat("Speed", agent != null ? agent.velocity.magnitude : 0f);
+        animator.SetFloat("Speed", agent != null ? agent.velocity.magnitude / walkSpeed : 0f);
 
         bool isAttacking = currentState == EnemyState.AttackPlayer ||
-                           currentState == EnemyState.AttackBase;
+                           currentState == EnemyState.AttackBase ||
+                           currentState == EnemyState.AttackMinion;
         animator.SetBool("IsAttacking", isAttacking);
     }
 
@@ -203,11 +315,51 @@ public class ImpAI : MonoBehaviour
                 }
                 break;
 
+            case EnemyState.ChaseMinion:
+                if (minionTransform != null)
+                {
+                    agent.isStopped = false;
+                    agent.speed = runSpeed;
+                    agent.SetDestination(minionTransform.position);
+                }
+                break;
+
             case EnemyState.AttackPlayer:
+                if (playerTransform != null)
+                {
+                    agent.SetDestination(playerTransform.position);
+                }
+                break;
+
+            case EnemyState.AttackMinion:
+                if (minionTransform != null)
+                {
+                    agent.SetDestination(minionTransform.position);
+                }
+                break;
+
             case EnemyState.AttackBase:
-                agent.isStopped = true;
+                if (baseTransform != null)
+                {
+                    agent.SetDestination(baseTransform.position);
+                }
                 break;
         }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, chaseRange);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, baseAttackRange);
     }
 
     // ==================== PROJECTILE ====================
@@ -216,10 +368,14 @@ public class ImpAI : MonoBehaviour
     {
         if (projectilePrefab == null || firePoint == null) return;
 
-        Vector3 targetPos =
-            currentState == EnemyState.AttackBase && baseTransform != null
-            ? baseTransform.position + Vector3.up
-            : playerTransform.position + Vector3.up;
+        Transform target = null;
+        if (currentState == EnemyState.AttackBase) target = baseTransform;
+        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else target = playerTransform;
+
+        if (target == null) return;
+
+        Vector3 targetPos = target.position + Vector3.up;
 
         Vector3 direction = (targetPos - firePoint.position).normalized;
 
@@ -255,7 +411,13 @@ public class ImpAI : MonoBehaviour
         if (isDead) return;
         isDead = true;
 
-        if (animator != null) animator.SetTrigger("Die");
+        if (animator != null) 
+        {
+            animator.applyRootMotion = false;
+            animator.SetFloat("Speed", 0f);
+            animator.SetBool("IsAttacking", false);
+            animator.SetTrigger("Die");
+        }
 
         if (countsInWaveUI)
             GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
