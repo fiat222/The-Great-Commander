@@ -13,8 +13,13 @@ public class EnemyWeaponHitbox : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // ดึงค่า damage จาก MinionData ถ้ามี ถ้าไม่มีใช้ค่า default
-        int damage = (ownerAI != null && ownerAI.data != null) ? (int)ownerAI.data.damage : 10;
+        // 🔥 ใช้ EnemyStatsSO แทน data
+        int damage = 10;
+
+        if (ownerAI != null && ownerAI.stats != null)
+        {
+            damage = (int)ownerAI.stats.GetDamage();
+        }
 
         bool hitTarget = false;
 
@@ -22,6 +27,7 @@ public class EnemyWeaponHitbox : MonoBehaviour
         {
             var player = other.GetComponent<PlayerController>();
             var archer = other.GetComponent<Archer>();
+
             if (player != null)
             {
                 player.TakeDamage(damage);
@@ -46,6 +52,7 @@ public class EnemyWeaponHitbox : MonoBehaviour
         {
             var minionAI = other.GetComponent<MinionAI>();
             var archerAI = other.GetComponent<ArcherAI>();
+
             if (minionAI != null)
             {
                 minionAI.TakeDamage(damage);
@@ -58,11 +65,12 @@ public class EnemyWeaponHitbox : MonoBehaviour
             }
         }
 
-        // ถ้าโจมตีโดนเป้าหมายแล้ว ให้ปิด Collider ทันที (One-hit-per-swing)
+        // One-hit-per-swing
         if (hitTarget)
         {
-            Debug.Log($"<color=red>[Hitbox]</color> Hit {other.name} for {damage} damage! Disabling hitbox to prevent multi-hit.");
-            if (hitboxCollider != null) hitboxCollider.enabled = false;
+            Debug.Log($"<color=red>[Hitbox]</color> Hit {other.name} for {damage} damage! Disabling hitbox.");
+            if (hitboxCollider != null)
+                hitboxCollider.enabled = false;
         }
     }
 }

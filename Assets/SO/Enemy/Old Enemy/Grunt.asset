@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
-  m_Name: Footman
+  m_Name: Grunt
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: Footman
-  prefab: {fileID: 8171029694780832156, guid: 16008a0c506241940a75a72a93ca1483, type: 3}
-  picture: {fileID: 21300000, guid: f2a694c8864267f4ab63323a37817f8b, type: 3}
-  icon: {fileID: -501385968, guid: 3a6e41059dbdd5f40abd07aff030f788, type: 3}
-  cost: 10
-  defense: 1
+  minionName: Grunt
+  prefab: {fileID: 7232642560734904356, guid: fd92d43fd96d8f7489397de57770799b, type: 3}
+  picture: {fileID: 1852159160, guid: 9f73bb3c81f1bd24caa022ec515687bd, type: 3}
+  icon: {fileID: 1852159160, guid: 9f73bb3c81f1bd24caa022ec515687bd, type: 3}
+  cost: 20
   damage: 6
-  hp: 3
-  speed: 10
-  attackrange: 4
+  defense: 4
+  speed: 3
+  hp: 60
+  attackrange: 3

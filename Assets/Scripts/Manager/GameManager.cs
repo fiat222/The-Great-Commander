@@ -32,6 +32,10 @@ public class GameManager : NetworkBehaviour
     // เก็บข้อมูลเวฟที่สุ่มได้ในรูปแบบ "index:count|index:count"
     public NetworkVariable<FixedString512Bytes> systemWaveDraft = new NetworkVariable<FixedString512Bytes>("");
 
+    [Header("Enemy Stats SOs")]
+    [Tooltip("ลาก EnemyStatsSO ให้ตรงลำดับกับ systemEnemyPool ทุกตัวครับ")]
+    public EnemyStatsSO[] enemyStatsSOs;
+
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
     
@@ -105,11 +109,19 @@ public class GameManager : NetworkBehaviour
         UpdatePhaseUI(newValue);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
         UpdateCursorState(newValue);
-        
+
         if (newValue == GamePhase.Planning)
         {
-            if (IsServer) currentWave.Value++;
-            CleanupEnemies(); // ⭐ เคลียร์ศัตรูที่เหลืออยู่ครับ
+            if (IsServer)
+            {
+                currentWave.Value++;
+
+                // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
+                if (enemyStatsSOs != null)
+                    foreach (var so in enemyStatsSOs)
+                        if (so != null) so.SetWave(currentWave.Value);
+            }
+            CleanupEnemies();
         }
 
         // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
@@ -219,6 +231,15 @@ public class GameManager : NetworkBehaviour
 
         systemWaveDraft.Value = draft;
         Debug.Log($"<color=orange>[GameManager]</color> Generated Wave {currentWave.Value}: {draft} (Total: {totalToSpawn})");
+
+        if (enemyStatsSOs != null)
+        {
+            foreach (var so in enemyStatsSOs)
+            {
+                if (so != null) so.SetWave(currentWave.Value);
+            }
+        }
+
     }
 
     // แก้ฟังก์ชันนี้ให้รับ parameter เพื่อรู้ว่ากดปุ่มไหนมาครับ

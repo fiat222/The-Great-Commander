@@ -2544,6 +2544,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bccc92b64e226ce4cbc55dd75768b510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  stats: {fileID: 11400000, guid: 0d5f05283bf903d409d8186ce6bc0316, type: 2}
   moveSpeed: 12
   rotationSpeed: 13
   jumpHeight: 3
@@ -2591,7 +2592,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 988953083
+  GlobalObjectIdHash: 195356216
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
