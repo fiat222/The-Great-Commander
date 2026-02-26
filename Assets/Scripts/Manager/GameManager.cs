@@ -138,10 +138,16 @@ public class GameManager : NetworkBehaviour
 
     private void CleanupEnemies()
     {
+        if (!IsServer) return; // เฉพาะ Server เท่านั้นที่ Despawn ได้
+
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (GameObject enemy in enemies)
         {
-            Destroy(enemy);
+            NetworkObject netObj = enemy.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.IsSpawned)
+                netObj.Despawn(); // sync ทุก client
+            else
+                Destroy(enemy);  // fallback สำหรับ non-network object
         }
     }
 

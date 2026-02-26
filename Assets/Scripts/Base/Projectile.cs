@@ -94,11 +94,7 @@ public class Projectile : MonoBehaviour
             }
 
             // Spawn VFX
-            if (hitVFXPrefab != null)
-            {
-                GameObject hitEffect = Instantiate(hitVFXPrefab, target.position, Quaternion.identity);
-                Destroy(hitEffect, 2f);
-            }
+            VFXManager.Instance?.Play(hitVFXPrefab, target.position);
         }
 
         Destroy(gameObject);
