@@ -134,7 +134,13 @@ public class MinionAI : MonoBehaviour
 
         agent.isStopped = true;
         SetWalk(false);
-        animator.SetBool("Die", true);
+        animator.SetTrigger("Die");
+
+        // ปิด Collider และลบตัวละครทิ้งหลังจาก 1 วิ
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        Destroy(gameObject, 1f);
     }
 
     void FindClosestEnemy()
