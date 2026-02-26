@@ -4,6 +4,12 @@ using UnityEngine.UI;
 
 public class Archer : MonoBehaviour
 {
+    // ==================== SO ====================
+    [Header("Stats SO")]
+    [Tooltip("ลาก PlayerStatsSO ตัวเดียวกับ PlayerController มาใส่ได้เลยครับ")]
+    public PlayerStatsSO stats;
+
+    // ==================== Movement ====================
     [Header("Movement Settings")]
     public float moveSpeed = 12f;
     public float rotationSpeed = 13f;
@@ -14,6 +20,7 @@ public class Archer : MonoBehaviour
     public float aimMoveSpeed = 5f;
     public float aimRotationSpeed = 8f;
 
+    // ==================== Arrow ====================
     [Header("Arrow Settings")]
     public GameObject arrowPrefab;
     public Transform arrowSpawnPoint;
@@ -24,12 +31,11 @@ public class Archer : MonoBehaviour
     [Header("Arrow Power Settings")]
     public float minArrowSpeed = 15f;
     public float maxArrowSpeed = 40f;
-    [Range(1, 5)]
-    public int minDamage = 1;
-    [Range(1, 5)]
-    public int maxDamage = 5;
+    [Range(1, 50)] public int minDamage = 3;
+    [Range(1, 50)] public int maxDamage = 15;
     public float maxSpreadAngle = 10f;
 
+    // ==================== Roll ====================
     [Header("Roll Settings")]
     public float rollForce = 20f;
     public float rollSpeed = 15f;
@@ -37,6 +43,7 @@ public class Archer : MonoBehaviour
     public float dashDecay = 10f;
     [Range(0, 1)] public float forceTime = 0.2f;
 
+    // ==================== Target Lock ====================
     [Header("Target Lock Settings")]
     public float lockRange = 15f;
     public CinemachineTargetGroup targetGroup;
@@ -44,77 +51,97 @@ public class Archer : MonoBehaviour
     private Transform currentTarget;
     private bool isLockedOn;
 
-    [Header("References")]
+    // ==================== References ====================
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
 
-    [Header("Ground Check Settings")]
+    // ==================== Ground Check ====================
+    [Header("Ground Check")]
     public Transform groundCheck;
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
 
-    [Header("Health Settings")]
-    public int maxHP = 100;      // ตั้งค่าเลือดได้ใน Inspector
-    public Slider healthBar;     // ลาก UI Slider มาใส่ใน Inspector
+    // ==================== Health UI ====================
+    [Header("Health UI")]
+    public int maxHP = 100;
+    public Slider healthBar;
 
-    // --- Internal State ---
+    // ==================== Runtime Stats ====================
+    public float AttackDamage { get; private set; } = 15f;
+    public float Defense { get; private set; } = 5f;
+
     private int currentHP;
-    private bool isDead = false;
+    private bool isDead;
     private Vector3 currentDashVelocity;
     private Vector3 rollDirection;
     private float rotationVelocity;
     private Vector3 verticalVelocity;
     private bool isGrounded;
-    private bool isInvincible = false; // สำหรับระบบอมตะ (I-frames)
+    private bool isInvincible;
     private Coroutine rotationCoroutine;
 
-    // Aim / Shoot State
-    private bool isAiming = false;
-    private bool hasFiredThisAim = false;
-    private float lastAccuracy; // เก็บค่าไว้ก่อนโดน Reset ครับ
+    private bool isAiming;
+    private bool hasFiredThisAim;
+    private float lastAccuracy;
+
+    // ==================== Lifecycle ====================
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        if (Camera.main != null) mainCameraTransform = Camera.main.transform;
 
-        if (Camera.main != null)
-            mainCameraTransform = Camera.main.transform;
-
-        // เริ่มต้น HP
-        currentHP = maxHP;
-        if (healthBar != null)
-        {
-            healthBar.maxValue = maxHP;
-            healthBar.value = maxHP;
-        }
-
-        // --- ค้นหา Crosshair อัตโนมัติถ้ายังไม่ได้ลากใส่ใน Inspector ---
-        if (crosshair == null)
-        {
-            GameObject crosshairObj = GameObject.FindWithTag("Crosshair");
-            if (crosshairObj != null)
-            {
-                crosshair = crosshairObj.GetComponent<AimCrosshair>();
-            }
-        }
+        ApplyStats(isFirstInit: true);
 
         if (crosshair == null)
         {
-            Debug.LogWarning("<color=red>[Archer]</color> ยังไม่มีการผูก Crosshair! (ให้ลากใส่ Inspector หรือติด Tag 'Crosshair' ที่ Object นั้นครับ)");
+            var obj = GameObject.FindWithTag("Crosshair");
+            if (obj != null) crosshair = obj.GetComponent<AimCrosshair>();
         }
+        if (crosshair == null)
+            Debug.LogWarning("<color=red>[Archer]</color> ยังไม่มีการผูก Crosshair!");
+    }
+
+    /// <summary>
+    /// ดึงค่าจาก SO มาใช้
+    /// minDamage/maxDamage จะ scale ตาม AttackDamage อัตโนมัติ (20%–100%)
+    /// </summary>
+    public void ApplyStats(bool isFirstInit = false)
+    {
+        if (stats != null)
+        {
+            maxHP = stats.GetHP();
+            moveSpeed = stats.GetSpeed() * 2.4f;
+            aimMoveSpeed = stats.GetSpeed() * 1.0f;
+            AttackDamage = stats.GetDamage();
+            Defense = stats.GetDefense();
+
+            minDamage = Mathf.Max(1, Mathf.RoundToInt(AttackDamage * 0.20f));
+            maxDamage = Mathf.RoundToInt(AttackDamage);
+        }
+
+        if (isFirstInit)
+        {
+            currentHP = maxHP;
+            if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
+        }
+
+        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
     private void Update()
     {
-        if (isDead) return; // ปิด input ทั้งหมดเมื่อตาย
+        if (isDead) return;
         HandleTargetLockInput();
         HandleRollInput();
         HandleAimAndShootInput();
         CheckAnimationLogic();
         Move();
     }
+
+    // ==================== Target Lock ====================
 
     private void HandleTargetLockInput()
     {
@@ -123,76 +150,53 @@ public class Archer : MonoBehaviour
             if (isLockedOn) UnlockTarget();
             else FindNearestTarget();
         }
-
-        if (isLockedOn)
-        {
-            if (currentTarget == null) UnlockTarget();
-            else if (Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f) UnlockTarget();
-        }
+        if (isLockedOn && currentTarget == null) UnlockTarget();
+        if (isLockedOn && currentTarget != null &&
+            Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f)
+            UnlockTarget();
     }
 
     private void FindNearestTarget()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, lockRange);
-        float closestDistance = lockRange;
-        Transform closestEnemy = null;
-
-        foreach (var hitCollider in hitColliders)
+        Collider[] cols = Physics.OverlapSphere(transform.position, lockRange);
+        float closestDist = lockRange;
+        Transform closest = null;
+        foreach (var c in cols)
         {
-            if (hitCollider.CompareTag("Enemy"))
-            {
-                float dist = Vector3.Distance(transform.position, hitCollider.transform.position);
-                if (dist < closestDistance)
-                {
-                    closestDistance = dist;
-                    closestEnemy = hitCollider.transform;
-                }
-            }
+            if (!c.CompareTag("Enemy")) continue;
+            float d = Vector3.Distance(transform.position, c.transform.position);
+            if (d < closestDist) { closestDist = d; closest = c.transform; }
         }
+        if (closest == null) return;
+        currentTarget = closest;
+        isLockedOn = true;
 
-        if (closestEnemy != null)
+        if (CameraManager.Instance != null)
         {
-            currentTarget = closestEnemy;
-            isLockedOn = true;
-
-            if (CameraManager.Instance != null)
+            CameraManager.Instance.SetTargetLock(true);
+            var vcam = CameraManager.Instance.TargetLockCamera;
+            if (cameraPivot != null)
             {
-                CameraManager.Instance.SetTargetLock(true);
-                var vcam = CameraManager.Instance.TargetLockCamera;
-
-                if (cameraPivot != null)
-                {
-                    var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
-                    if (aligner != null) aligner.SetTarget(currentTarget);
-                }
-
-                if (targetGroup != null)
-                {
-                    while (targetGroup.Targets.Count > 1) 
-                        targetGroup.RemoveMember(targetGroup.Targets[1].Object);
-                    targetGroup.AddMember(currentTarget, 1f, 0f);
-                    if (vcam != null) vcam.LookAt = targetGroup.transform;
-                }
-                else
-                {
-                    if (vcam != null) vcam.LookAt = currentTarget;
-                }
+                var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+                if (aligner != null) aligner.SetTarget(currentTarget);
             }
+            if (targetGroup != null)
+            {
+                while (targetGroup.Targets.Count > 1)
+                    targetGroup.RemoveMember(targetGroup.Targets[1].Object);
+                targetGroup.AddMember(currentTarget, 1f, 0f);
+                if (vcam != null) vcam.LookAt = targetGroup.transform;
+            }
+            else { if (vcam != null) vcam.LookAt = currentTarget; }
         }
     }
 
     public void UnlockTarget()
     {
         isLockedOn = false;
-
-        if (targetGroup != null && currentTarget != null)
-        {
-            targetGroup.RemoveMember(currentTarget);
-        }
-
+        if (targetGroup != null && currentTarget != null) targetGroup.RemoveMember(currentTarget);
         currentTarget = null;
         if (CameraManager.Instance != null) CameraManager.Instance.SetTargetLock(false);
-
         if (cameraPivot != null)
         {
             var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
@@ -206,7 +210,7 @@ public class Archer : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, lockRange);
     }
 
-    // ==================== ROLL ====================
+    // ==================== Roll ====================
 
     private void HandleRollInput()
     {
@@ -214,266 +218,152 @@ public class Archer : MonoBehaviour
                       (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") ||
                        animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
                        animator.GetNextAnimatorStateInfo(0).IsTag("Attack") ||
-                       animator.GetNextAnimatorStateInfo(0).IsTag("Roll") ||
-                       isAiming);
+                       animator.GetNextAnimatorStateInfo(0).IsTag("Roll") || isAiming);
+        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy) return;
 
-        // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ +++++++
-        //if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 inputDir = new Vector3(h, 0f, v).normalized;
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded && !isBusy)
+        if (inputDir.magnitude >= 0.1f)
         {
-            float horizontal = Input.GetAxisRaw("Horizontal");
-            float vertical = Input.GetAxisRaw("Vertical");
-            Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
-
-            if (inputDir.magnitude >= 0.1f)
-            {
-                float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg +
-                                    (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                rollDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-
-                if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
-                rotationCoroutine = StartCoroutine(SmoothRotate(targetAngle));
-            }
-            else
-            {
-                rollDirection = transform.forward;
-            }
-
-            currentDashVelocity = rollDirection * (rollForce * 0.5f);
-
-            if (animator != null)
-                animator.SetTrigger("Roll");
+            float angle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg +
+                          (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
+            rollDirection = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+            if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
+            rotationCoroutine = StartCoroutine(SmoothRotate(angle));
         }
+        else { rollDirection = transform.forward; }
+
+        currentDashVelocity = rollDirection * (rollForce * 0.5f);
+        if (animator != null) animator.SetTrigger("Roll");
     }
 
-    // ==================== AIM & SHOOT ====================
+    // ==================== Aim & Shoot ====================
 
     private void HandleAimAndShootInput()
     {
-        // โจมตีได้เฉพาะเฟสต่อสู้เท่านั้นครับ!!!!!!!!!!!!!!!!!!!!!!
-        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
-
-        // กดค้าง Left Mouse → เล็ง
         if (Input.GetMouseButtonDown(0))
         {
             bool isBusy = animator != null &&
                           (animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
                            animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
-            if (!isBusy)
-            {
-                StartAiming();
-            }
+            if (!isBusy) StartAiming();
         }
-
-        // ปล่อย Left Mouse → ยิง
         if (Input.GetMouseButtonUp(0))
         {
-            if (isAiming && !hasFiredThisAim)
-            {
-                Shoot();
-            }
+            if (isAiming && !hasFiredThisAim) Shoot();
             StopAiming();
         }
 
-        // อัปเดต BlendTree และหันหน้าตามกล้อง (เล็งอยู่ หรือ กำลังเล่นท่าที่ติด Tag 'Attack')
-        bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
-
-        if (isAiming || isPlayingAttack)
-        {
-            UpdateAimBlendTree();
-            FaceCamera(); // หันหน้าตามกล้องขณะเล็งหรือกำลังยิง
-        }
+        bool isPlayingAttack = animator != null &&
+                               (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") ||
+                                animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
+        if (isAiming || isPlayingAttack) { UpdateAimBlendTree(); FaceCamera(); }
     }
 
     private void StartAiming()
     {
-        isAiming = true;
-        hasFiredThisAim = false;
-
-        if (animator != null)
-        {
-            animator.SetBool("isAiming", true);
-            animator.SetTrigger("DrawArrow");
-        }
-
-        if (crosshair != null)
-        {
-            Debug.Log("<color=green>[Archer]</color> เรียกใช้ Crosshair.StartAim()");
-            crosshair.StartAim();
-        }
+        isAiming = true; hasFiredThisAim = false;
+        if (animator != null) { animator.SetBool("isAiming", true); animator.SetTrigger("DrawArrow"); }
+        if (crosshair != null) crosshair.StartAim();
     }
 
     private void StopAiming()
     {
         isAiming = false;
-
-        if (animator != null)
-            animator.SetBool("isAiming", false);
-
-        if (crosshair != null)
-            crosshair.StopAim();
+        if (animator != null) animator.SetBool("isAiming", false);
+        if (crosshair != null) crosshair.StopAim();
     }
 
     private void Shoot()
     {
         hasFiredThisAim = true;
-
-        // --- หัวใจสำคัญ: เก็บค่าความแม่นยำไว้ "ก่อน" ที่จะสั่ง StopAiming() ครับ ---
         lastAccuracy = crosshair != null ? crosshair.GetAccuracy() : 1f;
-
-        if (animator != null)
-            animator.SetTrigger("Shoot");
-
-        // ลูกธนูจะถูก spawn ผ่าน Animation Event ใน clip Shoot แทน
+        if (animator != null) animator.SetTrigger("Shoot");
     }
 
-    // เรียกจาก Animation Event ใน clip Shoot
     public void SpawnArrow()
     {
         if (arrowPrefab == null || arrowSpawnPoint == null) return;
-
-        // ใช้ค่าที่เก็บไว้ตอนกดปล่อยเมาส์ครับ
-        float accuracy = lastAccuracy; 
-        
-        // 🎯 ระบบคำนวณทิศทางให้ตรงกับศูนย์เลขา (Crosshair)
-        Vector3 targetPoint;
         Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
-        RaycastHit hit;
+        Vector3 targetPt = Physics.Raycast(ray, out RaycastHit hit, 100f,
+                                           groundMask | LayerMask.GetMask("Enemy"))
+            ? hit.point : ray.GetPoint(100f);
 
-        // ลองยิง Raycast ออกจากใจกลางกล้องเพื่อหาว่าเรากำลังเล็งอะไรอยู่
-        if (Physics.Raycast(ray, out hit, 100f, groundMask | LayerMask.GetMask("Enemy")))
-        {
-            // ถ้าเจอเป้าหมาย (พื้นหรือศัตรู) ให้ยิงไปที่จุดนั้นเลยครับ
-            targetPoint = hit.point;
-        }
-        else
-        {
-            // ถ้าไม่เจออะไรเลย ให้ยิงพุ่งตรงไปไกลๆ ในอากาศครับ
-            targetPoint = ray.GetPoint(100f);
-        }
+        Vector3 dir = (targetPt - arrowSpawnPoint.position).normalized;
+        float finalSpd = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, lastAccuracy);
+        int finalDmg = Mathf.RoundToInt(Mathf.Lerp(minDamage, maxDamage, lastAccuracy));
 
-        // คำนวณหาทิศทางจากจุดเกิดลูกธนูไปยังจุดที่เล็งไว้
-        Vector3 finalDirection = (targetPoint - arrowSpawnPoint.position).normalized;
-
-        // ⚡ Speed
-        float finalSpeed = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, accuracy);
-
-        // 💥 Damage
-        int finalDamage = Mathf.RoundToInt(Mathf.Lerp(minDamage, maxDamage, accuracy));
-
-        // --- เพิ่ม Log เพื่อเช็คความแรงครับ ---
-        Debug.Log($"<color=cyan>[Archer]</color> <b>ยิงธนู!</b> | Accuracy: {accuracy:P0} | Speed: {finalSpeed:F1} | Damage: {finalDamage}");
-
-        GameObject arrow = Instantiate(
-            arrowPrefab,
-            arrowSpawnPoint.position,
-            Quaternion.LookRotation(finalDirection)
-        );
-
-        arrow.GetComponent<ArrowProjectile>()?.Launch(finalDirection, finalSpeed, finalDamage);
+        Debug.Log($"<color=cyan>[Archer]</color> ยิง! Acc:{lastAccuracy:P0} Spd:{finalSpd:F1} Dmg:{finalDmg}");
+        var arrow = Instantiate(arrowPrefab, arrowSpawnPoint.position, Quaternion.LookRotation(dir));
+        arrow.GetComponent<ArrowProjectile>()?.Launch(dir, finalSpd, finalDmg);
     }
 
-    /// <summary>
-    /// อัปเดต Forward / Right Parameters สำหรับ BlendTree ตอนเล็ง
-    /// โดยคำนวณทิศ input เทียบกับทิศที่ตัวละครหัน (camera-relative → character-relative)
-    /// </summary>
     private void UpdateAimBlendTree()
     {
         if (animator == null) return;
-
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-
-        // แปลง input ตาม camera โลก แล้วค่อย inverse transform เทียบกับตัวละคร
-        Vector3 worldMove = mainCameraTransform != null
-            ? Quaternion.Euler(0, mainCameraTransform.eulerAngles.y, 0) * new Vector3(horizontal, 0f, vertical)
-            : new Vector3(horizontal, 0f, vertical);
-
-        // ใช้ InverseTransformDirection เพื่อให้ได้ทิศเทียบกับ facing ของตัวละครจริงๆ
-        Vector3 localMove = transform.InverseTransformDirection(worldMove);
-
-        animator.SetFloat("Right", localMove.x, 0.05f, Time.deltaTime);
-        animator.SetFloat("Forward", localMove.z, 0.05f, Time.deltaTime);
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 world = mainCameraTransform != null
+            ? Quaternion.Euler(0, mainCameraTransform.eulerAngles.y, 0) * new Vector3(h, 0, v)
+            : new Vector3(h, 0, v);
+        Vector3 local = transform.InverseTransformDirection(world);
+        animator.SetFloat("Right", local.x, 0.05f, Time.deltaTime);
+        animator.SetFloat("Forward", local.z, 0.05f, Time.deltaTime);
     }
 
-    /// <summary>
-    /// ขณะเล็ง ตัวละครหันตามทิศกล้องเสมอ
-    /// </summary>
     private void FaceCamera()
     {
         if (mainCameraTransform == null) return;
-
-        float targetAngle = mainCameraTransform.eulerAngles.y;
-        float angle = Mathf.SmoothDampAngle(
-            transform.eulerAngles.y, targetAngle,
-            ref rotationVelocity, 1f / aimRotationSpeed);
+        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y,
+                                            mainCameraTransform.eulerAngles.y,
+                                            ref rotationVelocity, 1f / aimRotationSpeed);
         transform.rotation = Quaternion.Euler(0f, angle, 0f);
     }
 
-    // ==================== UTILITIES ====================
-
     private System.Collections.IEnumerator SmoothRotate(float targetAngle)
     {
-        Quaternion targetRotation = Quaternion.Euler(0f, targetAngle, 0f);
-        float duration = 0.1f;
+        Quaternion target = Quaternion.Euler(0f, targetAngle, 0f);
         float elapsed = 0f;
-
-        while (elapsed < duration)
+        while (elapsed < 0.1f)
         {
-            transform.rotation = Quaternion.RotateTowards(
-                transform.rotation, targetRotation, 720f * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, 720f * Time.deltaTime);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.rotation = targetRotation;
+        transform.rotation = target;
     }
 
-    // เรียกจาก Move() หรือ Update() เพื่อคุมความสัมพันธ์ของแอนิเมชัน
-    private void CheckAnimationLogic()
-    {
-        // Archer ในปัจจุบันยังไม่มีระบบ Combo Window แบบ PlayerController 
-        // แต่ใส่ไว้เผื่อขยายงานในอนาคตครับ
-    }
+    private void CheckAnimationLogic() { }
 
-    // ==================== MOVE ====================
+    // ==================== Move ====================
 
     private void Move()
     {
-        var stateInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
-        var nextStateInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
 
-        bool isRolling = animator != null &&
-                         (stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll"));
+        bool isRolling = animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
+        bool isPlayingAttack = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack"));
+        bool isLocked = isRolling;
 
-        bool isPlayingAttack = animator != null &&
-                              (stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack"));
-
-        bool isLocked = isRolling; // Attack lock ถูกถอดออก (ธนูไม่มีคอมโบระยะประชิด)
-
-        // Ground check
         if (groundCheck != null)
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-
-        if (isGrounded && verticalVelocity.y < 0)
-            verticalVelocity.y = -2f;
+        if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
-        // ความเร็วที่ใช้ (ปกติ vs เล็ง หรือยิงอยู่)
-        float currentSpeed = (isAiming || isPlayingAttack) ? aimMoveSpeed : moveSpeed;
-        Vector3 direction = new Vector3(h, 0f, v).normalized;
+        float spd = (isAiming || isPlayingAttack) ? aimMoveSpeed : moveSpeed;
+        Vector3 dir = new Vector3(h, 0f, v).normalized;
 
         if (animator != null)
         {
-            // FreelookSpeed ใช้สำหรับ blend idle/run ตอนไม่เล็ง
             if (!isAiming && !isPlayingAttack)
-                animator.SetFloat("FreelookSpeed", direction.magnitude, 0.05f, Time.deltaTime);
-
+                animator.SetFloat("FreelookSpeed", dir.magnitude, 0.05f, Time.deltaTime);
             animator.SetBool("isGrounded", isGrounded);
         }
 
-        // Dash velocity (Roll)
         if (currentDashVelocity.magnitude > 0.1f)
         {
             controller.Move(currentDashVelocity * Time.deltaTime);
@@ -481,45 +371,31 @@ public class Archer : MonoBehaviour
             currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, decay * Time.deltaTime);
         }
 
-        // Roll movement (Elden Ring style)
-        if (isRolling)
-        {
-            float normalizedTime = stateInfo.normalizedTime % 1f;
-            if (normalizedTime < 0.75f)
-                controller.Move(rollDirection * rollSpeed * Time.deltaTime);
-        }
+        if (isRolling && sInfo.normalizedTime % 1f < 0.75f)
+            controller.Move(rollDirection * rollSpeed * Time.deltaTime);
 
-        // ==================== FREE MOVEMENT ====================
         if (!isLocked)
         {
             if (isAiming || isPlayingAttack)
             {
-                // ตอนเล็ง/ยิง: เดินได้ทุกทิศ แต่ความเร็วช้าลง, หันตาม camera ผ่าน FaceCamera()
-                if (direction.magnitude >= 0.1f)
+                if (dir.magnitude >= 0.1f)
                 {
-                    float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg +
-                                        (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                    Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                    controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+                    float angle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg +
+                                  (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
+                    controller.Move(Quaternion.Euler(0f, angle, 0f) * Vector3.forward * spd * Time.deltaTime);
                 }
             }
             else
             {
-                // ตอนปกติ: เดินหันตาม input
-                if (direction.magnitude >= 0.1f)
+                if (dir.magnitude >= 0.1f)
                 {
-                    float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg +
+                    float targetAngle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg +
                                         (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                    float angle = Mathf.SmoothDampAngle(
-                        transform.eulerAngles.y, targetAngle,
-                        ref rotationVelocity, 1f / rotationSpeed);
+                    float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle,
+                                                        ref rotationVelocity, 1f / rotationSpeed);
                     transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-                    Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                    controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+                    controller.Move(Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * spd * Time.deltaTime);
                 }
-
-                // Jump
                 if (Input.GetButtonDown("Jump") && isGrounded)
                 {
                     verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -528,46 +404,26 @@ public class Archer : MonoBehaviour
             }
         }
 
-        // Gravity
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
     }
 
-    // ==================== ANIMATION EVENTS ====================
+    // ==================== Animation Events ====================
 
-    // เรียกใช้จาก Animator Event เพื่อเริ่มภาวะอมตะ (เช่น ตอนเริ่มกลิ้ง)
-    public void EnableInvincibility()
+    public void EnableInvincibility() => isInvincible = true;
+    public void DisableInvincibility() => isInvincible = false;
+
+    public void TakeDamage(int rawDmg)
     {
-        isInvincible = true;
-    }
+        if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
+        if (animator != null) animator.SetTrigger("Damage");
 
-    // เรียกใช้จาก Animator Event เพื่อจบภาวะอมตะ
-    public void DisableInvincibility()
-    {
-        isInvincible = false;
-    }
+        int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
+        currentHP = Mathf.Max(0, currentHP - actual);
+        if (healthBar != null) healthBar.value = currentHP;
 
-    public void TakeDamage(int dmg)
-    {
-        if (isDead || isInvincible)
-        {
-            print("ไม่โดนเว้ย");
-            return;
-        }
-
-        if (animator != null)
-            animator.SetTrigger("Damage");
-
-        currentHP -= dmg;
-        currentHP = Mathf.Max(currentHP, 0);
-
-        if (healthBar != null)
-            healthBar.value = currentHP;
-
-        Debug.Log($"<color=red>[Archer]</color> โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
-
-        if (currentHP <= 0)
-            Die();
+        Debug.Log($"<color=red>[Archer]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}");
+        if (currentHP <= 0) Die();
     }
 
     public void Die()
@@ -576,7 +432,5 @@ public class Archer : MonoBehaviour
         isDead = true;
         Debug.Log("<color=red>[Archer]</color> ตายแล้ว!");
         if (animator != null) animator.SetTrigger("Die");
-        // สามารถใส่ logic เพิ่มเติมได้ เช่น GameOver screen
     }
-
 }

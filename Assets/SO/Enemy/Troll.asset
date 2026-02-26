@@ -9,16 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
+  m_Script: {fileID: 11500000, guid: 001be0423c12c444fb1fa8555fa08a81, type: 3}
   m_Name: Troll
-  m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: Troll
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
+  enemyName: Troll
   prefab: {fileID: 8378969683373002168, guid: 42d717d445b109b449d89fb3c4191517, type: 3}
-  picture: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
   icon: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
   cost: 50
-  damage: 30
-  defense: 5
-  speed: 3
-  hp: 150
-  attackrange: 6
+  orbDrop: 0
+  attackRange: 6
+  baseDamage: 30
+  baseDefense: 5
+  baseSpeed: 3
+  baseHP: 150
+  waveHpMultiplier: 1.15
+  waveAttackMultiplier: 1.12
+  waveDefenseMultiplier: 1.1
+  waveSpeedMultiplier: 1.05
