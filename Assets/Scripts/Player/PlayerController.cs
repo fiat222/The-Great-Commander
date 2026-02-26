@@ -100,7 +100,12 @@ public class PlayerController : MonoBehaviour
         if (isFirstInit)
         {
             currentHP = maxHP;
-            if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
+        }
+
+        if (healthBar != null) 
+        { 
+            healthBar.maxValue = maxHP; 
+            healthBar.value = currentHP; 
         }
 
         Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");

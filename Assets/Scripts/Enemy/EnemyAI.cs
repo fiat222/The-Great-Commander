@@ -2,13 +2,14 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 
-public enum EnemyState { MoveToBase, ChasePlayer, AttackPlayer, AttackBase }
+public enum EnemyState { MoveToBase, ChasePlayer, AttackPlayer, AttackBase, ChaseMinion, AttackMinion }
 
 public class EnemyAI : MonoBehaviour
 {
     private NavMeshAgent agent;
     private Transform playerTransform;
     private Transform baseTransform;
+    private Transform minionTransform;
     private Animator animator;
 
     [Header("Enemy Stats SO")]
@@ -42,6 +43,7 @@ public class EnemyAI : MonoBehaviour
 
     private float distanceToPlayer;
     private float distanceToBase;
+    private float distanceToMinion;
     private bool isDead = false;
     public bool IsDead => isDead;
 
@@ -134,46 +136,120 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        if (isDead || playerTransform == null) return;
+        if (isDead) return;
 
-        distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-        if (baseTransform != null)
-            distanceToBase = Vector3.Distance(transform.position, baseTransform.position);
-
+        CheckAttackStasis();
+        UpdateTargetsAndDistances();
         HandleStateTransitions();
         UpdateAnimations();
     }
 
+    private void CheckAttackStasis()
+    {
+        if (animator == null || agent == null || !agent.enabled) return;
+
+        bool isAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack");
+        if (isAttacking)
+        {
+            agent.isStopped = true;
+            agent.updateRotation = false;
+            agent.velocity = Vector3.zero;
+        }
+        else
+        {
+            agent.updateRotation = true;
+        }
+    }
+
+    private void UpdateTargetsAndDistances()
+    {
+        // อัปเดตระยะ Player
+        if (playerTransform != null)
+            distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+
+        // อัปเดตระยะ Base
+        if (baseTransform != null)
+            distanceToBase = Vector3.Distance(transform.position, baseTransform.position);
+
+        // ค้นหา Minion ที่ใกล้ที่สุดในระยะ detectionRange ถ้ายังไม่มีเป้าหมาย Minion
+        if (minionTransform == null || !minionTransform.gameObject.activeInHierarchy)
+        {
+            FindClosestMinion();
+        }
+
+        // อัปเดตระยะ Minion
+        if (minionTransform != null)
+        {
+            distanceToMinion = Vector3.Distance(transform.position, minionTransform.position);
+            // ถ้าหลุดระยะไล่ล่า ให้เลิกสนใจ
+            if (distanceToMinion > chaseRange)
+            {
+                minionTransform = null;
+            }
+        }
+    }
+
+    private void FindClosestMinion()
+    {
+        GameObject[] minions = GameObject.FindGameObjectsWithTag("Minion");
+        float closestDist = detectionRange;
+        Transform closestMinion = null;
+
+        foreach (GameObject m in minions)
+        {
+            float dist = Vector3.Distance(transform.position, m.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closestMinion = m.transform;
+            }
+        }
+
+        minionTransform = closestMinion;
+    }
+
     private void HandleStateTransitions()
     {
+        // 1. ตรวจสอบการโจมตีฐานก่อนเสมอ (ถ้าประชิดฐานแล้ว)
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
             currentState = EnemyState.AttackBase;
             return;
         }
 
+        // 2. จัดการสถานะตามเป้าหมาย (Priority: Minion > Player > Base)
         switch (currentState)
         {
-            case EnemyState.MoveToBase:
-                if (distanceToPlayer <= detectionRange)
-                    currentState = EnemyState.ChasePlayer;
+            case EnemyState.AttackMinion:
+                if (minionTransform == null) currentState = EnemyState.MoveToBase;
+                else if (distanceToMinion > attackRange) currentState = EnemyState.ChaseMinion;
                 break;
 
-            case EnemyState.ChasePlayer:
-                if (distanceToPlayer > chaseRange)
-                    currentState = EnemyState.MoveToBase;
-                else if (distanceToPlayer <= attackRange)
-                    currentState = EnemyState.AttackPlayer;
+            case EnemyState.ChaseMinion:
+                if (minionTransform == null) currentState = EnemyState.MoveToBase;
+                else if (distanceToMinion <= attackRange) currentState = EnemyState.AttackMinion;
                 break;
 
             case EnemyState.AttackPlayer:
-                if (distanceToPlayer > attackRange)
-                    currentState = EnemyState.ChasePlayer;
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
+                break;
+
+            case EnemyState.ChasePlayer:
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
+                else if (distanceToPlayer <= attackRange) currentState = EnemyState.AttackPlayer;
                 break;
 
             case EnemyState.AttackBase:
-                if (distanceToBase > baseAttackRange + 1f)
-                    currentState = EnemyState.MoveToBase;
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer; // แทรกคิว Player ถ้าเข้าใกล้
+                else if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
+                break;
+
+            case EnemyState.MoveToBase:
+                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
+                else if (playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 break;
         }
     }
@@ -187,7 +263,9 @@ public class EnemyAI : MonoBehaviour
 
         animator.SetFloat("Speed", normalizedSpeed);
 
-        bool isAttacking = currentState == EnemyState.AttackPlayer || currentState == EnemyState.AttackBase;
+        bool isAttacking = currentState == EnemyState.AttackPlayer || 
+                           currentState == EnemyState.AttackBase || 
+                           currentState == EnemyState.AttackMinion;
         animator.SetBool("IsAttacking", isAttacking);
     }
 
@@ -198,23 +276,41 @@ public class EnemyAI : MonoBehaviour
         switch (currentState)
         {
             case EnemyState.MoveToBase:
-                agent.isStopped = false;
-                agent.speed = baseSpeed;
-                agent.SetDestination(baseTransform.position);
+                if (baseTransform != null)
+                {
+                    agent.isStopped = false;
+                    agent.updateRotation = true; // เปิดการหมุนขณะวิ่ง
+                    agent.speed = baseSpeed;
+                    agent.SetDestination(baseTransform.position);
+                }
                 break;
 
             case EnemyState.ChasePlayer:
-                agent.isStopped = false;
-                agent.speed = baseSpeed * 1.5f;
-                agent.SetDestination(playerTransform.position);
+                if (playerTransform != null)
+                {
+                    agent.isStopped = false;
+                    agent.updateRotation = true; // เปิดการหมุนขณะไล่ล่า
+                    agent.speed = baseSpeed * 1.5f;
+                    agent.SetDestination(playerTransform.position);
+                }
+                break;
+
+            case EnemyState.ChaseMinion:
+                if (minionTransform != null)
+                {
+                    agent.isStopped = false;
+                    agent.updateRotation = true; // เปิดการหมุนขณะไล่ล่า
+                    agent.speed = baseSpeed * 1.5f;
+                    agent.SetDestination(minionTransform.position);
+                }
                 break;
 
             case EnemyState.AttackPlayer:
-                agent.isStopped = true;
-                break;
-
             case EnemyState.AttackBase:
+            case EnemyState.AttackMinion:
                 agent.isStopped = true;
+                agent.updateRotation = false; // ปิดการหมุนขณะโจมตี
+                agent.velocity = Vector3.zero; // ป้องกันการสไลด์
                 break;
         }
     }
@@ -248,7 +344,11 @@ public class EnemyAI : MonoBehaviour
         isDead = true;
 
         if (animator != null)
+        {
+            animator.SetFloat("Speed", 0f);
+            animator.SetBool("IsAttacking", false);
             animator.SetTrigger("Die");
+        }
 
         if (countsInWaveUI)
             GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
@@ -268,6 +368,21 @@ public class EnemyAI : MonoBehaviour
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
         Destroy(gameObject, 3f);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, chaseRange);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, baseAttackRange);
     }
 
     // ==================== Animation Events ====================
