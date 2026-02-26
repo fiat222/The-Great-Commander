@@ -23,6 +23,8 @@ public class HealthSystem : MonoBehaviour
     public UnityEvent OnDie;
 
     private bool isDead = false;
+    public bool IsDead => isDead;
+
     private Camera mainCamera;
 
     void Start()

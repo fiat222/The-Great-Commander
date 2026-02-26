@@ -43,6 +43,7 @@ public class EnemyAI : MonoBehaviour
     private float distanceToPlayer;
     private float distanceToBase;
     private bool isDead = false;
+    public bool IsDead => isDead;
 
     // ==================== UNITY ====================
 

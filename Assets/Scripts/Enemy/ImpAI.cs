@@ -43,6 +43,7 @@ public class ImpAI : MonoBehaviour
     private float distanceToPlayer;
     private float distanceToBase;
     private bool isDead = false;
+    public bool IsDead => isDead;
     private Vector3 pendingTargetPos;
 
     // ==================== EVENT SUBSCRIBE ====================
