@@ -247,6 +247,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efe554cde10bfed4287d0b1d4102d06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::archer
+  stats: {fileID: 11400000, guid: cbae5f884a15e7c4dab15085c8b9c39a, type: 2}
   moveSpeed: 15
   rotationSpeed: 13
   jumpHeight: 3

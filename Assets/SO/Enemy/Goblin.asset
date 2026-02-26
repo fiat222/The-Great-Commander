@@ -9,16 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
+  m_Script: {fileID: 11500000, guid: 001be0423c12c444fb1fa8555fa08a81, type: 3}
   m_Name: Goblin
-  m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: Goblin
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
+  enemyName: Goblin
   prefab: {fileID: 8856839914518036732, guid: 6f99e13a75128d94c9c5e8d1bed40986, type: 3}
-  picture: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
   icon: {fileID: 342709286, guid: e02ccacff7f5b78458ee85cce9034803, type: 3}
   cost: 20
-  damage: 15
-  defense: 2.5
-  speed: 5
-  hp: 40
-  attackrange: 3
+  orbDrop: 0
+  attackRange: 3
+  baseDamage: 15
+  baseDefense: 2.5
+  baseSpeed: 5
+  baseHP: 40
+  waveHpMultiplier: 1.15
+  waveAttackMultiplier: 1.12
+  waveDefenseMultiplier: 1.1
+  waveSpeedMultiplier: 1.05

@@ -9,16 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e478ee0d02317e428f3b33799725b84, type: 3}
+  m_Script: {fileID: 11500000, guid: 001be0423c12c444fb1fa8555fa08a81, type: 3}
   m_Name: Skeleton
-  m_EditorClassIdentifier: Assembly-CSharp::MinionData
-  minionName: Skeleton
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
+  enemyName: Skeleton
   prefab: {fileID: 2481845571369870494, guid: 21e7579a44187194d8e08075df8e097d, type: 3}
-  picture: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
   icon: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
   cost: 20
-  damage: 24
-  defense: 1
-  speed: 5
-  hp: 40
-  attackrange: 15
+  orbDrop: 0
+  attackRange: 3
+  baseDamage: 24
+  baseDefense: 1
+  baseSpeed: 5
+  baseHP: 40
+  waveHpMultiplier: 1.15
+  waveAttackMultiplier: 1.12
+  waveDefenseMultiplier: 1.1
+  waveSpeedMultiplier: 1.05

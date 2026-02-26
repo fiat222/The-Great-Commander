@@ -923,6 +923,7 @@ GameObject:
   - component: {fileID: 3020874965249959954}
   - component: {fileID: 6174559527208273876}
   - component: {fileID: 3785600493340737964}
+  - component: {fileID: -6636403736851743034}
   m_Layer: 0
   m_Name: Skeleton
   m_TagString: Enemy
@@ -1054,20 +1055,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 177e267d05e1f6e49afe37951db3848f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  stats: {fileID: 11400000, guid: 2f3c2dcbfd7c59a4cabbfab40d383b44, type: 2}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
-  attackRange: 4.86
   baseAttackRange: 4.75
-  walkSpeed: 4.5
-  runSpeed: 7.5
   weaponCollider: {fileID: 7242172807407608528}
-  data: {fileID: 11400000, guid: abf58cf9a21851e4f8c70c3b1c80e2c8, type: 2}
   healthBar: {fileID: 4380254646009640366}
   updateRate: 0.2
   typeIndex: 0
   countsInWaveUI: 0
   powerBallDropAmount: 5
+--- !u!54 &-6636403736851743034
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2481845571369870494}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &2526103059635743627
 GameObject:
   m_ObjectHideFlags: 0

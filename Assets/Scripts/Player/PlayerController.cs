@@ -4,182 +4,178 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
+    // ==================== SO ====================
+    [Header("Stats SO")]
+    [Tooltip("ลาก PlayerStatsSO มาใส่ตรงนี้ครับ")]
+    public PlayerStatsSO stats;
+
+    // ==================== Movement ====================
     [Header("Movement Settings")]
     public float moveSpeed = 12f;
     public float rotationSpeed = 13f;
     public float jumpHeight = 3f;
     public float gravity = -19.62f;
 
+    // ==================== Combo ====================
     [Header("Combo Settings")]
-    public float comboResetTime = 3.0f; 
-    public float attackDashForce = 5f; 
-    public float dashDecay = 10f; 
-    public float rollForce = 20f; 
-    // public float rollSpeed = 15f; // ความเร็วต่อเนื่องในขณะกลิ้ง (Elden Ring Style)
-    public float rollDecay = 8f; 
-    [Range(0, 1)] public float forceTime = 0.2f; 
-    [Range(0, 1)] public float comboWindowTime = 0.5f; 
-    [Range(0, 1)] public float finisherWindowTime = 0.85f; // หน้าต่างต่อคอมโบของท่าสุดท้าย (ต้องรอนานกว่าปกติเพื่อให้ดูหนักแน่น)
-    
-    private int comboStep = 0;
+    public float comboResetTime = 3.0f;
+    public float attackDashForce = 5f;
+    public float dashDecay = 10f;
+    public float rollForce = 20f;
+    public float rollDecay = 8f;
+    [Range(0, 1)] public float forceTime = 0.2f;
+    [Range(0, 1)] public float comboWindowTime = 0.5f;
+    [Range(0, 1)] public float finisherWindowTime = 0.85f;
+
+    private int comboStep;
     private float lastClickTime;
     private Vector3 currentDashVelocity;
-    private Vector3 rollDirection; // เก็บพิกัดที่จะกลิ้งไป
-    private bool alreadyAppliedForce; 
-    private bool bufferCombo; 
+    private Vector3 rollDirection;
+    private bool alreadyAppliedForce;
+    private bool bufferCombo;
 
+    // ==================== Target Lock ====================
     [Header("Target Lock Settings")]
     public float lockRange = 15f;
-    // targetCamera removed, now handled by CameraManager
-    public CinemachineTargetGroup targetGroup; // (Optional) ลาก Target Group มาใส่ถ้าอยากได้สไตล์ Monster Hunter
-    public Transform cameraPivot; // ลาก CamaraFocus มาใส่ที่นี่ครับ
+    public CinemachineTargetGroup targetGroup;
+    public Transform cameraPivot;
     private Transform currentTarget;
     private bool isLockedOn;
 
-    [Header("References")]
+    // ==================== References ====================
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
 
-    [Header("Ground Check Settings")]
+    // ==================== Ground Check ====================
+    [Header("Ground Check")]
     public Transform groundCheck;
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
-    
-    [Header("Health Settings")]
-    public int maxHP = 100;      // ตั้งค่าเลือดได้ใน Inspector
-    public Slider healthBar;     // ลาก UI Slider มาใส่ใน Inspector
+
+    // ==================== Health UI ====================
+    [Header("Health UI")]
+    public int maxHP = 100;
+    public Slider healthBar;
+
+    // ==================== Runtime Stats ====================
+    public float AttackDamage { get; private set; } = 15f;
+    public float Defense { get; private set; } = 5f;
 
     private int currentHP;
     private float rotationVelocity;
     private Vector3 verticalVelocity;
     private bool isGrounded;
-    private bool isInvincible = false; // สำหรับระบบอมตะ (I-frames)
-    private bool isDead = false;
-    private Coroutine rotationCoroutine; // สำหรับคุมการหมุนนุ่มๆ
+    private bool isInvincible;
+    private bool isDead;
+    private Coroutine rotationCoroutine;
 
-    // --- ⭐ ตัวแปรล็อคการเคลื่อนไหว (กลิ้ง) สั่งงานจาก WeaponHandler ---
-    public bool isMovementLocked { get; set; } 
+    public bool isMovementLocked { get; set; }
+
+    // ==================== Lifecycle ====================
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
-        
-        if (Camera.main != null)
-            mainCameraTransform = Camera.main.transform;
+        if (Camera.main != null) mainCameraTransform = Camera.main.transform;
 
-        // เริ่มต้น HP
-        currentHP = maxHP;
-        if (healthBar != null)
+        ApplyStats(isFirstInit: true);
+    }
+
+    /// <summary>
+    /// ดึงค่าจาก SO มาใช้
+    /// เรียกได้ทุกครั้งหลัง Upgrade สำเร็จ — ค่าจะมีผลทันที
+    /// </summary>
+    public void ApplyStats(bool isFirstInit = false)
+    {
+        if (stats != null)
         {
-            healthBar.maxValue = maxHP;
-            healthBar.value = maxHP;
+            maxHP = stats.GetHP();
+            moveSpeed = stats.GetSpeed() * 2.4f;   // SO Speed(5-10) → moveSpeed(12-24)
+            AttackDamage = stats.GetDamage();
+            Defense = stats.GetDefense();
         }
+
+        if (isFirstInit)
+        {
+            currentHP = maxHP;
+            if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
+        }
+
+        Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
     }
 
     private void Update()
     {
-        if (isDead) return; // ปิด input ทั้งหมดเมื่อตาย
-        HandleTargetLockInput(); // เช็คปุ่มล็อคเป้า (เมาส์กลาง)
-        HandleRollInput(); 
+        if (isDead) return;
+        HandleTargetLockInput();
+        HandleRollInput();
         HandleAttackInput();
-        CheckAnimationLogic(); 
+        CheckAnimationLogic();
         Move();
     }
 
+    // ==================== Target Lock ====================
+
     private void HandleTargetLockInput()
     {
-        if (Input.GetKeyDown(KeyCode.Tab)) // เปลี่ยนจากเมาส์กลางเป็นปุ่ม Tab ครับ
+        if (Input.GetKeyDown(KeyCode.Tab))
         {
-            if (isLockedOn)
-            {
-                UnlockTarget();
-            }
-            else
-            {
-                FindNearestTarget();
-            }
+            if (isLockedOn) UnlockTarget();
+            else FindNearestTarget();
         }
-
-        // หลุดล็อคถ้าเป้าหมายตายหรืออยู่ไกลเกินไป
         if (isLockedOn && currentTarget == null) UnlockTarget();
-        if (isLockedOn && currentTarget != null && Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f) UnlockTarget();
+        if (isLockedOn && currentTarget != null &&
+            Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f)
+            UnlockTarget();
     }
 
     private void FindNearestTarget()
     {
-        // ใช้ OverlapSphere เพื่อหาศัตรูในรัศมีรอบตัว (แม่นยำและประหยัดทรัพยากรกว่าครับ)
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, lockRange);
-        float closestDistance = lockRange;
-        Transform closestEnemy = null;
+        Collider[] cols = Physics.OverlapSphere(transform.position, lockRange);
+        float closestDist = lockRange;
+        Transform closest = null;
 
-        foreach (var hitCollider in hitColliders)
+        foreach (var c in cols)
         {
-            // เช็คว่ามี Tag เป็น Enemy ไหม
-            if (hitCollider.CompareTag("Enemy"))
-            {
-                float dist = Vector3.Distance(transform.position, hitCollider.transform.position);
-                if (dist < closestDistance)
-                {
-                    closestDistance = dist;
-                    closestEnemy = hitCollider.transform;
-                }
-            }
+            if (!c.CompareTag("Enemy")) continue;
+            float d = Vector3.Distance(transform.position, c.transform.position);
+            if (d < closestDist) { closestDist = d; closest = c.transform; }
         }
+        if (closest == null) return;
 
-        if (closestEnemy != null)
+        currentTarget = closest;
+        isLockedOn = true;
+
+        if (CameraManager.Instance != null)
         {
-            currentTarget = closestEnemy;
-            isLockedOn = true;
+            CameraManager.Instance.SetTargetLock(true);
+            var vcam = CameraManager.Instance.TargetLockCamera;
 
-            // --- จัดการกล้องผ่าน CameraManager ---
-            if (CameraManager.Instance != null)
+            if (cameraPivot != null)
             {
-                CameraManager.Instance.SetTargetLock(true);
-                var vcam = CameraManager.Instance.TargetLockCamera;
-
-                // --- สั่งให้ Pivot หันหาศัตรูผ่าน Component ตัวใหม่ที่แยกออกมาครับ ---
-                if (cameraPivot != null)
-                {
-                    var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
-                    if (aligner != null) aligner.SetTarget(currentTarget);
-                }
-
-                // --- สไตล์ Monster Hunter (ใช้ Target Group) ---
-                if (targetGroup != null)
-                {
-                    // ล้างเป้าหมายเดิมออกก่อน (ถ้ามีเหลือติดมา)
-                    while (targetGroup.Targets.Count > 1) 
-                        targetGroup.RemoveMember(targetGroup.Targets[1].Object);
-                    
-                    // เพิ่มศัตรูเข้ากลุ่ม 
-                    targetGroup.AddMember(currentTarget, 1f, 0f);
-                    if (vcam != null) vcam.LookAt = targetGroup.transform;
-                }
-                else
-                {
-                    // แบบ Elden Ring (มองศัตรูตรงๆ)
-                    if (vcam != null) vcam.LookAt = currentTarget;
-                }
+                var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
+                if (aligner != null) aligner.SetTarget(currentTarget);
             }
+
+            if (targetGroup != null)
+            {
+                while (targetGroup.Targets.Count > 1)
+                    targetGroup.RemoveMember(targetGroup.Targets[1].Object);
+                targetGroup.AddMember(currentTarget, 1f, 0f);
+                if (vcam != null) vcam.LookAt = targetGroup.transform;
+            }
+            else { if (vcam != null) vcam.LookAt = currentTarget; }
         }
     }
 
     public void UnlockTarget()
     {
         isLockedOn = false;
-
-        // เอาศัตรูออกจาก Target Group
-        if (targetGroup != null && currentTarget != null)
-        {
-            targetGroup.RemoveMember(currentTarget);
-        }
-
+        if (targetGroup != null && currentTarget != null) targetGroup.RemoveMember(currentTarget);
         currentTarget = null;
         if (CameraManager.Instance != null) CameraManager.Instance.SetTargetLock(false);
-
-        // หยุดการหันหาศัตรู
         if (cameraPivot != null)
         {
             var aligner = cameraPivot.GetComponent<CameraPivotAligner>();
@@ -193,97 +189,60 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, lockRange);
     }
 
+    // ==================== Roll ====================
+
     private void HandleRollInput()
     {
-        // เช็คว่ากำลังยุ่งอยู่ไหม (กำลังเล่นท่าโจมตี/กลิ้งอยู่)
-        // ขึ้นอยู่กับ Tag ใน Animator 100% ครับ
         var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
-        bool isBusy = (animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || 
-                                           sInfo.IsTag("Attack") || nInfo.IsTag("Attack")));
+        bool isBusy = animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") ||
+                                           sInfo.IsTag("Attack") || nInfo.IsTag("Attack"));
+        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy) return;
 
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 inputDir = new Vector3(h, 0f, v).normalized;
 
-        // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ
-        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
-
-        if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded && !isBusy)
+        if (inputDir.magnitude >= 0.1f)
         {
-            float horizontal = Input.GetAxisRaw("Horizontal");
-            float vertical = Input.GetAxisRaw("Vertical");
-            Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
-
-            if (inputDir.magnitude >= 0.1f)
-            {
-                float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                rollDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                
-                // หันให้นุ่มนวลเหมือนตอนฟันครับ
-                if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
-                rotationCoroutine = StartCoroutine(SmoothRotate(targetAngle));
-            }
-            else
-            {
-                rollDirection = transform.forward;
-            }
-
-            // สไตล์ Archer: ดีดตัวไปด้วยแรง rollForce ทีเดียวจบ (สะอาดและคุมง่ายกว่าครับ)
-            currentDashVelocity = rollDirection * rollForce;
-
-            if (animator != null)
-            {
-                animator.SetTrigger("Roll");
-            }
+            float angle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg +
+                          (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
+            rollDirection = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+            if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
+            rotationCoroutine = StartCoroutine(SmoothRotate(angle));
         }
+        else { rollDirection = transform.forward; }
+
+        currentDashVelocity = rollDirection * rollForce;
+        if (animator != null) animator.SetTrigger("Roll");
     }
+
+    // ==================== Attack ====================
 
     private void HandleAttackInput()
     {
-        // โจมตีได้เฉพาะเฟสต่อสู้เท่านั้นครับ
-        // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
-
         if (Input.GetMouseButtonDown(0))
         {
-            // ⭐ ห้ามฟันถ้ากำลัง "กลิ้ง" หรือ "กระโดด" อยู่ครับ (ป้องกันฟันแทรก)
             var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
             var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
-            if (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || sInfo.IsTag("Jump") || nInfo.IsTag("Jump")) return;
+            if (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || sInfo.IsTag("Jump") || nInfo.IsTag("Jump")) goto checkReset;
 
             lastClickTime = Time.time;
-            
-            // ถ้าไม่ได้ฟันอยู่ ให้เริ่มฟันทันที
-            if (comboStep == 0)
-            {
-                TriggerAttack();
-            }
-            else
-            {
-                // ถ้ากำลังฟันอยู่ ให้ "จดจำ" (Buffer) ไว้ว่าผู้เล่นอยากต่อคอมโบ
-                bufferCombo = true;
-            }
+            if (comboStep == 0) TriggerAttack();
+            else bufferCombo = true;
         }
-
-        // รีเซ็ตคอมโบถ้าทิ้งช่วงนานเกินไป
-        if (comboStep > 0 && Time.time - lastClickTime > comboResetTime)
-        {
-            ResetCombo();
-        }
+    checkReset:
+        if (comboStep > 0 && Time.time - lastClickTime > comboResetTime) ResetCombo();
     }
 
     private void TriggerAttack()
     {
-        // 📷 หันหน้าไปตามทิศที่กล้องมองเสมอ (สไตล์ Archer) ไม่ว่าจะเดินอยู่หรือไม่ก็ตามครับ
         float targetAngle = mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : transform.eulerAngles.y;
-
-        // สั่งหมุนตัวให้นุ่มนวลไปยังเป้าหมาย (ไวแต่ไม่วาร์ป)
         if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
         rotationCoroutine = StartCoroutine(SmoothRotate(targetAngle));
 
-        // ⭐ เอาการล็อคอัตโนมัติออกแล้วครับ พี่ไปใส่ Lock/Unlock ใน Animation เองได้เลย
-        // isMovementLocked = true;
-
         comboStep++;
         if (comboStep > 3) comboStep = 1;
-
         alreadyAppliedForce = false;
         bufferCombo = false;
 
@@ -296,145 +255,97 @@ public class PlayerController : MonoBehaviour
 
     private System.Collections.IEnumerator SmoothRotate(float targetAngle)
     {
-        Quaternion targetRotation = Quaternion.Euler(0f, targetAngle, 0f);
-        float duration = 0.1f; // หมุนให้เสร็จใน 0.1 วินาที (ไวแต่ไม่วาร์ป)
+        Quaternion target = Quaternion.Euler(0f, targetAngle, 0f);
         float elapsed = 0f;
-
-        while (elapsed < duration)
+        while (elapsed < 0.1f)
         {
-            // ใช้ RotateTowards เพื่อให้การหมุนมีความเร็วสม่ำเสมอและนุ่มนวล
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 720f * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, 720f * Time.deltaTime);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.rotation = targetRotation;
+        transform.rotation = target;
     }
+
+    // ==================== Animation Logic ====================
 
     private void CheckAnimationLogic()
     {
         if (animator == null) return;
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+        bool isLocked = sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
+        bool justTrigger = Time.time - lastClickTime < 0.2f;
 
-        var stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        var nextStateInfo = animator.GetNextAnimatorStateInfo(0);
-        
-        // เช็ค Tag ทั้ง Attack และ Roll เพื่อล็อคการเดิน
-        bool isLockedState = stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack") || 
-                             stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll");
-
-        // ถ้าเราเพิ่งกด Trigger ไป แอนิเมเตอร์อาจจะยังไม่เปลี่ยนสถานะในหลักมิลลิวินาทีแรก
-        bool justTriggered = Time.time - lastClickTime < 0.2f;
-
-        if (isLockedState || justTriggered)
+        if (isLocked || justTrigger)
         {
-            float normalizedTime = stateInfo.normalizedTime % 1f;
-            if (animator.IsInTransition(0) && (nextStateInfo.IsTag("Attack") || nextStateInfo.IsTag("Roll")))
-            {
-                normalizedTime = nextStateInfo.normalizedTime % 1f;
-            }
+            float t = sInfo.normalizedTime % 1f;
+            if (animator.IsInTransition(0) && (nInfo.IsTag("Attack") || nInfo.IsTag("Roll")))
+                t = nInfo.normalizedTime % 1f;
 
-            // --- เอาโค้ดพุ่งอัตโนมัติออกแล้วครับ เพื่อให้พี่ผูก Event ใน Animator เองได้ 100% ---
-            // ⭐ ป้องกันการ "เขียนทับแรงพุ่ง": ถ้ากำลังจะกลิ้ง (Roll) ห้ามใช้แรงพุ่งของท่าฟันครับ
-            bool isRollingNow = stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll");
-
-            if (normalizedTime >= forceTime && !alreadyAppliedForce && stateInfo.IsTag("Attack") && !isRollingNow)
+            bool isRolling = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
+            if (t >= forceTime && !alreadyAppliedForce && sInfo.IsTag("Attack") && !isRolling)
             {
                 PerformAttackDash();
                 alreadyAppliedForce = true;
             }
 
-            // จังหวะ Combo Window (เช็คว่ากดต่อคอมโบได้หรือยัง)
-            // ทริค: ถ้าเป็นท่าที่ 3 (ท่าสุดท้าย) เราจะให้รอนานกว่าปกติ (finisherWindowTime) เพื่อไม่ให้หันหน้าวาร์ปครับ
-            float currentWindow = (comboStep == 3) ? finisherWindowTime : comboWindowTime;
-
-            if (bufferCombo && normalizedTime >= currentWindow)
-            {
-                TriggerAttack();
-            }
+            float window = comboStep == 3 ? finisherWindowTime : comboWindowTime;
+            if (bufferCombo && t >= window) TriggerAttack();
         }
         else
         {
-            // ถ้าไม่ได้อยู่ใน Attack และ "ไม่ได้กำลังเปลี่ยนท่า" และ "ไม่ได้เพิ่งกด" ถึงจะรีเซ็ต
-            if (comboStep != 0 && !animator.IsInTransition(0))
-            {
-                if (!justTriggered)
-                {
-                    ResetCombo();
-                }
-            }
+            if (comboStep != 0 && !animator.IsInTransition(0) && !justTrigger) ResetCombo();
         }
     }
 
     private void ResetCombo()
     {
-        comboStep = 0;
-        bufferCombo = false;
-        alreadyAppliedForce = false;
+        comboStep = 0; bufferCombo = false; alreadyAppliedForce = false;
         if (animator != null) animator.SetInteger("ComboStep", 0);
     }
 
-    public void PerformAttackDash()
-    {
-        currentDashVelocity = transform.forward * attackDashForce;
-    }
+    public void PerformAttackDash() => currentDashVelocity = transform.forward * attackDashForce;
+
+    // ==================== Move ====================
 
     private void Move()
     {
-        var stateInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
-        var nextStateInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        bool isLocked = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") ||
+                                             sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
 
-        // ล็อคการเดิน/กระโดด ถ้ากำลังเล่นแอนิเมชัน Attack/Roll (เช็คจาก Tag ใน Animator 100% ครับ)
-        bool isLocked = (animator != null && (stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack") || 
-                                             stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll")));
-
-
-
-
-        // ระบบเช็คพื้นแบบใหม่โดยใช้ Empty Object (SphereCast)
         if (groundCheck != null)
-        {
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-        }
+        if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
 
-        if (isGrounded && verticalVelocity.y < 0)
-        {
-            verticalVelocity.y = -2f;
-        }
-
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 dir = new Vector3(h, 0f, v).normalized;
 
         if (animator != null)
         {
-            animator.SetFloat("FreelookSpeed", direction.magnitude, 0.05f, Time.deltaTime);
+            animator.SetFloat("FreelookSpeed", dir.magnitude, 0.05f, Time.deltaTime);
             animator.SetBool("isGrounded", isGrounded);
         }
 
-        // ใช้แรงพุ่งสะสมเคลื่อนที่ตัวละคร
         if (currentDashVelocity.magnitude > 0.1f)
         {
             controller.Move(currentDashVelocity * Time.deltaTime);
-            float decay = isLocked && stateInfo.IsTag("Roll") ? rollDecay : dashDecay;
+            float decay = isLocked && sInfo.IsTag("Roll") ? rollDecay : dashDecay;
             currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, decay * Time.deltaTime);
         }
 
-        // ลบระบบเคลื่อนที่ต่อเนื่องแบบเช็ค % ออก (เพราะเราใช้ DashVelocity ตัวเดียวแบบ Archer แล้วครับ)
-
-
-        // เคลื่อนที่และหมุนตัว (ถ้าไม่ได้โดนล็อค Animation อยู่)
         if (!isLocked)
         {
-            if (direction.magnitude >= 0.1f)
+            if (dir.magnitude >= 0.1f)
             {
-                // คำนวณหาทิศทางที่จะไปอ้างอิงจากมุมกล้อง
-                float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                
-                // หันหน้าตัวละครไปตามทิศที่จะเดิน (ไม่ว่าจะเป็น Lock-on หรือไม่ เพื่อให้เป็นสไตล์ Monster Hunter ครับ)
-                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotationVelocity, 1f / rotationSpeed);
+                float targetAngle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg +
+                                    (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle,
+                                                    ref rotationVelocity, 1f / rotationSpeed);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-                Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                controller.Move(moveDir.normalized * moveSpeed * Time.deltaTime);
+                controller.Move(Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * moveSpeed * Time.deltaTime);
             }
 
             if (Input.GetButtonDown("Jump") && isGrounded)
@@ -444,43 +355,26 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // แรงโน้มถ่วง (ทำงานตลอดเวลา)
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
     }
 
-    // ==================== ANIMATION EVENTS ====================
+    // ==================== Animation Events ====================
 
-    // เรียกใช้จาก Animator Event เพื่อเริ่มภาวะอมตะ (เช่น ตอนเริ่มกลิ้ง)
-    public void EnableInvincibility()
+    public void EnableInvincibility() => isInvincible = true;
+    public void DisableInvincibility() => isInvincible = false;
+
+    /// <summary>เรียกจาก EnemyAI หรือ Projectile ที่ชนผู้เล่น</summary>
+    public void TakeDamage(int rawDmg)
     {
-        isInvincible = true;
-    }
+        if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
 
-    // เรียกใช้จาก Animator Event เพื่อจบภาวะอมตะ
-    public void DisableInvincibility()
-    {
-        isInvincible = false;
-    }
+        int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
+        currentHP = Mathf.Max(0, currentHP - actual);
+        if (healthBar != null) healthBar.value = currentHP;
 
-    public void TakeDamage(int dmg)
-    {
-        if (isDead || isInvincible) 
-        {
-            print("ไม่โดนเว้ย");
-            return;
-        }
-
-        currentHP -= dmg;
-        currentHP = Mathf.Max(currentHP, 0);
-
-        if (healthBar != null)
-            healthBar.value = currentHP;
-
-        Debug.Log($"<color=red>[Player]</color> โดนตี {dmg} ดาเมจ | HP เหลือ: {currentHP}");
-
-        if (currentHP <= 0)
-            Die();
+        Debug.Log($"<color=red>[Player]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}");
+        if (currentHP <= 0) Die();
     }
 
     public void Die()
@@ -489,7 +383,5 @@ public class PlayerController : MonoBehaviour
         isDead = true;
         Debug.Log("<color=red>[Player]</color> ตายแล้ว!");
         if (animator != null) animator.SetTrigger("Die");
-        // สามารถใส่ logic เพิ่มเติมได้ เช่น GameOver screen
     }
-
 }

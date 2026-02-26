@@ -11790,6 +11790,7 @@ GameObject:
   - component: {fileID: 7022889997681370178}
   - component: {fileID: 1637783398252621389}
   - component: {fileID: 2506690989477773532}
+  - component: {fileID: 4789366257405991004}
   m_Layer: 0
   m_Name: Imp
   m_TagString: Enemy
@@ -11807,7 +11808,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.9307, y: -0, z: -0.80104}
-  m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
+  m_LocalScale: {x: 1.97, y: 1.97, z: 1.97}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2110207445912402075}
@@ -11851,7 +11852,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2027599513
+  GlobalObjectIdHash: 3685616709
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -11921,6 +11922,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 112178b95101e1743b8189b8bd566240, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ImpAI
+  stats: {fileID: 11400000, guid: 8eeaddc6655f6ea41808f57ee7bd11c1, type: 2}
+  healthBar: {fileID: 6188879498003277001}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
@@ -11931,12 +11934,37 @@ MonoBehaviour:
   projectilePrefab: {fileID: 6916111140770829, guid: 4e576fa9f7b2be9418e2367b42e51a5b, type: 3}
   firePoint: {fileID: 5778052268085955263}
   projectileSpeed: 20
-  data: {fileID: 11400000, guid: 5f89a80a41585354b8a3362e8320cbab, type: 2}
-  healthBar: {fileID: 6188879498003277001}
   updateRate: 0.2
   typeIndex: 0
   countsInWaveUI: 0
   powerBallDropAmount: 3
+--- !u!54 &4789366257405991004
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7969264364928350748}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &7994172203084786907
 GameObject:
   m_ObjectHideFlags: 0

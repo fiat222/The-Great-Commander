@@ -2347,6 +2347,7 @@ GameObject:
   - component: {fileID: 7146906442572810718}
   - component: {fileID: 8768528159069381026}
   - component: {fileID: 3233745083892480175}
+  - component: {fileID: -6821839404168367972}
   m_Layer: 0
   m_Name: Troll
   m_TagString: Enemy
@@ -2476,20 +2477,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 177e267d05e1f6e49afe37951db3848f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  stats: {fileID: 11400000, guid: 49bfa040ae688bb4092f611127822152, type: 2}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
-  attackRange: 10.2
   baseAttackRange: 10
-  walkSpeed: 4.5
-  runSpeed: 7.5
   weaponCollider: {fileID: 4119540314111231965}
-  data: {fileID: 11400000, guid: 466d0cdd9a263d44bb74a0583db82a11, type: 2}
   healthBar: {fileID: 2475521018926550491}
   updateRate: 0.2
   typeIndex: 0
   countsInWaveUI: 0
   powerBallDropAmount: 5
+--- !u!54 &-6821839404168367972
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378969683373002168}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &8544920200380359057
 GameObject:
   m_ObjectHideFlags: 0
