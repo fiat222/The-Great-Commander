@@ -2617,6 +2617,7 @@ GameObject:
   - component: {fileID: 919149574631803258}
   - component: {fileID: 4250717058193517012}
   - component: {fileID: 2439350745714779980}
+  - component: {fileID: 6591537001615045865}
   m_Layer: 0
   m_Name: minotaur
   m_TagString: Enemy
@@ -2747,20 +2748,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 177e267d05e1f6e49afe37951db3848f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  stats: {fileID: 11400000, guid: cb81fb4419f6a8b49bd62c061062d321, type: 2}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
-  attackRange: 6.6
   baseAttackRange: 6.3
-  walkSpeed: 4.5
-  runSpeed: 7.5
   weaponCollider: {fileID: 1156479969222257645}
-  data: {fileID: 11400000, guid: 43d565b243f13ce46a5800b4b2777ec5, type: 2}
   healthBar: {fileID: 6821621521065452543}
   updateRate: 0.2
   typeIndex: 0
   countsInWaveUI: 0
   powerBallDropAmount: 5
+--- !u!54 &6591537001615045865
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4338195467388019840}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &4378426307308255978
 GameObject:
   m_ObjectHideFlags: 0

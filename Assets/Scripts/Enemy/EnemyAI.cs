@@ -11,66 +11,63 @@ public class EnemyAI : MonoBehaviour
     private Transform baseTransform;
     private Animator animator;
 
+    [Header("Enemy Stats SO")]
+    public EnemyStatsSO stats;   // 🔥 ใช้ตัวนี้แทน MinionData
+
     [Header("State Settings")]
     public EnemyState currentState = EnemyState.MoveToBase;
-    public float detectionRange = 17f; // ระยะตรวจเจอครั้งแรก
-    public float chaseRange = 28f;     // ระยะหลุด (เพิ่มขึ้นตอนไล่ล่า)
-    public float attackRange = 5f;      // ระยะโจมตี
-    public float baseAttackRange = 7f;  // ระยะโจมตีป้อม
+    public float detectionRange = 17f;
+    public float chaseRange = 28f;
+    public float baseAttackRange = 7f;
 
-    [Header("Movement Settings")]
-    [Tooltip("ใช้ความเร็วจาก MinionData. Speed ถ้าไม่มีให้ใช้ค่า Default นี้ครับ")]
-    private float baseSpeed = 4.5f; 
+    [Header("Combat")]
+    public Collider weaponCollider;
 
-    [Header("Combat Settings")]
-    public Collider weaponCollider;    // ลาก Collider ของหอกมาใส่ตรงนี้ครับ
-
-    [Header("Health Settings")]
-    public MinionData data;            // ลาก MinionData ScriptableObject มาใส่ใน Inspector
-    public Slider healthBar;           // ลาก UI Slider มาใส่ใน Inspector
+    [Header("Health UI")]
+    public Slider healthBar;
 
     [Header("AI Settings")]
     public float updateRate = 0.2f;
-    public int typeIndex;           // เพิ่มเพื่อระบุว่าเป็นตัวไหน
-    public bool countsInWaveUI;      // เพิ่มเพื่อระบุว่าเป็นมอนสเตอร์ระบบที่ต้องนับใน UI
+    public int typeIndex;
+    public bool countsInWaveUI;
 
     [Header("PowerBall Drop")]
-    [Tooltip("จำนวน PowerBall ที่ drop เมื่อตาย (0 = ไม่ drop)")]
     public int powerBallDropAmount = 5;
+
+    private float baseSpeed;
+    private float attackRange;
+    private float currentHP;
+    private float currentDamage;
+    private float currentDefense;
 
     private float distanceToPlayer;
     private float distanceToBase;
     private bool isDead = false;
-    private float currentHP;
+
+    // ==================== UNITY ====================
+
+    void OnEnable()
+    {
+        EnemyStatsSO.OnEnemyWaveScaled += OnWaveScaled;
+    }
+
+    void OnDisable()
+    {
+        EnemyStatsSO.OnEnemyWaveScaled -= OnWaveScaled;
+    }
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
-        // หา Base ด้วย Tag
         GameObject baseObj = GameObject.FindGameObjectWithTag("Base");
         if (baseObj != null) baseTransform = baseObj.transform;
 
-        // หาผู้เล่นด้วย Tag "Player"
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform;
 
-        // ตั้งค่า HP จาก MinionData
-        if (data != null)
-        {
-            currentHP = data.hp;
-            baseSpeed = data.speed;
-        }
-        else
-        {
-            currentHP = 100f; // ค่า default ถ้าไม่มี MinionData
-        }
-        
-        agent.speed = baseSpeed;
-        agent.acceleration = 60f;     // แรงเร่งสูงสุด (แตะปุ๊บวิ่งปั๊บ)
-        agent.angularSpeed = 600f;    // ความเร็วการหมุน (หมุนไวทันใจ)
-        agent.stoppingDistance = 0f;  // ไปให้ถึงเป้าหมาย ไม่ต้องชะลอ
+        ApplyStatsFromSO();
 
         if (healthBar != null)
         {
@@ -78,11 +75,57 @@ public class EnemyAI : MonoBehaviour
             healthBar.value = currentHP;
         }
 
-        // ปิด Collider ไว้ก่อนตอนเริ่มเกม
         DisableWeaponCollider();
 
         InvokeRepeating(nameof(UpdateDestination), 0f, updateRate);
     }
+
+    // ==================== APPLY STATS ====================
+
+    private void ApplyStatsFromSO()
+    {
+        if (stats == null)
+        {
+            Debug.LogWarning("[EnemyAI] ไม่มี EnemyStatsSO!");
+            return;
+        }
+
+        currentHP = stats.GetHP();
+        currentDamage = stats.GetDamage();
+        currentDefense = stats.GetDefense();
+        baseSpeed = stats.GetSpeed();
+        attackRange = stats.attackRange;
+
+        if (agent != null)
+        {
+            agent.speed = baseSpeed;
+            agent.acceleration = 60f;
+            agent.angularSpeed = 600f;
+            agent.stoppingDistance = 0f;
+        }
+    }
+
+    private void OnWaveScaled(EnemyStatsSO changedSO)
+    {
+        if (changedSO != stats) return;
+
+        float hpPercent = currentHP / healthBar.maxValue;
+
+        ApplyStatsFromSO();
+
+        // รักษา % HP เดิมไว้
+        currentHP = stats.GetHP() * hpPercent;
+
+        if (healthBar != null)
+        {
+            healthBar.maxValue = stats.GetHP();
+            healthBar.value = currentHP;
+        }
+
+        Debug.Log($"[EnemyAI] {stats.enemyName} รีเฟรช stat ตาม Wave {stats.CurrentWave}");
+    }
+
+    // ==================== UPDATE ====================
 
     void Update()
     {
@@ -98,14 +141,9 @@ public class EnemyAI : MonoBehaviour
 
     private void HandleStateTransitions()
     {
-        // --- กฎเหล็ก: ถ้าถึงป้อมแล้ว ต้องตีป้อมอย่างเดียว ไม่สนเพลเยอร์ ---
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
-            if (currentState != EnemyState.AttackBase)
-            {
-                currentState = EnemyState.AttackBase;
-                Debug.Log("<color=red>[EnemyAI]</color> Base reached! Ignoring player and attacking base...");
-            }
+            currentState = EnemyState.AttackBase;
             return;
         }
 
@@ -113,36 +151,24 @@ public class EnemyAI : MonoBehaviour
         {
             case EnemyState.MoveToBase:
                 if (distanceToPlayer <= detectionRange)
-                {
                     currentState = EnemyState.ChasePlayer;
-                    Debug.Log("<color=orange>[EnemyAI]</color> Player detected! Chasing...");
-                }
                 break;
 
             case EnemyState.ChasePlayer:
                 if (distanceToPlayer > chaseRange)
-                {
                     currentState = EnemyState.MoveToBase;
-                    Debug.Log("<color=yellow>[EnemyAI]</color> Player lost! Returning to base...");
-                }
                 else if (distanceToPlayer <= attackRange)
-                {
                     currentState = EnemyState.AttackPlayer;
-                }
                 break;
 
             case EnemyState.AttackPlayer:
                 if (distanceToPlayer > attackRange)
-                {
                     currentState = EnemyState.ChasePlayer;
-                }
                 break;
 
             case EnemyState.AttackBase:
                 if (distanceToBase > baseAttackRange + 1f)
-                {
                     currentState = EnemyState.MoveToBase;
-                }
                 break;
         }
     }
@@ -151,11 +177,9 @@ public class EnemyAI : MonoBehaviour
     {
         if (animator == null) return;
 
-        // --- 🌊 ใช้ความเร็วแบบ Normalized (1.0 = เดินปกติ, 1.5 = วิ่ง) ---
-        // ทำให้ BlendTree ของเราไม่ต้องแปรผันตามค่าความเร็วเป๊ะๆ ของมอนสเตอร์แต่ละตัวครับ
         float currentSpeed = agent != null ? agent.velocity.magnitude : 0f;
         float normalizedSpeed = baseSpeed > 0 ? currentSpeed / baseSpeed : 0f;
-        
+
         animator.SetFloat("Speed", normalizedSpeed);
 
         bool isAttacking = currentState == EnemyState.AttackPlayer || currentState == EnemyState.AttackBase;
@@ -169,61 +193,76 @@ public class EnemyAI : MonoBehaviour
         switch (currentState)
         {
             case EnemyState.MoveToBase:
-                if (baseTransform != null)
-                {
-                    agent.isStopped = false;
-                    agent.speed = baseSpeed;
-                    agent.SetDestination(baseTransform.position);
-                }
+                agent.isStopped = false;
+                agent.speed = baseSpeed;
+                agent.SetDestination(baseTransform.position);
                 break;
 
             case EnemyState.ChasePlayer:
-                if (playerTransform != null)
-                {
-                    agent.isStopped = false;
-                    agent.speed = baseSpeed * 1.5f; // วิ่งไล่กวดให้เร็วขึ้นหน่อยครับ
-                    agent.SetDestination(playerTransform.position);
-                }
+                agent.isStopped = false;
+                agent.speed = baseSpeed * 1.5f;
+                agent.SetDestination(playerTransform.position);
                 break;
 
             case EnemyState.AttackPlayer:
                 agent.isStopped = true;
-                if (playerTransform != null)
-                {
-                    Vector3 lookPos = playerTransform.position;
-                    lookPos.y = transform.position.y;
-                    transform.LookAt(lookPos);
-                }
                 break;
 
             case EnemyState.AttackBase:
                 agent.isStopped = true;
-                if (baseTransform != null)
-                {
-                    Vector3 lookPos = baseTransform.position;
-                    lookPos.y = transform.position.y;
-                    transform.LookAt(lookPos);
-                }
                 break;
         }
     }
 
-    private void OnDrawGizmosSelected()
+    // ==================== DAMAGE ====================
+
+    public void TakeDamage(float dmg)
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
+        if (isDead) return;
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, chaseRange);
+        float actualDamage = Mathf.Max(1f, dmg - currentDefense);
 
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        currentHP -= actualDamage;
+        currentHP = Mathf.Max(currentHP, 0);
 
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, baseAttackRange);
+        if (healthBar != null)
+            healthBar.value = currentHP;
+
+        if (animator != null)
+            animator.SetTrigger("Damage");
+
+        if (currentHP <= 0)
+            Die();
     }
 
-    // ==================== ANIMATION EVENTS ====================
+    public void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        if (animator != null)
+            animator.SetTrigger("Die");
+
+        if (countsInWaveUI)
+            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.enabled = false;
+        }
+
+        Collider mainCollider = GetComponent<Collider>();
+        if (mainCollider != null) mainCollider.enabled = false;
+
+        DisableWeaponCollider();
+
+        PowerBallDropper.Drop(transform.position, powerBallDropAmount);
+
+        Destroy(gameObject, 3f);
+    }
+
+    // ==================== Animation Events ====================
 
     public void EnableWeaponCollider()
     {
@@ -233,79 +272,5 @@ public class EnemyAI : MonoBehaviour
     public void DisableWeaponCollider()
     {
         if (weaponCollider != null) weaponCollider.enabled = false;
-    }
-
-    // ==================== HEALTH ====================
-
-    public void TakeDamage(int dmg)
-    {
-        if (isDead) return;
-
-        // คำนวณ Damage หลังจาก Defense
-        float defense = data != null ? data.defense : 0f;
-        float actualDamage = Mathf.Max(1f, dmg - defense);
-
-        currentHP -= actualDamage;
-        currentHP = Mathf.Max(currentHP, 0);
-
-        // อัพเดท Health Bar Slider
-        if (healthBar != null)
-            healthBar.value = currentHP;
-
-        // เล่น Animation โดนตี
-        if (animator != null)
-            animator.SetTrigger("Damage");
-
-        Debug.Log($"<color=orange>[EnemyAI]</color> {gameObject.name} โดนตี {dmg} ดาเมจ (Defense: {defense}, Actual: {actualDamage}) | HP เหลือ: {currentHP}");
-
-        if (currentHP <= 0)
-            Die();
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (isDead) return;
-
-        // รับดาเมจจาก Tag "Weapon" และ "Minion" เท่านั้น
-        if (other.CompareTag("Weapon") || other.CompareTag("Minion"))
-        {
-            TakeDamage(50);
-        }
-    }
-
-    public void Die()
-    {
-        if (isDead) return;
-        isDead = true;
-
-        Debug.Log("<color=red>[EnemyAI]</color> <b>Die!!</b>");
-
-        // 1. เล่นอนิเมชันตาย
-        if (animator != null) animator.SetTrigger("Die");
-
-        // 2. แจ้งระบบ UI ว่ามอนสเตอร์รายทางตัวนี้ตายแล้ว
-        if (countsInWaveUI)
-        {
-            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
-        }
-
-        // 3. หยุดเดินและปิด AI
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.enabled = false;
-        }
-
-        // 4. ปิด Collider เพื่อไม่ให้ขวางทาง
-        Collider mainCollider = GetComponent<Collider>();
-        if (mainCollider != null) mainCollider.enabled = false;
-
-        DisableWeaponCollider();
-
-        // 5. Drop PowerBall ณ ตำแหน่งที่ตาย
-        PowerBallDropper.Drop(transform.position, powerBallDropAmount);
-
-        // 6. ทำลายทิ้งหลังจาก 3 วินาที
-        Destroy(gameObject, 3f);
     }
 }
