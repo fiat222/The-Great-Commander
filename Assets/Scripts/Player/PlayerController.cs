@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour
     public float attackDashForce = 5f; 
     public float dashDecay = 10f; 
     public float rollForce = 20f; 
-    public float rollSpeed = 15f; // ความเร็วต่อเนื่องในขณะกลิ้ง (Elden Ring Style)
+    // public float rollSpeed = 15f; // ความเร็วต่อเนื่องในขณะกลิ้ง (Elden Ring Style)
     public float rollDecay = 8f; 
     [Range(0, 1)] public float forceTime = 0.2f; 
     [Range(0, 1)] public float comboWindowTime = 0.5f; 
@@ -57,6 +57,9 @@ public class PlayerController : MonoBehaviour
     private bool isInvincible = false; // สำหรับระบบอมตะ (I-frames)
     private bool isDead = false;
     private Coroutine rotationCoroutine; // สำหรับคุมการหมุนนุ่มๆ
+
+    // --- ⭐ ตัวแปรล็อคการเคลื่อนไหว (กลิ้ง) สั่งงานจาก WeaponHandler ---
+    public bool isMovementLocked { get; set; } 
 
     private void Awake()
     {
@@ -192,11 +195,13 @@ public class PlayerController : MonoBehaviour
 
     private void HandleRollInput()
     {
-        // เช็คว่ากำลังยุ่งอยู่ไหม (ฟันอยู่ หรือกำลังกลิ้งอยู่)
-        bool isBusy = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || 
-                                          animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
-                                          animator.GetNextAnimatorStateInfo(0).IsTag("Attack") || 
-                                          animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
+        // เช็คว่ากำลังยุ่งอยู่ไหม (กำลังเล่นท่าโจมตี/กลิ้งอยู่)
+        // ขึ้นอยู่กับ Tag ใน Animator 100% ครับ
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        bool isBusy = (animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || 
+                                           sInfo.IsTag("Attack") || nInfo.IsTag("Attack")));
+
 
         // กดกลิ้งได้เฉพาะเฟสต่อสู้เท่านั้นครับ
         // if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
@@ -221,9 +226,8 @@ public class PlayerController : MonoBehaviour
                 rollDirection = transform.forward;
             }
 
-            // ในระบบ Elden Ring เราจะไม่ใช้แรงส่งตูมเดียว แต่จะเคลื่อนที่ใน Move() ตลอดแอนิเมชัน
-            // แต่ผมยังคงใส่ DashVelocity นิดหน่อยตอนเริ่มเพื่อให้มันดู "กระชาก" ตอนออกตัวครับ
-            currentDashVelocity = rollDirection * (rollForce * 0.5f);
+            // สไตล์ Archer: ดีดตัวไปด้วยแรง rollForce ทีเดียวจบ (สะอาดและคุมง่ายกว่าครับ)
+            currentDashVelocity = rollDirection * rollForce;
 
             if (animator != null)
             {
@@ -239,6 +243,11 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            // ⭐ ห้ามฟันถ้ากำลัง "กลิ้ง" หรือ "กระโดด" อยู่ครับ (ป้องกันฟันแทรก)
+            var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+            if (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || sInfo.IsTag("Jump") || nInfo.IsTag("Jump")) return;
+
             lastClickTime = Time.time;
             
             // ถ้าไม่ได้ฟันอยู่ ให้เริ่มฟันทันที
@@ -262,20 +271,15 @@ public class PlayerController : MonoBehaviour
 
     private void TriggerAttack()
     {
-        // --- เพิ่มระบบหันไปตามทิศที่กดเดิน (เหมือนตอนกลิ้ง) ---
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
+        // 📷 หันหน้าไปตามทิศที่กล้องมองเสมอ (สไตล์ Archer) ไม่ว่าจะเดินอยู่หรือไม่ก็ตามครับ
+        float targetAngle = mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : transform.eulerAngles.y;
 
-        if (inputDir.magnitude >= 0.1f)
-        {
-            // หาความชันที่อ้างอิงจากมุมกล้อง
-            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-            
-            // เปลี่ยนจากหันทันที เป็นการสั่ง Coroutine ให้ค่อยๆ หมุน (แต่หมุนไวมาก) เพื่อไม่ให้ดูเหมือนวาร์ปครับ
-            if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
-            rotationCoroutine = StartCoroutine(SmoothRotate(targetAngle));
-        }
+        // สั่งหมุนตัวให้นุ่มนวลไปยังเป้าหมาย (ไวแต่ไม่วาร์ป)
+        if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
+        rotationCoroutine = StartCoroutine(SmoothRotate(targetAngle));
+
+        // ⭐ เอาการล็อคอัตโนมัติออกแล้วครับ พี่ไปใส่ Lock/Unlock ใน Animation เองได้เลย
+        // isMovementLocked = true;
 
         comboStep++;
         if (comboStep > 3) comboStep = 1;
@@ -329,8 +333,10 @@ public class PlayerController : MonoBehaviour
             }
 
             // --- เอาโค้ดพุ่งอัตโนมัติออกแล้วครับ เพื่อให้พี่ผูก Event ใน Animator เองได้ 100% ---
+            // ⭐ ป้องกันการ "เขียนทับแรงพุ่ง": ถ้ากำลังจะกลิ้ง (Roll) ห้ามใช้แรงพุ่งของท่าฟันครับ
+            bool isRollingNow = stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll");
 
-            if (normalizedTime >= forceTime && !alreadyAppliedForce && stateInfo.IsTag("Attack"))
+            if (normalizedTime >= forceTime && !alreadyAppliedForce && stateInfo.IsTag("Attack") && !isRollingNow)
             {
                 PerformAttackDash();
                 alreadyAppliedForce = true;
@@ -373,13 +379,15 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        // ตรวจสอบว่ากำลังทำ Action ที่ต้องล็อคการเดินไหม (ฟัน/กลิ้ง)
-        // ปรับปรุง: เช็คทั้งสถานะปัจจุบัน และสถานะถัดไป (Transition) เพื่อให้ล็อคแน่น 100% ครับ
         var stateInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nextStateInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
-        
-        bool isLocked = animator != null && (stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack") || 
-                                             stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll"));
+
+        // ล็อคการเดิน/กระโดด ถ้ากำลังเล่นแอนิเมชัน Attack/Roll (เช็คจาก Tag ใน Animator 100% ครับ)
+        bool isLocked = (animator != null && (stateInfo.IsTag("Attack") || nextStateInfo.IsTag("Attack") || 
+                                             stateInfo.IsTag("Roll") || nextStateInfo.IsTag("Roll")));
+
+
+
 
         // ระบบเช็คพื้นแบบใหม่โดยใช้ Empty Object (SphereCast)
         if (groundCheck != null)
@@ -410,16 +418,8 @@ public class PlayerController : MonoBehaviour
             currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, decay * Time.deltaTime);
         }
 
-        // --- ระบบเคลื่อนที่ต่อเนื่องขณะกลิ้ง (Elden Ring Style) ---
-        if (isLocked && stateInfo.IsTag("Roll"))
-        {
-            float normalizedTime = stateInfo.normalizedTime % 1f;
-            // กลิ้งไปข้างหน้าเฉพาะช่วงเวลาที่ตัวละครกำลังม้วนตัว (0% - 75% ของแอนิเมชัน)
-            if (normalizedTime < 0.75f)
-            {
-                controller.Move(rollDirection * rollSpeed * Time.deltaTime);
-            }
-        }
+        // ลบระบบเคลื่อนที่ต่อเนื่องแบบเช็ค % ออก (เพราะเราใช้ DashVelocity ตัวเดียวแบบ Archer แล้วครับ)
+
 
         // เคลื่อนที่และหมุนตัว (ถ้าไม่ได้โดนล็อค Animation อยู่)
         if (!isLocked)
