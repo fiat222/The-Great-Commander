@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: -1265361500, guid: cdbdba6152284b3498045e0898913945, type: 3}
   cost: 20
   orbDrop: 0
-  attackRange: 15
+  attackRange: 21
   baseDamage: 12
   baseDefense: 1
   baseSpeed: 6
