@@ -73,6 +73,7 @@ public class Archer : MonoBehaviour
 
     private int currentHP;
     private bool isDead;
+    public bool IsDead => isDead;
     private Vector3 currentDashVelocity;
     private Vector3 rollDirection;
     private float rotationVelocity;
