@@ -7,46 +7,58 @@ public class Projectile : MonoBehaviour
     public float speed = 35f;
 
     private Transform target;
-    private Transform towerTransform;
-    private float towerRange;
+    private Vector3 targetPoint;   // ปลายเส้น — fixed ตอน Seek()
+    private Vector3 dir;           // ทิศทางคงที่ตลอด
     private int damage;
-    private float distanceTraveled = 0f;
+    private bool ready = false;
 
     public void Seek(Transform _target, int _damage, Transform _tower, float _range)
     {
-        target = _target;
-        damage = _damage;
-        towerTransform = _tower;
-        towerRange = _range;
-        distanceTraveled = 0f;
+        target  = _target;
+        damage  = _damage;
+
+        // ปลายเส้นตรงกับ laser เป๊ะๆ — snapshot ทันที
+        targetPoint = GetTargetCenter(_target);
+        dir         = (targetPoint - transform.position).normalized;
+        ready       = true;
     }
 
     void Update()
     {
-        if (target == null || towerTransform == null)
+        if (!ready || target == null)
         {
             Destroy(gameObject);
             return;
         }
 
-        // เช็กว่าเป้าหมายอยู่ในขอบเขตไหม
-        float distToTower = Vector3.Distance(towerTransform.position, target.position);
-        if (distToTower > towerRange)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        // อัปเดต target ทุก frame — ไล่ตาม enemy ตลอด
+        Vector3 currentTarget = GetTargetCenter(target);
 
-        // ล็อกตำแหน่งบนเส้นตรงระหว่างป้อมกับเป้าหมาย
-        distanceTraveled += speed * Time.deltaTime;
-        float progress = distanceTraveled / distToTower;
-        transform.position = Vector3.Lerp(towerTransform.position, target.position, progress);
+        // บินไปหา enemy ด้วย MoveTowards
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            currentTarget,
+            speed * Time.deltaTime
+        );
 
-        if (progress >= 1.0f)
-        {
+        // หมุนหัวชี้ไปทาง enemy ตลอดเวลา
+        Vector3 liveDir = (currentTarget - transform.position).normalized;
+        if (liveDir != Vector3.zero)
+            transform.rotation = Quaternion.LookRotation(liveDir);
+
+        // ถึงตัว enemy แล้ว
+        if (Vector3.Distance(transform.position, currentTarget) < 0.3f)
             HitTarget();
-        }
     }
+
+
+    /// <summary>คืน world-space center ของ enemy จาก Collider bounds</summary>
+    static Vector3 GetTargetCenter(Transform t)
+    {
+        Collider col = t.GetComponentInChildren<Collider>();
+        return col != null ? col.bounds.center : t.position + Vector3.up;
+    }
+
 
     void OnTriggerEnter(Collider other)
     {
@@ -82,11 +94,7 @@ public class Projectile : MonoBehaviour
             }
 
             // Spawn VFX
-            if (hitVFXPrefab != null)
-            {
-                GameObject hitEffect = Instantiate(hitVFXPrefab, target.position, Quaternion.identity);
-                Destroy(hitEffect, 2f);
-            }
+            VFXManager.Instance?.Play(hitVFXPrefab, target.position);
         }
 
         Destroy(gameObject);

@@ -21,6 +21,12 @@ public class EnemyStatsSO : ScriptableObject
     public float orbDrop;
     public float attackRange;
 
+    [Header("VFX")]
+    [Tooltip("Particle/Effect ที่เล่นเมื่อ Enemy โดนตี")]
+    public GameObject hitVFX;
+    [Tooltip("Particle/Effect ที่เล่นเมื่อ Enemy ตาย")]
+    public GameObject deathVFX;
+
     [Header("Base Stats (Wave 1)")]
     public float baseDamage = 15f;
     public float baseDefense = 2.5f;

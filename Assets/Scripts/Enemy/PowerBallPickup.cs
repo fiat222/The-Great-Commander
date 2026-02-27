@@ -33,6 +33,8 @@ public class PowerBallPickup : MonoBehaviour
     [Header("Auto Collect")]
     [Tooltip("ความเร็วลอยเข้าหาผู้เล่นตอน auto collect")]
     public float autoCollectSpeed = 14f;
+    [Tooltip("ความสูงเหนือตำแหน่ง Player ที่ลูกบอลจะบินเข้าหา (กึ่งกลางตัวผู้เล่น)")]
+    public float collectHeight = 1f;
 
     // ── state ──
     private Transform playerTransform;
@@ -95,12 +97,15 @@ public class PowerBallPickup : MonoBehaviour
 
         if (playerTransform == null) return;
 
+        // จุดเป้าหมายที่กึ่งกลางตัวผู้เล่น (ไม่ใช่ที่เท้า)
+        Vector3 collectTarget = playerTransform.position + Vector3.up * collectHeight;
+
         if (isAutoCollecting)
         {
             transform.position = Vector3.MoveTowards(
-                transform.position, playerTransform.position, autoCollectSpeed * Time.deltaTime);
+                transform.position, collectTarget, autoCollectSpeed * Time.deltaTime);
 
-            if (Vector3.Distance(transform.position, playerTransform.position) < 0.5f)
+            if (Vector3.Distance(transform.position, collectTarget) < 0.5f)
                 Collect();
         }
         else
@@ -110,7 +115,7 @@ public class PowerBallPickup : MonoBehaviour
             if (distToPlayer <= attractRadius)
             {
                 transform.position = Vector3.MoveTowards(
-                    transform.position, playerTransform.position, attractSpeed * Time.deltaTime);
+                    transform.position, collectTarget, attractSpeed * Time.deltaTime);
             }
             else
             {
