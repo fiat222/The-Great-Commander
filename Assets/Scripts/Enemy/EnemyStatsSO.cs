@@ -29,6 +29,29 @@ public class EnemyStatsSO : ScriptableObject
     [Tooltip("Particle/Effect ที่เล่นเมื่อ Enemy ถูกลบออกจากแมพ")]
     public GameObject removalVFX;
 
+    [Header("SFX — Attack")]
+    [Tooltip("สุ่มเล่น 1 ตัวทุกครั้งที่โจมตี (เรียกจาก Animation Event)")]
+    public AudioClip[] attackSounds;
+    [Range(0f, 1f)] public float attackVolume = 0.8f;
+
+    [Header("SFX — Roar")]
+    [Tooltip("สุ่มเล่น 1 ตัวตอน Spawn")]
+    public AudioClip[] roarSounds;
+    [Range(0f, 1f)] public float roarVolume = 1f;
+    [Tooltip("ติ๊กเพื่อให้เสียงคำรามวนลูปตลอดชีวิต หยุดอัตโนมัติเมื่อตาย")]
+    public bool roarLoop = false;
+
+    [Header("SFX — Death")]
+    [Tooltip("สุ่มเล่น 1 ตัวตอนตาย")]
+    public AudioClip[] deathSounds;
+    [Range(0f, 1f)] public float deathVolume = 1f;
+
+    [Header("SFX — 3D Audio Settings")]
+    [Tooltip("ระยะที่ดังเต็ม 100%")]
+    public float minHearDistance = 3f;
+    [Tooltip("ระยะที่ไม่ได้ยินแล้ว")]
+    public float maxHearDistance = 30f;
+
     [Header("Base Stats (Wave 1)")]
     public float baseDamage = 15f;
     public float baseDefense = 2.5f;
