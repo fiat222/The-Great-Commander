@@ -43,6 +43,7 @@ public class PlayerController : MonoBehaviour
     private bool isLockedOn;
 
     // ==================== References ====================
+    public WeaponHandler weaponHandler;
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
@@ -68,6 +69,7 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;
     private bool isInvincible;
     private bool isDead;
+    public bool IsDead => isDead;
     private Coroutine rotationCoroutine;
 
     public bool isMovementLocked { get; set; }
@@ -118,7 +120,24 @@ public class PlayerController : MonoBehaviour
         HandleRollInput();
         HandleAttackInput();
         CheckAnimationLogic();
+        UpdateWeaponEffect();
         Move();
+    }
+
+    private void UpdateWeaponEffect()
+    {
+        if (weaponHandler == null || animator == null) return;
+
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+
+        bool inAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack");
+        bool inRoll = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
+        bool inJump = sInfo.IsTag("Jump") || nInfo.IsTag("Jump");
+
+        bool shouldShow = inAttack || inRoll || inJump;
+
+        weaponHandler.SetEffectActive(shouldShow);
     }
 
     // ==================== Target Lock ====================
@@ -373,6 +392,7 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int rawDmg)
     {
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
+        if (animator != null) animator.SetTrigger("Damage");
 
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
@@ -387,6 +407,8 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
         isDead = true;
         Debug.Log("<color=red>[Player]</color> ตายแล้ว!");
+        
         if (animator != null) animator.SetTrigger("Die");
+        if (controller != null) controller.enabled = false;
     }
 }
