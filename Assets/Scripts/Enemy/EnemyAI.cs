@@ -35,6 +35,11 @@ public class EnemyAI : MonoBehaviour
     [Header("PowerBall Drop")]
     public int powerBallDropAmount = 5;
 
+    [Header("VFX Spawn Points")]
+    public Transform hitVFXPoint;
+    public Transform deathVFXPoint;
+    public Transform removalVFXPoint;
+
     private float baseSpeed;
     private float attackRange;
     private float currentHP;
@@ -148,8 +153,14 @@ public class EnemyAI : MonoBehaviour
     {
         if (animator == null || agent == null || !agent.enabled) return;
 
-        bool isAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack");
-        if (isAttacking)
+        bool isAnimatorAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || 
+                                   animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk");
+
+        bool isAttackState = currentState == EnemyState.AttackPlayer || 
+                             currentState == EnemyState.AttackBase || 
+                             currentState == EnemyState.AttackMinion;
+
+        if (isAnimatorAttacking)
         {
             agent.isStopped = true;
             agent.updateRotation = false;
@@ -158,6 +169,31 @@ public class EnemyAI : MonoBehaviour
         else
         {
             agent.updateRotation = true;
+            
+            // ถ้าอยู่ในสถานะโจมตี แต่ไม่ได้เล่นท่า (ช่วงคูลดาวน์) ให้ค่อยๆ หันหาเป้าหมาย
+            if (isAttackState)
+            {
+                RotateTowardsTarget();
+            }
+        }
+    }
+
+    private void RotateTowardsTarget()
+    {
+        Transform target = null;
+        if (currentState == EnemyState.AttackBase) target = baseTransform;
+        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else target = playerTransform;
+
+        if (target != null)
+        {
+            Vector3 direction = (target.position - transform.position).normalized;
+            direction.y = 0; 
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            }
         }
     }
 
@@ -309,7 +345,6 @@ public class EnemyAI : MonoBehaviour
             case EnemyState.AttackBase:
             case EnemyState.AttackMinion:
                 agent.isStopped = true;
-                agent.updateRotation = false; // ปิดการหมุนขณะโจมตี
                 agent.velocity = Vector3.zero; // ป้องกันการสไลด์
                 break;
         }
@@ -332,7 +367,8 @@ public class EnemyAI : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Damage");
 
-        VFXManager.Instance?.Play(stats?.hitVFX, transform.position);
+        Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
+        VFXManager.Instance?.Play(stats?.hitVFX, vfxPos);
 
         if (currentHP <= 0)
             Die();
@@ -364,10 +400,19 @@ public class EnemyAI : MonoBehaviour
 
         DisableWeaponCollider();
 
-        VFXManager.Instance?.Play(stats?.deathVFX, transform.position);
+        Vector3 vfxPos = deathVFXPoint != null ? deathVFXPoint.position : transform.position;
+        VFXManager.Instance?.Play(stats?.deathVFX, vfxPos);
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
+        Invoke(nameof(PlayRemovalVFX), 2f);
         Destroy(gameObject, 3f);
+    }
+
+    private void PlayRemovalVFX()
+    {
+        Vector3 vfxPos = removalVFXPoint != null ? removalVFXPoint.position : 
+                         (hitVFXPoint != null ? hitVFXPoint.position : transform.position);
+        VFXManager.Instance?.Play(stats?.removalVFX, vfxPos);
     }
 
     private void OnDrawGizmosSelected()

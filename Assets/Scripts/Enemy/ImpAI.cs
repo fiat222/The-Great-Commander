@@ -38,6 +38,11 @@ public class ImpAI : MonoBehaviour
     [Header("PowerBall Drop")]
     public int powerBallDropAmount = 3;
 
+    [Header("VFX Spawn Points")]
+    public Transform hitVFXPoint;
+    public Transform deathVFXPoint;
+    public Transform removalVFXPoint;
+
     private float currentHP;
     private float currentDamage;
     private float currentDefense;
@@ -407,7 +412,8 @@ public class ImpAI : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Damage");
 
-        VFXManager.Instance?.Play(stats?.hitVFX, transform.position);
+        Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
+        VFXManager.Instance?.Play(stats?.hitVFX, vfxPos);
 
         if (currentHP <= 0)
             Die();
@@ -438,9 +444,18 @@ public class ImpAI : MonoBehaviour
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
 
-        VFXManager.Instance?.Play(stats?.deathVFX, transform.position);
+        Vector3 vfxPos = deathVFXPoint != null ? deathVFXPoint.position : transform.position;
+        VFXManager.Instance?.Play(stats?.deathVFX, vfxPos);
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
+        Invoke(nameof(PlayRemovalVFX), 2f);
         Destroy(gameObject, 3f);
+    }
+
+    private void PlayRemovalVFX()
+    {
+        Vector3 vfxPos = removalVFXPoint != null ? removalVFXPoint.position : 
+                         (hitVFXPoint != null ? hitVFXPoint.position : transform.position);
+        VFXManager.Instance?.Play(stats?.removalVFX, vfxPos);
     }
 }
