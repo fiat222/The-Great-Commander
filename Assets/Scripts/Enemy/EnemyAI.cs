@@ -244,8 +244,20 @@ public class EnemyAI : MonoBehaviour
         minionTransform = closestMinion;
     }
 
+    private bool IsPlayerDead()
+    {
+        if (playerTransform == null) return true;
+        var pc = playerTransform.GetComponent<PlayerController>();
+        if (pc != null) return pc.IsDead;
+        var ar = playerTransform.GetComponent<Archer>();
+        if (ar != null) return ar.IsDead;
+        return false;
+    }
+
     private void HandleStateTransitions()
     {
+        bool playerDead = IsPlayerDead();
+
         // 1. ตรวจสอบการโจมตีฐานก่อนเสมอ (ถ้าประชิดฐานแล้ว)
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
@@ -268,24 +280,24 @@ public class EnemyAI : MonoBehaviour
 
             case EnemyState.AttackPlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
+                else if (playerDead || playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
                 break;
 
             case EnemyState.ChasePlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
+                else if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
                 else if (distanceToPlayer <= attackRange) currentState = EnemyState.AttackPlayer;
                 break;
 
             case EnemyState.AttackBase:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer; // แทรกคิว Player ถ้าเข้าใกล้
+                else if (!playerDead && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer; // แทรกคิว Player ถ้าเข้าใกล้
                 else if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
                 break;
 
             case EnemyState.MoveToBase:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                else if (!playerDead && playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 break;
         }
     }
