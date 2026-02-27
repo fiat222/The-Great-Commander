@@ -114,6 +114,9 @@ public class ImpAI : MonoBehaviour
 
         if (agent != null)
         {
+            agent.speed = walkSpeed;
+            agent.acceleration = 60f;
+            agent.angularSpeed = 600f;
             // ให้มันหยุดเดินก่อนถึงเป้าหมายเล็กน้อย (ตามระยะโจมตี) จะได้ไม่เอาหน้าไปแนบ
             agent.stoppingDistance = Mathf.Max(2f, attackRange - 2f);
         }
@@ -243,8 +246,20 @@ public class ImpAI : MonoBehaviour
 
     // ==================== STATE MACHINE (เหมือนเดิม) ====================
 
+    private bool IsPlayerDead()
+    {
+        if (playerTransform == null) return true;
+        var pc = playerTransform.GetComponent<PlayerController>();
+        if (pc != null) return pc.IsDead;
+        var ar = playerTransform.GetComponent<Archer>();
+        if (ar != null) return ar.IsDead;
+        return false;
+    }
+
     private void HandleStateTransitions()
     {
+        bool playerDead = IsPlayerDead();
+
         // 1. ตรวจสอบการโจมตีฐานก่อน (ถ้าประชิดฐานแล้ว)
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
@@ -267,24 +282,24 @@ public class ImpAI : MonoBehaviour
 
             case EnemyState.AttackPlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
+                else if (playerDead || playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
                 break;
 
             case EnemyState.ChasePlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
+                else if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
                 else if (distanceToPlayer <= attackRange) currentState = EnemyState.AttackPlayer;
                 break;
 
             case EnemyState.AttackBase:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                else if (!playerDead && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 else if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
                 break;
 
             case EnemyState.MoveToBase:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                else if (!playerDead && playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 break;
         }
     }

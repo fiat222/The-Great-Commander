@@ -2560,6 +2560,7 @@ MonoBehaviour:
   lockRange: 40
   targetGroup: {fileID: 5297712426773064380}
   cameraPivot: {fileID: 1091415606521185129}
+  weaponHandler: {fileID: 8222893807471953391}
   groundCheck: {fileID: 6728241864739391125}
   groundDistance: 0.4
   groundMask:
@@ -2580,6 +2581,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHandler
   weaponHitbox: {fileID: 383996374462886139}
+  weaponEffect: {fileID: 4138443799964628163}
 --- !u!114 &1149898199259591970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2999,6 +3001,11 @@ PrefabInstance:
 --- !u!136 &383996374462886139 stripped
 CapsuleCollider:
   m_CorrespondingSourceObject: {fileID: 3466990305328937275, guid: d8c482f0e3231d2459bc829e94264a38, type: 3}
+  m_PrefabInstance: {fileID: 3839604535261612480}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4138443799964628163 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 875870202375470339, guid: d8c482f0e3231d2459bc829e94264a38, type: 3}
   m_PrefabInstance: {fileID: 3839604535261612480}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7610593806323888482 stripped
