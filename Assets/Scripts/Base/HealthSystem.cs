@@ -23,6 +23,8 @@ public class HealthSystem : MonoBehaviour
     public UnityEvent OnDie;
 
     private bool isDead = false;
+    public bool IsDead => isDead;
+
     private Camera mainCamera;
 
     void Start()
@@ -83,20 +85,21 @@ public class HealthSystem : MonoBehaviour
         isDead = true;
         OnDie?.Invoke();
         
-        // ถ้ามี UI ให้ซ่อน UI ไว้
         if (healthCanvas != null) healthCanvas.gameObject.SetActive(false);
 
         Debug.Log($"<color=red>[Dead]</color> {gameObject.name} ถูกทำลายแล้ว!");
 
         if (isMainBase)
         {
-            // === โค้ดจบเกมเวลาฐานแตก ===
             Debug.LogError("‼️ ฐานหลักพังแล้ว! จบเกม (Game Over) ‼️");
-            // ตรงนี้คุณสามารถเรียก GameManager.Instance.GameOver() ในอนาคตได้
         }
         else
         {
-            // ถ้าเป็นแค่ป้อมย่อย หรือ ศัตรูธรรมดา ให้ทำลายทิ้งตามปกติ
+            // ถ้ามี EnemyAI หรือ ImpAI ให้ AI จัดการ Destroy เอง (มี animation + PowerBall)
+            // HealthSystem ไม่ต้อง Destroy ซ้ำ
+            if (GetComponent<EnemyAI>() != null || GetComponent<ImpAI>() != null)
+                return;
+
             Destroy(gameObject, 0.5f);
         }
     }

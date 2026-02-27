@@ -45,6 +45,7 @@ public class ImpAI : MonoBehaviour
     private float distanceToBase;
     private float distanceToMinion;
     private bool isDead = false;
+    public bool IsDead => isDead;
     private Vector3 pendingTargetPos;
 
     // ==================== EVENT SUBSCRIBE ====================
@@ -77,6 +78,10 @@ public class ImpAI : MonoBehaviour
             healthBar.maxValue = currentHP;
             healthBar.value = currentHP;
         }
+
+        // ⭐ ถ้ามี HealthSystem ให้เชื่อม OnDie → Die()
+        HealthSystem hs = GetComponent<HealthSystem>();
+        if (hs != null) hs.OnDie.AddListener(Die);
 
         InvokeRepeating(nameof(UpdateDestination), 0f, updateRate);
     }
@@ -402,6 +407,8 @@ public class ImpAI : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Damage");
 
+        VFXManager.Instance?.Play(stats?.hitVFX, transform.position);
+
         if (currentHP <= 0)
             Die();
     }
@@ -431,6 +438,7 @@ public class ImpAI : MonoBehaviour
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
 
+        VFXManager.Instance?.Play(stats?.deathVFX, transform.position);
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
         Destroy(gameObject, 3f);
