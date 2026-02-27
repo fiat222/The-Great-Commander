@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Balancer
   prefab: {fileID: 6300062666072225749, guid: effd4ff60a6aa7d4fb15084ecbeb4478, type: 3}
-  picture: {fileID: 21300000, guid: 2fead1ce4e343a04792564adbc92714e, type: 3}
+  picture: {fileID: 21300000, guid: 0b4b5ac1b8a87014caa551ea048ccc24, type: 3}
   icon: {fileID: 21300000, guid: 2fead1ce4e343a04792564adbc92714e, type: 3}
   cost: 20
   damage: 15
@@ -22,3 +22,8 @@ MonoBehaviour:
   speed: 5
   hp: 40
   attackrange: 3
+  costEscalation: 1.5
+  hpMultiplier: 1.3
+  attackMultiplier: 1.2
+  defenseMultiplier: 1.3
+  maxLevel: 5
