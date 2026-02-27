@@ -286,10 +286,17 @@ public class Archer : MonoBehaviour
     public void SpawnArrow()
     {
         if (arrowPrefab == null || arrowSpawnPoint == null) return;
-        Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
-        Vector3 targetPt = Physics.Raycast(ray, out RaycastHit hit, 100f,
-                                           groundMask | LayerMask.GetMask("Enemy"))
-            ? hit.point : ray.GetPoint(100f);
+
+        // ใช้ ViewportPointToRay เพื่อความแม่นยำสูงสุดที่จุดกึ่งกลางหน้าจอ
+        Ray ray = mainCameraTransform != null ? 
+                  Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)) : 
+                  new Ray(transform.position + Vector3.up * 1.5f, transform.forward);
+
+        // เล็งกระแทกทุกอย่าง ยกเว้น Player และ Minion เพื่อให้จุดเล็ง (targetPt) ถูกต้องเสมอ
+        int mask = ~(LayerMask.GetMask("Player") | LayerMask.GetMask("Minion"));
+
+        Vector3 targetPt = Physics.Raycast(ray, out RaycastHit hit, 200f, mask)
+            ? hit.point : ray.GetPoint(200f);
 
         Vector3 dir = (targetPt - arrowSpawnPoint.position).normalized;
         float finalSpd = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, lastAccuracy);
