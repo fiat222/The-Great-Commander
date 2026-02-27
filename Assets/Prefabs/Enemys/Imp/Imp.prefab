@@ -2634,6 +2634,7 @@ Transform:
   - {fileID: 4025674065560890828}
   - {fileID: 7917707561321144190}
   - {fileID: 7135942075015439824}
+  - {fileID: 9084762860007178736}
   m_Father: {fileID: 3995313112573474958}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2095739473750002943
@@ -3029,6 +3030,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6705326777661754081}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2408488436159902015
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3927015672183012943}
+  m_Layer: 0
+  m_Name: HitVFXPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3927015672183012943
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2408488436159902015}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.79, z: 0}
+  m_LocalScale: {x: 0.5076142, y: 0.5076142, z: 0.5076142}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4362168260300280825}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2498280189092077580
 GameObject:
   m_ObjectHideFlags: 0
@@ -3284,6 +3316,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3114893958681838262}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2719405524082875431
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9084762860007178736}
+  m_Layer: 0
+  m_Name: removeVFXPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9084762860007178736
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2719405524082875431}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1290606843305681566}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2726427290184523114
 GameObject:
@@ -8716,6 +8779,37 @@ Transform:
   - {fileID: 4745589794698421945}
   m_Father: {fileID: 5696953023394741990}
   m_LocalEulerAnglesHint: {x: -7.4741187, y: -0.9468309, z: -0.28765222}
+--- !u!1 &6030162291093510244
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6404001965902653129}
+  m_Layer: 0
+  m_Name: DeathVFXPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6404001965902653129
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6030162291093510244}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.17, z: 0}
+  m_LocalScale: {x: 0.5076142, y: 0.5076142, z: 0.5076142}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4362168260300280825}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6041900245103431104
 GameObject:
   m_ObjectHideFlags: 0
@@ -11816,6 +11910,8 @@ Transform:
   - {fileID: 429852181687435330}
   - {fileID: 2818559359628413409}
   - {fileID: 1304664353649766171}
+  - {fileID: 3927015672183012943}
+  - {fileID: 6404001965902653129}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7998733515061401958
@@ -11938,6 +12034,9 @@ MonoBehaviour:
   typeIndex: 0
   countsInWaveUI: 0
   powerBallDropAmount: 3
+  hitVFXPoint: {fileID: 3927015672183012943}
+  deathVFXPoint: {fileID: 6404001965902653129}
+  removalVFXPoint: {fileID: 9084762860007178736}
 --- !u!54 &4789366257405991004
 Rigidbody:
   m_ObjectHideFlags: 0

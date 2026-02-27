@@ -20,6 +20,7 @@ MonoBehaviour:
   attackRange: 3
   hitVFX: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
   deathVFX: {fileID: 4809171458859421548, guid: 4e91ed1a8efe7044785b9bd97a47d87f, type: 3}
+  removalVFX: {fileID: 4318940320840401929, guid: 842eb98046e1ca348b3c0807fcfe362d, type: 3}
   baseDamage: 15
   baseDefense: 2.5
   baseSpeed: 5
