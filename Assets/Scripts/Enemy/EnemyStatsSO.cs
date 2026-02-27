@@ -26,6 +26,8 @@ public class EnemyStatsSO : ScriptableObject
     public GameObject hitVFX;
     [Tooltip("Particle/Effect ที่เล่นเมื่อ Enemy ตาย")]
     public GameObject deathVFX;
+    [Tooltip("Particle/Effect ที่เล่นเมื่อ Enemy ถูกลบออกจากแมพ")]
+    public GameObject removalVFX;
 
     [Header("Base Stats (Wave 1)")]
     public float baseDamage = 15f;
