@@ -114,11 +114,12 @@ public class Archer : MonoBehaviour
         if (stats != null)
         {
             maxHP = stats.GetHP();
-            moveSpeed = stats.GetSpeed() * 2.4f;
-            aimMoveSpeed = stats.GetSpeed() * 1.0f;
+            moveSpeed = stats.GetSpeed();
+            aimMoveSpeed = stats.GetSpeed();
             AttackDamage = stats.GetDamage();
             Defense = stats.GetDefense();
 
+            // minDamage 20% ของ maxDamage, maxDamage เต็มจาก SO
             minDamage = Mathf.Max(1, Mathf.RoundToInt(AttackDamage * 0.20f));
             maxDamage = Mathf.RoundToInt(AttackDamage);
         }
@@ -129,7 +130,9 @@ public class Archer : MonoBehaviour
             if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
         }
 
-        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} MinDmg:{minDamage} MaxDmg:{maxDamage}");
+        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} " +
+                  $"| HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} " +
+                  $"MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
     private void Update()
@@ -426,12 +429,20 @@ public class Archer : MonoBehaviour
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
 
+        // rawDmg - Defense ก่อน แล้วค่อยลบ HP (ต่ำสุด 1)
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
 
-        Debug.Log($"<color=red>[Archer]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}");
+        Debug.Log($"<color=red>[Archer]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}/{maxHP}");
         if (currentHP <= 0) Die();
+    }
+    public void Heal(int amount)
+    {
+        if (isDead) return;
+        currentHP = Mathf.Min(currentHP + amount, maxHP);
+        if (healthBar != null) healthBar.value = currentHP;
+        Debug.Log($"<color=lime>[Archer]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
     }
 
     public void Die()
