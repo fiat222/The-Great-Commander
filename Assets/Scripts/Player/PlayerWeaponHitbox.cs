@@ -5,62 +5,51 @@ public class PlayerWeaponHitbox : MonoBehaviour
 {
     private Collider hitboxCollider;
     private float customDamage = -1f;
-
-    // เก็บรายชื่อศัตรูที่โดนไปแล้วในการฟันรอบนี้
     private HashSet<Collider> hitThisSwing = new HashSet<Collider>();
 
-    void Awake()
-    {
-        hitboxCollider = GetComponent<Collider>();
-    }
+    void Awake() => hitboxCollider = GetComponent<Collider>();
 
-    // ดึงจาก PlayerController อัตโนมัติ
     public void SetDamage(float dmg) => customDamage = dmg;
 
-    /// <summary>เรียกจาก WeaponHandler ตอนเปิด Hitbox → เคลียร์รายชื่อ</summary>
-    public void ClearHitList()
-    {
-        hitThisSwing.Clear();
-    }
+    public void ClearHitList() => hitThisSwing.Clear();
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy"))
+        if (!other.CompareTag("Enemy")) return;
+        if (hitThisSwing.Contains(other)) return;
+        hitThisSwing.Add(other);
+
+        float damage = 10f;
+        if (customDamage > 0)
         {
-            // ถ้าโดนตัวนี้ไปแล้วรอบนี้ → ข้ามเลย
-            if (hitThisSwing.Contains(other)) return;
-            hitThisSwing.Add(other);
+            damage = customDamage;
+        }
+        else
+        {
+            var pc = GetComponentInParent<PlayerController>();
+            if (pc != null) damage = pc.AttackDamage;
+        }
 
-            float damage = 10f;
+        int dmgInt = Mathf.RoundToInt(damage);
 
-            // 1. หาดาเมจจากแหล่งกำเนิด
-            if (customDamage > 0)
-            {
-                damage = customDamage;
-            }
-            else
-            {
-                // ลองหาจากตัวพ่อ (PlayerController หรือ Archer)
-                var pc = GetComponentInParent<PlayerController>();
-                if (pc != null) damage = pc.AttackDamage;
-            }
+        EnemyAI enemyAI = other.GetComponent<EnemyAI>();
+        if (enemyAI != null)
+        {
+            enemyAI.TakeDamage(damage);
+            // ── แสดงตัวเลขดาเมจ ──
+            Vector3 spawnPos = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
+            DamageNumberSpawner.Show(dmgInt, spawnPos);
+            OnHitSuccess(other.name, damage);
+            return;
+        }
 
-            // 2. ส่งดาเมจไปที่ศัตรู (ใช้ GetComponentInParent เพื่อรองรับ Child Collider แบบ Minotaur)
-            EnemyAI enemyAI = other.GetComponent<EnemyAI>();
-            if (enemyAI != null)
-            {
-                enemyAI.TakeDamage(damage);
-                OnHitSuccess(other.name, damage);
-                return;
-            }
-
-            ImpAI impAI = other.GetComponent<ImpAI>();
-            if (impAI != null)
-            {
-                impAI.TakeDamage((int)damage);
-                OnHitSuccess(other.name, damage);
-                return;
-            }
+        ImpAI impAI = other.GetComponent<ImpAI>();
+        if (impAI != null)
+        {
+            impAI.TakeDamage(dmgInt);
+            Vector3 spawnPos2 = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
+            DamageNumberSpawner.Show(dmgInt, spawnPos2);
+            OnHitSuccess(other.name, damage);
         }
     }
 
