@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
   cost: 50
   orbDrop: 0
-  attackRange: 6
+  attackRange: 8
   hitVFX: {fileID: 2944396702758532163, guid: 2dbceea635b1ef546b7931ec8d967189, type: 3}
   deathVFX: {fileID: 4809171458859421548, guid: 4e91ed1a8efe7044785b9bd97a47d87f, type: 3}
   removalVFX: {fileID: 4318940320840401929, guid: 842eb98046e1ca348b3c0807fcfe362d, type: 3}
@@ -34,7 +34,7 @@ MonoBehaviour:
   baseDamage: 30
   baseDefense: 5
   baseSpeed: 3
-  baseHP: 150
+  baseHP: 1500
   waveHpMultiplier: 1.15
   waveAttackMultiplier: 1.12
   waveDefenseMultiplier: 1.1
