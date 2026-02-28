@@ -1,0 +1,75 @@
+﻿using UnityEngine;
+
+public class ArrowProjectile : MonoBehaviour
+{
+    [Header("Projectile Settings")]
+    public float gravity = 9.81f;
+    public float lifetime = 5f;
+
+    private float speed;
+    private int damage;
+    private Vector3 velocity;
+    private bool isFlying = false;
+
+    private readonly Quaternion rotationOffset = Quaternion.Euler(90f, 0f, 0f);
+
+    public void Launch(Vector3 direction, float launchSpeed, int launchDamage)
+    {
+        speed = launchSpeed;
+        damage = launchDamage;
+        velocity = direction.normalized * speed;
+        isFlying = true;
+        transform.rotation = Quaternion.LookRotation(velocity) * rotationOffset;
+        Destroy(gameObject, lifetime);
+    }
+
+    private void Update()
+    {
+        if (!isFlying) return;
+        velocity.y -= gravity * Time.deltaTime;
+        transform.position += velocity * Time.deltaTime;
+        if (velocity != Vector3.zero)
+            transform.rotation = Quaternion.LookRotation(velocity) * rotationOffset;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!isFlying) return;
+        if (other.CompareTag("Player")) return;
+        if (other.CompareTag("Minion")) return;
+
+        isFlying = false;
+
+        if (other.CompareTag("Enemy"))
+        {
+            HealthSystem hp = other.GetComponent<HealthSystem>();
+            if (hp != null)
+            {
+                hp.TakeDamage(damage);
+            }
+            else
+            {
+                EnemyAI enemyAI = other.GetComponent<EnemyAI>();
+                if (enemyAI != null)
+                    enemyAI.TakeDamage(damage);
+                else
+                {
+                    ImpAI impAI = other.GetComponent<ImpAI>();
+                    if (impAI != null) impAI.TakeDamage(damage);
+                }
+            }
+
+            // ── แสดงตัวเลขดาเมจ — วางที่ขอบบนสุดของ Collider ──
+            Vector3 spawnPos = new Vector3(other.bounds.center.x,
+                                           other.bounds.max.y,
+                                           other.bounds.center.z);
+            DamageNumberSpawner.Show(damage, spawnPos);
+
+            Debug.Log($"<color=red>[Arrow]</color> Hit Enemy! Damage: {damage}");
+        }
+
+        transform.SetParent(other.transform);
+        if (TryGetComponent<Collider>(out var col)) col.enabled = false;
+        Destroy(gameObject, 10f);
+    }
+}
