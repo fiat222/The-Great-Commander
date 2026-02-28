@@ -16,6 +16,9 @@ public class WeaponHandler : MonoBehaviour
     public void EnableHitbox()
     {
         weaponHitbox.enabled = true;
+        // เคลียร์รายชื่อศัตรูที่โดนไปแล้ว → ฟันรอบใหม่ตีโดนได้หมด
+        var hitbox = weaponHitbox.GetComponent<PlayerWeaponHitbox>();
+        if (hitbox != null) hitbox.ClearHitList();
     }
 
     public void DisableHitbox() 
