@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cd70768fa7ac14f9f544d816e83fd8, type: 3}
   m_Name: Warrior
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
-  baseHP: 100
+  baseHP: 10000
   baseSpeed: 5
   baseDefense: 5
   baseDamage: 25
