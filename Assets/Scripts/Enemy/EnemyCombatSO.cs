@@ -25,4 +25,7 @@ public class EnemyCombatSO : ScriptableObject
     [Header("Animation")]
     [Tooltip("ชื่อ Animator Trigger ที่ใช้สั่งโจมตี")]
     public string attackTriggerName = "Attack";
+
+    [Tooltip("จำนวนท่าโจมตีที่มี (ใช้สุ่ม AttackIndex 0 ถึง N-1)")]
+    public int attackVariants = 1;
 }

@@ -2550,7 +2550,7 @@ MonoBehaviour:
   jumpHeight: 3
   gravity: -19.62
   comboResetTime: 3
-  attackDashForce: 5
+  attackDashForce: 30
   dashDecay: 10
   rollForce: 35
   rollDecay: 0.3
@@ -2594,7 +2594,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 988953083
+  GlobalObjectIdHash: 195356216
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
