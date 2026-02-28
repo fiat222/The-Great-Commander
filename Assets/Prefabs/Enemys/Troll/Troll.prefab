@@ -2489,7 +2489,7 @@ MonoBehaviour:
   detectionRange: 17
   chaseRange: 28
   baseAttackRange: 7.8
-  weaponEffect: {fileID: 6270479847400694222}
+  weaponEffect: {fileID: 6244207482821792559}
   weaponCollider: {fileID: 4119540314111231965}
   healthBar: {fileID: 2475521018926550491}
   updateRate: 0.2
@@ -2533,7 +2533,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 327541969
+  GlobalObjectIdHash: 1395994454
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2616,7 +2616,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!82 &262549348233548022
 AudioSource:
@@ -2981,9 +2981,9 @@ CapsuleCollider:
   m_CorrespondingSourceObject: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
   m_PrefabInstance: {fileID: 2757188165463762084}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &6270479847400694222 stripped
+--- !u!1 &6244207482821792559 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 8162413916168684906, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
+  m_CorrespondingSourceObject: {fileID: 8134734134146578315, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
   m_PrefabInstance: {fileID: 2757188165463762084}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7232208742139296843 stripped
