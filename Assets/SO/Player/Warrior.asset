@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Warrior
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
   baseHP: 10000
-  baseSpeed: 5
+  baseSpeed: 8
   baseDefense: 5
   baseDamage: 25
   baseUpgradeCost: 20
