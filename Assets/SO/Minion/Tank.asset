@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Tank
   prefab: {fileID: 994335374302502111, guid: f86da21f859afd044b9a12580d75f7a0, type: 3}
-  picture: {fileID: 21300000, guid: ee16f9b24b7c60741b3b1e1afbd770f1, type: 3}
+  picture: {fileID: 21300000, guid: 5e91b5affddb05046aaf6a07577e1931, type: 3}
   icon: {fileID: 21300000, guid: ee16f9b24b7c60741b3b1e1afbd770f1, type: 3}
   cost: 20
   damage: 6
@@ -22,3 +22,8 @@ MonoBehaviour:
   speed: 3
   hp: 60
   attackrange: 3
+  costEscalation: 1.5
+  hpMultiplier: 1.3
+  attackMultiplier: 1.2
+  defenseMultiplier: 1.3
+  maxLevel: 5
