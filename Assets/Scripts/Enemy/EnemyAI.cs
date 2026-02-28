@@ -84,6 +84,7 @@ public class EnemyAI : MonoBehaviour
         }
 
         DisableWeaponCollider();
+        GetComponent<CharacterAudio>()?.PlayRoar();
 
         // ⭐ ถ้ามี HealthSystem ให้เชื่อม OnDie → Die() เพื่อรับ kill จากป้อมด้วย
         HealthSystem hs = GetComponent<HealthSystem>();
@@ -415,6 +416,7 @@ public class EnemyAI : MonoBehaviour
         Vector3 vfxPos = deathVFXPoint != null ? deathVFXPoint.position : transform.position;
         VFXManager.Instance?.Play(stats?.deathVFX, vfxPos);
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
+        GetComponent<CharacterAudio>()?.PlayDeath();
 
         Invoke(nameof(PlayRemovalVFX), 2f);
         Destroy(gameObject, 3f);
@@ -443,6 +445,9 @@ public class EnemyAI : MonoBehaviour
     }
 
     // ==================== Animation Events ====================
+
+    /// <summary>เรียกจาก Animation Event ตอน Frame ที่อาวุธปะทะเป้าหมาย</summary>
+    public void PlayAttackSound() => GetComponent<CharacterAudio>()?.PlayAttack();
 
     public void EnableWeaponCollider()
     {
