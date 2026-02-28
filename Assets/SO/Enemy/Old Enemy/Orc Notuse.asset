@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 001be0423c12c444fb1fa8555fa08a81, type: 3}
-  m_Name: Orc
+  m_Name: Orc Notuse
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
   enemyName: Orc
   prefab: {fileID: 1220637287032465596, guid: 502fda38a6bb9d045ad874e6cd89abc2, type: 3}
