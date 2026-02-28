@@ -29,7 +29,8 @@ public class PlayerController : MonoBehaviour
 
     private int comboStep;
     private float lastClickTime;
-    private Vector3 currentDashVelocity;
+    private Vector3 currentDashVelocity;  // แรงพุ่งตอนฟัน
+    private Vector3 currentRollVelocity;  // แรงกลิ้ง (แยกกันแล้ว!)
     private Vector3 rollDirection;
     private bool alreadyAppliedForce;
     private bool bufferCombo;
@@ -237,8 +238,12 @@ public class PlayerController : MonoBehaviour
         }
         else { rollDirection = transform.forward; }
 
-        currentDashVelocity = rollDirection * rollForce;
-        if (animator != null) animator.SetTrigger("Roll");
+        currentRollVelocity = rollDirection * rollForce;
+        if (animator != null)
+        {
+            animator.ResetTrigger("Damage"); // ตัดท่าโดนตีทิ้ง → กลิ้งเลย
+            animator.SetTrigger("Roll");
+        }
     }
 
     // ==================== Attack ====================
@@ -353,11 +358,18 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isGrounded", isGrounded);
         }
 
+        // --- Attack Dash ---
         if (currentDashVelocity.magnitude > 0.1f)
         {
             controller.Move(currentDashVelocity * Time.deltaTime);
-            float decay = isLocked && sInfo.IsTag("Roll") ? rollDecay : dashDecay;
-            currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, decay * Time.deltaTime);
+            currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, dashDecay * Time.deltaTime);
+        }
+
+        // --- Roll ---
+        if (currentRollVelocity.magnitude > 0.1f)
+        {
+            controller.Move(currentRollVelocity * Time.deltaTime);
+            currentRollVelocity = Vector3.Lerp(currentRollVelocity, Vector3.zero, rollDecay * Time.deltaTime);
         }
 
         if (!isLocked)
@@ -394,8 +406,10 @@ public class PlayerController : MonoBehaviour
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
 
-        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธทันที
+        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง
         ResetCombo();
+        currentDashVelocity = Vector3.zero;
+        currentRollVelocity = Vector3.zero;
         var wh = GetComponentInChildren<WeaponHandler>();
         if (wh != null) wh.DisableHitbox();
 
