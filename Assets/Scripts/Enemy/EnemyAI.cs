@@ -62,6 +62,8 @@ public class EnemyAI : MonoBehaviour
     private bool hasRetreated; // ถอยหลังแล้วรอบนี้หรือยัง
     private float targetStrafeX; // ค่าเป้าหมายสำหรับ Blend Tree (ค่อยๆ ไหล)
     private float targetStrafeY;
+    private bool attackTracking; // หมุนตามเพลเยอร์ระหว่างท่าตี (ใช้กับ Combo)
+    private float nextFlinchTime; // คูลดาวน์ท่าชะงัก (ป้องกันแสปมสตัน)
 
     // ==================== UNITY ====================
 
@@ -188,9 +190,21 @@ public class EnemyAI : MonoBehaviour
 
         if (isAnimatorAttacking)
         {
-            agent.isStopped = true;
             agent.updateRotation = false;
-            agent.velocity = Vector3.zero;
+
+            if (attackTracking)
+            {
+                // กำลังไกวอาวุธอยู่ → หมุนหาเพลเยอร์ไปเรื่อยๆ (สำหรับ Combo Tracking)
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+                RotateTowardsTarget();
+            }
+            else
+            {
+                // กำลังฟันอยู่ → ล็อคทุกอย่าง
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
         }
         else
         {
@@ -412,8 +426,16 @@ public class EnemyAI : MonoBehaviour
                 if (combatSO != null && !string.IsNullOrEmpty(combatSO.attackTriggerName))
                 {
                     animator.ResetTrigger("Damage"); // ยกเลิกท่าโดนตี ถ้ากำลังเล่นอยู่
+
+                    // สุ่มท่าโจมตี (0 ถึง attackVariants-1)
+                    int variants = combatSO.attackVariants;
+                    if (variants > 1)
+                        animator.SetInteger("AttackIndex", Random.Range(0, variants));
+                    else
+                        animator.SetInteger("AttackIndex", 0);
+
                     animator.SetTrigger(combatSO.attackTriggerName);
-                    Debug.Log($"[Combat] ⚔️ โจมตี! cooldown={cooldown}s, nextAttack={nextAttackTime:F1}");
+                    Debug.Log($"[Combat] ⚔️ โจมตี! ท่า={animator.GetInteger("AttackIndex")} cooldown={cooldown}s");
                 }
             }
         }
@@ -596,12 +618,16 @@ public class EnemyAI : MonoBehaviour
         if (healthBar != null)
             healthBar.value = currentHP;
 
-        // --- ระบบ Hyper Armor ---
+        // --- ระบบ Hyper Armor + Flinch Cooldown ---
         bool isAttacking = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk"));
         bool skipFlinch = combatSO != null && combatSO.hasHyperArmor && isAttacking;
+        bool flinchOnCooldown = Time.time < nextFlinchTime; // ยังอยู่ในช่วงป้องกัน spam
 
-        if (animator != null && !skipFlinch)
+        if (animator != null && !skipFlinch && !flinchOnCooldown)
+        {
             animator.SetTrigger("Damage");
+            nextFlinchTime = Time.time + 2f; // โดนสตันได้แค่ทุก 0.5 วิ
+        }
 
         Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
         VFXManager.Instance?.Play(stats?.hitVFX, vfxPos);
@@ -683,6 +709,49 @@ public class EnemyAI : MonoBehaviour
 
     /// <summary>เรียกจาก Animation Event ตอน Frame ที่อาวุธปะทะเป้าหมาย</summary>
     public void PlayAttackSound() => GetComponent<CharacterAudio>()?.PlayAttack();
+
+    /// <summary>เรียกจาก Animation Event ตอนเริ่มไกวอาวุธ → เปิดการหมุนตามเพลเยอร์</summary>
+    public void StartAttackTracking() => attackTracking = true;
+
+    /// <summary>เรียกจาก Animation Event ตอนพุ่งหรือท่าจบ → หยุดหมุน</summary>
+    public void StopAttackTracking() => attackTracking = false;
+
+    /// <summary>เรียกจาก Animation Event ตอนกำลังฟัด → หยุด Tracking + พุ่งเข้าใส่</summary>
+    public void AttackLunge()
+    {
+        if (playerTransform == null) return;
+
+        // หยุด tracking + หันหน้าฟึบ
+        attackTracking = false;
+        SnapRotateTowardsTarget();
+
+        // พุ่งเข้าหาเพลเยอร์แบบไวมาก (ไม่วาป)
+        float dist = Vector3.Distance(transform.position, playerTransform.position);
+        float lungeDistance = Mathf.Max(0f, dist - 3f); // เว้นห่าง 3 หน่วย
+        Vector3 dir = (playerTransform.position - transform.position).normalized;
+        dir.y = 0;
+
+        if (lungeDistance > 0.1f)
+            StartCoroutine(LungeCoroutine(dir, lungeDistance));
+    }
+
+    private System.Collections.IEnumerator LungeCoroutine(Vector3 dir, float totalDist)
+    {
+        float duration = 0.12f; // ระยะเวลาพุ่ง (วินาที) ยิ่งน้อย ยิ่งไว
+        float elapsed = 0f;
+        float moved = 0f;
+
+        while (elapsed < duration && agent != null && agent.isOnNavMesh)
+        {
+            float step = (totalDist / duration) * Time.deltaTime;
+            if (moved + step > totalDist) step = totalDist - moved;
+
+            agent.Move(dir * step);
+            moved += step;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
 
     public void EnableWeaponCollider()
     {
