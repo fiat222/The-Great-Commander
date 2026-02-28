@@ -394,6 +394,11 @@ public class PlayerController : MonoBehaviour
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
 
+        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธทันที
+        ResetCombo();
+        var wh = GetComponentInChildren<WeaponHandler>();
+        if (wh != null) wh.DisableHitbox();
+
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;

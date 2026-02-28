@@ -14,6 +14,7 @@ public class EnemyAI : MonoBehaviour
 
     [Header("Enemy Stats SO")]
     public EnemyStatsSO stats;   // 🔥 ใช้ตัวนี้แทน MinionData
+    public EnemyCombatSO combatSO; // 🔥 สมองการต่อสู้แยกไฟล์
 
     [Header("State Settings")]
     public EnemyState currentState = EnemyState.MoveToBase;
@@ -22,6 +23,7 @@ public class EnemyAI : MonoBehaviour
     public float baseAttackRange = 7f;
 
     [Header("Combat")]
+    public GameObject weaponEffect;
     public Collider weaponCollider;
 
     [Header("Health UI")]
@@ -51,6 +53,15 @@ public class EnemyAI : MonoBehaviour
     private float distanceToMinion;
     private bool isDead = false;
     public bool IsDead => isDead;
+
+    // --- Runtime Combat ---
+    private float nextAttackTime;
+    private int strafeDirection = 1;
+    private float strafeEndTime;
+    private bool isStrafing;
+    private bool hasRetreated; // ถอยหลังแล้วรอบนี้หรือยัง
+    private float targetStrafeX; // ค่าเป้าหมายสำหรับ Blend Tree (ค่อยๆ ไหล)
+    private float targetStrafeY;
 
     // ==================== UNITY ====================
 
@@ -148,6 +159,20 @@ public class EnemyAI : MonoBehaviour
         UpdateTargetsAndDistances();
         HandleStateTransitions();
         UpdateAnimations();
+        UpdateWeaponEffect();
+    }
+
+    private void UpdateWeaponEffect()
+    {
+        if (weaponEffect == null || animator == null) return;
+
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+
+        bool inAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack");
+
+        if (weaponEffect.activeSelf != inAttack)
+            weaponEffect.SetActive(inAttack);
     }
 
     private void CheckAttackStasis()
@@ -169,16 +194,39 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
-            agent.updateRotation = true;
-            
-            // ถ้าอยู่ในสถานะโจมตี แต่ไม่ได้เล่นท่า (ช่วงคูลดาวน์) ให้ค่อยๆ หันหาเป้าหมาย
+            agent.isStopped = false; // ปลดเบรก ให้เดินได้
+
             if (isAttackState)
             {
+                // อยู่ในสถานะโจมตีแต่ยังไม่เล่นท่า → ปิด NavMesh หมุน ใช้ของเราเอง
+                agent.updateRotation = false;
                 RotateTowardsTarget();
+            }
+            else if (isStrafing)
+            {
+                // กำลัง Strafe → หันหน้าหาเพลเยอร์ทุกเฟรม
+                agent.updateRotation = false;
+                RotateTowardsTarget();
+            }
+            else
+            {
+                // เดิน/วิ่งปกติ → ให้ NavMesh จัดการหมุนตามเส้นทาง
+                agent.updateRotation = true;
+                targetStrafeX = 0f;
+                targetStrafeY = 0f;
+            }
+
+            // --- ค่อยๆ ไหล StrafeX/Y ไปหาเป้าหมาย (ป้องกันกระตุก) ---
+            if (animator != null)
+            {
+                float dampTime = 0.15f;
+                animator.SetFloat("StrafeX", targetStrafeX, dampTime, Time.deltaTime);
+                animator.SetFloat("StrafeY", targetStrafeY, dampTime, Time.deltaTime);
             }
         }
     }
 
+    /// <summary>หมุนหน้าหาเป้าหมายแบบนุ่มๆ (Slerp)</summary>
     private void RotateTowardsTarget()
     {
         Transform target = null;
@@ -188,13 +236,30 @@ public class EnemyAI : MonoBehaviour
 
         if (target != null)
         {
-            Vector3 direction = (target.position - transform.position).normalized;
-            direction.y = 0; 
+            Vector3 direction = (target.position - transform.position);
+            direction.y = 0;
             if (direction != Vector3.zero)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+                Quaternion targetRot = Quaternion.LookRotation(direction.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 8f);
             }
+        }
+    }
+
+    /// <summary>หมุนหน้าหาเป้าหมายแบบฟึบทันที (Snap)</summary>
+    private void SnapRotateTowardsTarget()
+    {
+        Transform target = null;
+        if (currentState == EnemyState.AttackBase) target = baseTransform;
+        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else target = playerTransform;
+
+        if (target != null)
+        {
+            Vector3 direction = (target.position - transform.position);
+            direction.y = 0;
+            if (direction != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(direction.normalized);
         }
     }
 
@@ -258,6 +323,7 @@ public class EnemyAI : MonoBehaviour
     private void HandleStateTransitions()
     {
         bool playerDead = IsPlayerDead();
+        bool inCooldown = Time.time < nextAttackTime;
 
         // 1. ตรวจสอบการโจมตีฐานก่อนเสมอ (ถ้าประชิดฐานแล้ว)
         if (baseTransform != null && distanceToBase <= baseAttackRange)
@@ -281,13 +347,22 @@ public class EnemyAI : MonoBehaviour
 
             case EnemyState.AttackPlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerDead || playerTransform == null || distanceToPlayer > attackRange) currentState = EnemyState.ChasePlayer;
+                else if (playerDead || playerTransform == null || distanceToPlayer > attackRange) 
+                    currentState = EnemyState.ChasePlayer;
+                else if (inCooldown) 
+                {
+                    // ถ้าคูลดาวน์นาน (เช่น > 0.5 วิ) ให้เดินวน (Chase/Strafe)
+                    // ถ้าคูลดาวน์สั้น (รัวๆ) ให้ปักหลักยืนรอที่เดิม (Attack)
+                    float threshold = 0.5f;
+                    if (combatSO != null && combatSO.attackCooldown > threshold)
+                        currentState = EnemyState.ChasePlayer;
+                }
                 break;
 
             case EnemyState.ChasePlayer:
                 if (minionTransform != null) currentState = EnemyState.ChaseMinion;
                 else if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
-                else if (distanceToPlayer <= attackRange) currentState = EnemyState.AttackPlayer;
+                else if (distanceToPlayer <= attackRange * 0.8f && !inCooldown) currentState = EnemyState.AttackPlayer;
                 break;
 
             case EnemyState.AttackBase:
@@ -315,7 +390,43 @@ public class EnemyAI : MonoBehaviour
         bool isAttacking = currentState == EnemyState.AttackPlayer || 
                            currentState == EnemyState.AttackBase || 
                            currentState == EnemyState.AttackMinion;
+        
+        // ถ้าเพิ่งเริ่มโจมตี ให้ตั้งคูลดาวน์
+        if (isAttacking && Time.time >= nextAttackTime)
+        {
+            // --- เช็คระยะให้ชัวร์อีกรอบก่อนจะกางกรงเล็บฟัน (ป้องกันการตีลม) ---
+            bool canReach = false;
+            if (currentState == EnemyState.AttackPlayer && distanceToPlayer <= attackRange + 0.2f) canReach = true;
+            else if (currentState == EnemyState.AttackMinion && distanceToMinion <= attackRange + 0.2f) canReach = true;
+            else if (currentState == EnemyState.AttackBase && distanceToBase <= baseAttackRange + 0.5f) canReach = true;
+
+            if (canReach)
+            {
+                // หันหน้าหาเป้าหมายแบบฟึบก่อนฟัน
+                SnapRotateTowardsTarget();
+                agent.updateRotation = false;
+
+                float cooldown = combatSO != null ? combatSO.attackCooldown : 1.5f;
+                nextAttackTime = Time.time + cooldown;
+                
+                if (combatSO != null && !string.IsNullOrEmpty(combatSO.attackTriggerName))
+                {
+                    animator.ResetTrigger("Damage"); // ยกเลิกท่าโดนตี ถ้ากำลังเล่นอยู่
+                    animator.SetTrigger(combatSO.attackTriggerName);
+                    Debug.Log($"[Combat] ⚔️ โจมตี! cooldown={cooldown}s, nextAttack={nextAttackTime:F1}");
+                }
+            }
+        }
+
         animator.SetBool("IsAttacking", isAttacking);
+
+        // --- ล้าง Trigger ที่ค้างอยู่ (ป้องกันการตีลม) ---
+        // ไม่ลบถ้ายังอยู่ในคูลดาวน์ (หมายถึงเพิ่งสั่งตี → ต้องปล่อยให้ Animator รับ Trigger ก่อน)
+        bool inCooldown2 = Time.time < nextAttackTime;
+        if (!isAttacking && !inCooldown2 && combatSO != null && !string.IsNullOrEmpty(combatSO.attackTriggerName))
+        {
+            animator.ResetTrigger(combatSO.attackTriggerName);
+        }
     }
 
     void UpdateDestination()
@@ -338,8 +449,116 @@ public class EnemyAI : MonoBehaviour
                 if (playerTransform != null)
                 {
                     agent.isStopped = false;
-                    agent.updateRotation = true; // เปิดการหมุนขณะไล่ล่า
-                    agent.speed = baseSpeed * 1.5f;
+                    bool inCooldown = Time.time < nextAttackTime;
+                    float sRange = combatSO != null ? combatSO.strafeRange : attackRange + 2f;
+
+                    if (inCooldown && combatSO != null)
+                    {
+                        // ถ้ายังเล่นท่าตีอยู่ หรือกำลัง Transition เข้าท่าตี → หยุดนิ่ง
+                        bool stillSwinging = animator != null && 
+                            (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || 
+                             animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk") ||
+                             animator.GetNextAnimatorStateInfo(0).IsTag("Attack") ||
+                             animator.GetNextAnimatorStateInfo(0).IsTag("Atk"));
+                        if (stillSwinging)
+                        {
+                            agent.isStopped = true;
+                            agent.velocity = Vector3.zero;
+                            Debug.Log("[Combat] 🛑 ยังตีอยู่ รอท่าจบก่อน");
+                            return;
+                        }
+
+                        isStrafing = true; // บอก CheckAttackStasis ว่าอยู่ในโหมดคุมเชิง → หันหน้าหาเพลเยอร์ตลอด
+
+                        // === Phase 1: ถอยหลังแค่ครั้งเดียวหลังตี ===
+                        if (!hasRetreated && distanceToPlayer < sRange - 0.5f)
+                        {
+                            Debug.Log($"[Combat] 🔙 ถอยหลัง dist={distanceToPlayer:F1} → target={sRange:F1}");
+                            agent.updateRotation = false;
+                            RotateTowardsTarget(); // หันหน้าหาเพลเยอร์ขณะถอย
+
+                            Vector3 awayFromPlayer = (transform.position - playerTransform.position).normalized;
+                            Vector3 retreatPos = transform.position + awayFromPlayer * 3f;
+
+                            agent.speed = combatSO.strafeSpeed;
+                            agent.SetDestination(retreatPos);
+
+                            // ส่งค่า Animator (ใช้ StrafeX = 0 สำหรับถอย ถ้ามีท่า)
+                            if (animator != null)
+                            {
+                                animator.SetBool("IsStrafing", true);
+                                targetStrafeX = 0f;
+                                targetStrafeY = -1f; // ถอยหลัง
+                            }
+                            return;
+                        }
+
+                        // ถอยหลังเสร็จแล้ว (อยู่ที่ strafeRange แล้ว หรือข้าม Phase 1 ไปแล้ว)
+                        hasRetreated = true;
+
+                        // === Phase 2: เดินวนซ้าย/ขวาที่ระยะ strafeRange ===
+                        if (Time.time > strafeEndTime)
+                        {
+                            if (Random.value < combatSO.strafeChance)
+                            {
+                                isStrafing = true;
+                                strafeDirection = Random.value < 0.5f ? -1 : 1;
+                                strafeEndTime = Time.time + combatSO.strafeDuration;
+                            }
+                            else
+                            {
+                                isStrafing = false;
+                                strafeEndTime = Time.time + 0.5f;
+                            }
+                        }
+
+                        if (isStrafing)
+                        {
+                            Debug.Log($"[Combat] ↔️ เดินวน dir={strafeDirection}");
+                            agent.updateRotation = false;
+                            RotateTowardsTarget(); // หันหน้าหาเพลเยอร์ขณะเดินวน
+
+                            Vector3 toPlayer = (playerTransform.position - transform.position).normalized;
+                            Vector3 strafeDir = Vector3.Cross(toPlayer, Vector3.up) * strafeDirection;
+                            // รักษาระยะ ~ strafeRange
+                            Vector3 targetPos = playerTransform.position + toPlayer * -sRange + strafeDir * 3f;
+
+                            agent.speed = combatSO.strafeSpeed;
+                            agent.SetDestination(targetPos);
+
+                            if (animator != null)
+                            {
+                                animator.SetBool("IsStrafing", true);
+                                targetStrafeX = strafeDirection;
+                                targetStrafeY = 0f; // เดินข้าง
+                            }
+                            return;
+                        }
+
+                        // ไม่ strafe ก็ยืนรอ → หันหน้าหาเพลเยอร์
+                        agent.updateRotation = false;
+                        RotateTowardsTarget();
+                        if (animator != null)
+                        {
+                            animator.SetBool("IsStrafing", true);
+                            targetStrafeX = 0f;
+                            targetStrafeY = 0f;
+                        }
+                        return;
+                    }
+
+                    // === Phase 3: คูลดาวน์หมด → วิ่งเข้าหาเพลเยอร์ ===
+                    Debug.Log($"[Combat] 🏃 วิ่งเข้าตี! dist={distanceToPlayer:F1}, atkRange={attackRange:F1}");
+                    isStrafing = false;
+                    hasRetreated = false; // รีเซ็ต ให้ถอยได้อีกรอบหน้า
+                    if (animator != null)
+                    {
+                        animator.SetBool("IsStrafing", false);
+                        targetStrafeX = 0f;
+                        targetStrafeY = 0f;
+                    }
+                    agent.updateRotation = true;
+                    agent.speed = baseSpeed * 2.5f;
                     agent.SetDestination(playerTransform.position);
                 }
                 break;
@@ -377,14 +596,23 @@ public class EnemyAI : MonoBehaviour
         if (healthBar != null)
             healthBar.value = currentHP;
 
-        if (animator != null)
+        // --- ระบบ Hyper Armor ---
+        bool isAttacking = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk"));
+        bool skipFlinch = combatSO != null && combatSO.hasHyperArmor && isAttacking;
+
+        if (animator != null && !skipFlinch)
             animator.SetTrigger("Damage");
 
         Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
         VFXManager.Instance?.Play(stats?.hitVFX, vfxPos);
 
         if (currentHP <= 0)
+        {
+            // ตาย → บังคับเล่นท่า Damage ก่อน (ไม่สน Hyper Armor) เพื่อให้ Animator ไปถึง Die ได้
+            if (animator != null && skipFlinch)
+                animator.SetTrigger("Damage");
             Die();
+        }
     }
 
     public void Die()
@@ -442,6 +670,13 @@ public class EnemyAI : MonoBehaviour
 
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, baseAttackRange);
+
+        // วงเขียว = ระยะเดินวน (strafeRange)
+        if (combatSO != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, combatSO.strafeRange);
+        }
     }
 
     // ==================== Animation Events ====================
