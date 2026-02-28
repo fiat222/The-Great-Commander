@@ -2436,11 +2436,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 402749968897305690}
+  - component: {fileID: 3233745083892480175}
   - component: {fileID: 5275082045454767480}
   - component: {fileID: 568373489653242433}
   - component: {fileID: 7146906442572810718}
   - component: {fileID: 8768528159069381026}
-  - component: {fileID: 3233745083892480175}
   - component: {fileID: -6821839404168367972}
   - component: {fileID: 262549348233548022}
   - component: {fileID: -2639475191054101527}
@@ -2471,6 +2471,34 @@ Transform:
   - {fileID: 8428542495881081843}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3233745083892480175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378969683373002168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 177e267d05e1f6e49afe37951db3848f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  stats: {fileID: 11400000, guid: 49bfa040ae688bb4092f611127822152, type: 2}
+  combatSO: {fileID: 11400000, guid: 0fa74accd9300bd47b08ea35b451d010, type: 2}
+  currentState: 0
+  detectionRange: 17
+  chaseRange: 28
+  baseAttackRange: 7.8
+  weaponEffect: {fileID: 6270479847400694222}
+  weaponCollider: {fileID: 4119540314111231965}
+  healthBar: {fileID: 2475521018926550491}
+  updateRate: 0.2
+  typeIndex: 0
+  countsInWaveUI: 0
+  powerBallDropAmount: 5
+  hitVFXPoint: {fileID: 513273130916812022}
+  deathVFXPoint: {fileID: 8428542495881081843}
+  removalVFXPoint: {fileID: 5160342207554351793}
 --- !u!95 &5275082045454767480
 Animator:
   serializedVersion: 7
@@ -2563,32 +2591,6 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &3233745083892480175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8378969683373002168}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 177e267d05e1f6e49afe37951db3848f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  stats: {fileID: 11400000, guid: 49bfa040ae688bb4092f611127822152, type: 2}
-  currentState: 0
-  detectionRange: 17
-  chaseRange: 28
-  baseAttackRange: 10
-  weaponCollider: {fileID: 4119540314111231965}
-  healthBar: {fileID: 2475521018926550491}
-  updateRate: 0.2
-  typeIndex: 0
-  countsInWaveUI: 0
-  powerBallDropAmount: 5
-  hitVFXPoint: {fileID: 513273130916812022}
-  deathVFXPoint: {fileID: 8428542495881081843}
-  removalVFXPoint: {fileID: 5160342207554351793}
 --- !u!54 &-6821839404168367972
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2925,26 +2927,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3619749018964763524}
     m_Modifications:
-    - target: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      propertyPath: m_Height
-      value: 1.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      propertyPath: m_Radius
-      value: 0.43
-      objectReference: {fileID: 0}
-    - target: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      propertyPath: m_Center.x
-      value: 0.07
-      objectReference: {fileID: 0}
-    - target: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      propertyPath: m_Center.y
-      value: -0.08
-      objectReference: {fileID: 0}
-    - target: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      propertyPath: m_Center.z
-      value: 0.36
-      objectReference: {fileID: 0}
     - target: {fileID: 4764376913039792367, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.014
@@ -2992,14 +2974,16 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5406128183402853294, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 307858468846977084}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
 --- !u!136 &4119540314111231965 stripped
 CapsuleCollider:
   m_CorrespondingSourceObject: {fileID: 2263072083563029369, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
+  m_PrefabInstance: {fileID: 2757188165463762084}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &6270479847400694222 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8162413916168684906, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
   m_PrefabInstance: {fileID: 2757188165463762084}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7232208742139296843 stripped
@@ -3007,20 +2991,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4764376913039792367, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
   m_PrefabInstance: {fileID: 2757188165463762084}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7873960071822350090 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5406128183402853294, guid: 1f7b1b9b5856ecd40b5c7743b6676c3b, type: 3}
-  m_PrefabInstance: {fileID: 2757188165463762084}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &307858468846977084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7873960071822350090}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75a03ecc1e4ced24685364f9b224e613, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyWeaponHitbox
