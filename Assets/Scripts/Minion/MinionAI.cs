@@ -18,6 +18,14 @@ public class MinionAI : MonoBehaviour
     private bool isInRange = false;
     private bool isDead = false;
 
+    [Header("VFX")]
+    [Tooltip("ตำแหน่งเกิด Effect (เช่น เท้า Golem)")]
+    public Transform attackVFXPoint;
+
+    [Header("Weapons")]
+    [Tooltip("ใส่ Hitbox ทุกชิ้นที่ใช้โจมตี (เช่น ดาบ, โล่)")]
+    public MinionWeaponHitbox[] weaponHitboxes;
+
     void Start()
     {
         if (data != null)
@@ -58,9 +66,35 @@ public class MinionAI : MonoBehaviour
         float range = data != null ? data.attackrange : 2f;
         float cooldown = data != null ? 1f / Mathf.Max(data.speed, 0.1f) : 1.5f;
 
+        // เช็คว่ากำลังเล่นท่าที่มี Tag "GolemAtk" อยู่เหรอเปล่า
+        bool isGolemAttacking = animator != null && animator.GetCurrentAnimatorStateInfo(0).IsTag("GolemAtk");
+        if (isGolemAttacking)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+
+            // หันหน้าหาศัตรูระหว่างตี
+            if (currentTarget != null)
+            {
+                Vector3 attackDir = currentTarget.position - transform.position;
+                attackDir.y = 0;
+                if (attackDir != Vector3.zero)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(attackDir);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 8f);
+                }
+            }
+
+            return;
+        }
+
         if (distance > range)
         {
-            if (isInRange) isInRange = false;
+            if (isInRange)
+            {
+                isInRange = false;
+                animator.ResetTrigger("Attack"); // เคลียร์ท่าตีทิ้งถ้าเป้าหมายหนี
+            }
 
             SetWalk(true);
             agent.isStopped = false;
@@ -105,6 +139,36 @@ public class MinionAI : MonoBehaviour
         Debug.Log($"<color=red>[MinionAI]</color> Hit! Damage: {dmg}");
     }
 
+    // เลือกว่าจะเปิด hitbox ของอาวุธชิ้นไหน (ตั้งค่า Int ใน Animation Event)
+    public void EnableWeaponColliderByIndex(int index)
+    {
+        if (weaponHitboxes != null && index >= 0 && index < weaponHitboxes.Length)
+        {
+            var hitbox = weaponHitboxes[index];
+            if (hitbox != null) hitbox.EnableHitbox();
+        }
+    }
+
+    public void DisableWeaponColliderByIndex(int index)
+    {
+        if (weaponHitboxes != null && index >= 0 && index < weaponHitboxes.Length)
+        {
+            var hitbox = weaponHitboxes[index];
+            if (hitbox != null) hitbox.DisableHitbox();
+        }
+    }
+
+    public void PlayAttackVFX()
+    {
+        if (data != null && data.attackVFX != null)
+        {
+            Vector3 spawnPos = attackVFXPoint.position;
+            VFXManager.Instance?.Play(data.attackVFX, spawnPos);
+        }
+    }
+
+
+
     void SetWalk(bool value) => animator.SetBool("Walk", value);
 
     public void TakeDamage(int dmg)
@@ -148,8 +212,25 @@ public class MinionAI : MonoBehaviour
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         if (enemies.Length == 0) { currentTarget = null; return; }
 
-        currentTarget = enemies
+        var validEnemies = enemies.Where(e => 
+        {
+            var ai = e.GetComponent<EnemyAI>();
+            return ai != null && !ai.IsDead; // มองข้ามตัวที่ตายแล้ว/กำลังลุก
+        }).ToArray();
+
+        if (validEnemies.Length == 0) { currentTarget = null; return; }
+
+        currentTarget = validEnemies
             .OrderBy(e => Vector3.Distance(transform.position, e.transform.position))
             .First().transform;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        float range = data.attackrange;
+
+        // Attack Range (แดง)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, range);
     }
 }

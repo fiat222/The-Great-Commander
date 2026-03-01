@@ -249,7 +249,7 @@ public class EnemyAI : MonoBehaviour
     {
         Transform target = null;
         if (currentState == EnemyState.AttackBase) target = baseTransform;
-        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else if (currentState == EnemyState.AttackMinion || currentState == EnemyState.ChaseMinion) target = minionTransform;
         else target = playerTransform;
 
         if (target != null)
@@ -269,7 +269,7 @@ public class EnemyAI : MonoBehaviour
     {
         Transform target = null;
         if (currentState == EnemyState.AttackBase) target = baseTransform;
-        else if (currentState == EnemyState.AttackMinion) target = minionTransform;
+        else if (currentState == EnemyState.AttackMinion || currentState == EnemyState.ChaseMinion) target = minionTransform;
         else target = playerTransform;
 
         if (target != null)
@@ -283,13 +283,13 @@ public class EnemyAI : MonoBehaviour
 
     private void UpdateTargetsAndDistances()
     {
-        // อัปเดตระยะ Player
+        // อัปเดตระยะ Player (ใช้ขอบ Collider แทนจุดกึ่งกลาง)
         if (playerTransform != null)
-            distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            distanceToPlayer = DistanceToEdge(playerTransform);
 
         // อัปเดตระยะ Base
         if (baseTransform != null)
-            distanceToBase = Vector3.Distance(transform.position, baseTransform.position);
+            distanceToBase = DistanceToEdge(baseTransform);
 
         // ค้นหา Minion ที่ใกล้ที่สุดในระยะ detectionRange ถ้ายังไม่มีเป้าหมาย Minion
         if (minionTransform == null || !minionTransform.gameObject.activeInHierarchy)
@@ -300,13 +300,24 @@ public class EnemyAI : MonoBehaviour
         // อัปเดตระยะ Minion
         if (minionTransform != null)
         {
-            distanceToMinion = Vector3.Distance(transform.position, minionTransform.position);
-            // ถ้าหลุดระยะไล่ล่า ให้เลิกสนใจ
+            distanceToMinion = DistanceToEdge(minionTransform);
             if (distanceToMinion > chaseRange)
             {
                 minionTransform = null;
             }
         }
+    }
+
+    /// <summary>วัดระยะจากขอบ Collider ของเราถึงขอบ Collider ของเป้าหมาย (ไม่ใช่ศูนย์กลาง)</summary>
+    private float DistanceToEdge(Transform target)
+    {
+        Collider targetCol = target.GetComponent<Collider>();
+        if (targetCol != null)
+        {
+            Vector3 closestPoint = targetCol.ClosestPoint(transform.position);
+            return Vector3.Distance(transform.position, closestPoint);
+        }
+        return Vector3.Distance(transform.position, target.position);
     }
 
     private void FindClosestMinion()
@@ -343,34 +354,40 @@ public class EnemyAI : MonoBehaviour
         bool playerDead = IsPlayerDead();
         bool inCooldown = Time.time < nextAttackTime;
 
-        // 1. ตรวจสอบการโจมตีฐานก่อนเสมอ (ถ้าประชิดฐานแล้ว)
+        // 1. ประชิดฐาน → ตีฐานเสมอ
         if (baseTransform != null && distanceToBase <= baseAttackRange)
         {
             currentState = EnemyState.AttackBase;
             return;
         }
 
-        // 2. จัดการสถานะตามเป้าหมาย (Priority: Minion > Player > Base)
+        // 2. จัดการตามสถานะปัจจุบัน (ล็อคเป้าจนตาย/หลุดระยะ)
         switch (currentState)
         {
+            // --- กำลังสู้ Minion → อยู่กับ Minion จนตาย ---
             case EnemyState.AttackMinion:
                 if (minionTransform == null) currentState = EnemyState.MoveToBase;
                 else if (distanceToMinion > attackRange) currentState = EnemyState.ChaseMinion;
+                else if (inCooldown)
+                {
+                    float threshold = 0.5f;
+                    if (combatSO != null && combatSO.attackCooldown > threshold)
+                        currentState = EnemyState.ChaseMinion;
+                }
                 break;
 
             case EnemyState.ChaseMinion:
                 if (minionTransform == null) currentState = EnemyState.MoveToBase;
-                else if (distanceToMinion <= attackRange) currentState = EnemyState.AttackMinion;
+                else if (distanceToMinion > chaseRange) { minionTransform = null; currentState = EnemyState.MoveToBase; }
+                else if (distanceToMinion <= attackRange * 0.8f && !inCooldown) currentState = EnemyState.AttackMinion;
                 break;
 
+            // --- กำลังสู้ Player → อยู่กับ Player จนตาย/หลุดระยะ ---
             case EnemyState.AttackPlayer:
-                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerDead || playerTransform == null || distanceToPlayer > attackRange) 
+                if (playerDead || playerTransform == null || distanceToPlayer > attackRange)
                     currentState = EnemyState.ChasePlayer;
                 else if (inCooldown) 
                 {
-                    // ถ้าคูลดาวน์นาน (เช่น > 0.5 วิ) ให้เดินวน (Chase/Strafe)
-                    // ถ้าคูลดาวน์สั้น (รัวๆ) ให้ปักหลักยืนรอที่เดิม (Attack)
                     float threshold = 0.5f;
                     if (combatSO != null && combatSO.attackCooldown > threshold)
                         currentState = EnemyState.ChasePlayer;
@@ -378,20 +395,30 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case EnemyState.ChasePlayer:
-                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
+                if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
                 else if (distanceToPlayer <= attackRange * 0.8f && !inCooldown) currentState = EnemyState.AttackPlayer;
                 break;
 
+            // --- ตีฐาน / เดินไปฐาน → ล็อคสิ่งแรกที่เข้ามาในระยะ ---
             case EnemyState.AttackBase:
-                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (!playerDead && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer; // แทรกคิว Player ถ้าเข้าใกล้
-                else if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
+                if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
+                else if (minionTransform != null && distanceToMinion <= detectionRange) currentState = EnemyState.ChaseMinion;
+                else if (!playerDead && playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
                 break;
 
             case EnemyState.MoveToBase:
-                if (minionTransform != null) currentState = EnemyState.ChaseMinion;
-                else if (!playerDead && playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                // ล็อคสิ่งแรกที่เข้ามาในระยะ (เช็คทั้ง Minion + Player)
+                bool minionInRange = minionTransform != null && distanceToMinion <= detectionRange;
+                bool playerInRange = !playerDead && playerTransform != null && distanceToPlayer <= detectionRange;
+
+                if (minionInRange && playerInRange)
+                {
+                    // ทั้งคู่อยู่ในระยะ → เลือกตัวที่ใกล้กว่า
+                    currentState = distanceToMinion <= distanceToPlayer 
+                        ? EnemyState.ChaseMinion : EnemyState.ChasePlayer;
+                }
+                else if (minionInRange) currentState = EnemyState.ChaseMinion;
+                else if (playerInRange) currentState = EnemyState.ChasePlayer;
                 break;
         }
     }
@@ -600,8 +627,102 @@ public class EnemyAI : MonoBehaviour
                 if (minionTransform != null)
                 {
                     agent.isStopped = false;
-                    agent.updateRotation = true; // เปิดการหมุนขณะไล่ล่า
-                    agent.speed = baseSpeed * 1.5f;
+                    bool inCooldownM = Time.time < nextAttackTime;
+                    float sRangeM = combatSO != null ? combatSO.strafeRange : attackRange + 2f;
+
+                    if (inCooldownM && combatSO != null)
+                    {
+                        // ถ้ายังเล่นท่าตีอยู่ → หยุดนิ่ง
+                        bool stillSwinging = animator != null && 
+                            (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || 
+                             animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk") ||
+                             animator.GetNextAnimatorStateInfo(0).IsTag("Attack") ||
+                             animator.GetNextAnimatorStateInfo(0).IsTag("Atk"));
+                        if (stillSwinging)
+                        {
+                            agent.isStopped = true;
+                            agent.velocity = Vector3.zero;
+                            return;
+                        }
+
+                        isStrafing = true;
+
+                        // Phase 1: ถอยหลัง
+                        if (!hasRetreated && distanceToMinion < sRangeM - 0.5f)
+                        {
+                            agent.updateRotation = false;
+                            RotateTowardsTarget();
+                            Vector3 awayFromTarget = (transform.position - minionTransform.position).normalized;
+                            agent.speed = combatSO.strafeSpeed;
+                            agent.SetDestination(transform.position + awayFromTarget * 3f);
+                            if (animator != null)
+                            {
+                                animator.SetBool("IsStrafing", true);
+                                targetStrafeX = 0f;
+                                targetStrafeY = -1f;
+                            }
+                            return;
+                        }
+
+                        hasRetreated = true;
+
+                        // Phase 2: เดินวน
+                        if (Time.time > strafeEndTime)
+                        {
+                            if (Random.value < combatSO.strafeChance)
+                            {
+                                isStrafing = true;
+                                strafeDirection = Random.value < 0.5f ? -1 : 1;
+                                strafeEndTime = Time.time + combatSO.strafeDuration;
+                            }
+                            else
+                            {
+                                isStrafing = false;
+                                strafeEndTime = Time.time + 0.5f;
+                            }
+                        }
+
+                        if (isStrafing)
+                        {
+                            agent.updateRotation = false;
+                            RotateTowardsTarget();
+                            Vector3 toTarget = (minionTransform.position - transform.position).normalized;
+                            Vector3 strafeDir = Vector3.Cross(toTarget, Vector3.up) * strafeDirection;
+                            Vector3 targetPos = minionTransform.position + toTarget * -sRangeM + strafeDir * 3f;
+                            agent.speed = combatSO.strafeSpeed;
+                            agent.SetDestination(targetPos);
+                            if (animator != null)
+                            {
+                                animator.SetBool("IsStrafing", true);
+                                targetStrafeX = strafeDirection;
+                                targetStrafeY = 0f;
+                            }
+                            return;
+                        }
+
+                        // ยืนรอ
+                        agent.updateRotation = false;
+                        RotateTowardsTarget();
+                        if (animator != null)
+                        {
+                            animator.SetBool("IsStrafing", true);
+                            targetStrafeX = 0f;
+                            targetStrafeY = 0f;
+                        }
+                        return;
+                    }
+
+                    // Phase 3: คูลดาวน์หมด → วิ่งเข้าตี
+                    isStrafing = false;
+                    hasRetreated = false;
+                    if (animator != null)
+                    {
+                        animator.SetBool("IsStrafing", false);
+                        targetStrafeX = 0f;
+                        targetStrafeY = 0f;
+                    }
+                    agent.updateRotation = true;
+                    agent.speed = baseSpeed * 2.5f;
                     agent.SetDestination(minionTransform.position);
                 }
                 break;
