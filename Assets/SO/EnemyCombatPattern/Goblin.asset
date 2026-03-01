@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatSO
   attackCooldown: 0.2
   hasHyperArmor: 0
+  flinchCooldown: 0.3
   strafeChance: 0
   strafeRange: 5
   strafeDuration: 2
   strafeSpeed: 2
   attackTriggerName: Attack
+  attackVariants: 1

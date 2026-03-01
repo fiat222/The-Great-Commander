@@ -10,14 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9edb62d385344014485642b348cfc5ce, type: 3}
-  m_Name: Minotor
+  m_Name: Skeleton
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatSO
   attackCooldown: 5
   hasHyperArmor: 1
   flinchCooldown: 3
-  strafeChance: 0.7
-  strafeRange: 15
+  reviveCount: 1
+  reviveHPPercent: 0.7
+  reviveDelay: 4
+  strafeChance: 0.8
+  strafeRange: 9
   strafeDuration: 5
-  strafeSpeed: 5
+  strafeSpeed: 7
   attackTriggerName: Attack
-  attackVariants: 2
+  attackVariants: 3

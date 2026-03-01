@@ -990,10 +990,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   stats: {fileID: 11400000, guid: 2f3c2dcbfd7c59a4cabbfab40d383b44, type: 2}
+  combatSO: {fileID: 11400000, guid: fae4c5dfa0b18224e8fd76590a1249c6, type: 2}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
-  baseAttackRange: 4.75
+  baseAttackRange: 4
   weaponEffect: {fileID: 7452504445607689274}
   weaponCollider: {fileID: 7242172807407608528}
   healthBar: {fileID: 4380254646009640366}
@@ -1016,7 +1017,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1766766133
+  GlobalObjectIdHash: 478434434
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
