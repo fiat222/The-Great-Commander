@@ -1,44 +1,59 @@
-using UnityEngine;
+๏ปฟusing UnityEngine;
+using System.Collections.Generic;
 
 public class MinionWeaponHitbox : MonoBehaviour
 {
     private Collider hitboxCollider;
-    private MinionAI ownerAI;
+    private HashSet<Collider> hitThisSwing = new HashSet<Collider>();
 
-    void Awake()
+    void Awake() => hitboxCollider = GetComponent<Collider>();
+
+    public void ClearHitList() => hitThisSwing.Clear();
+
+    public void EnableHitbox()
     {
-        hitboxCollider = GetComponent<Collider>();
-        ownerAI = GetComponentInParent<MinionAI>();
+        ClearHitList();
+        if (hitboxCollider != null) hitboxCollider.enabled = true;
+    }
+
+    public void DisableHitbox()
+    {
+        if (hitboxCollider != null) hitboxCollider.enabled = false;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // ดึงค่า damage จาก MinionData ถ้ามี ถ้าไม่มีใช้ค่า default
-        int damage = (ownerAI != null && ownerAI.data != null) ? (int)ownerAI.data.damage : 10;
+        if (!other.CompareTag("Enemy")) return;
+        if (hitThisSwing.Contains(other)) return;
+        hitThisSwing.Add(other);
 
-        bool hitTarget = false;
+        // Get damage from MinionData (supports upgrade)
+        float damage = 10f;
+        var minion = GetComponentInParent<MinionAI>();
+        if (minion != null && minion.data != null)
+            damage = minion.data.GetDamage();
 
-        if (other.CompareTag("Enemy"))
+        int dmgInt = Mathf.RoundToInt(damage);
+
+        // Hit EnemyAI
+        EnemyAI enemyAI = other.GetComponent<EnemyAI>();
+        if (enemyAI != null)
         {
-            var enemyAI = other.GetComponent<EnemyAI>();
-            var impAI = other.GetComponent<ImpAI>();
-            if (enemyAI != null)
-            {
-                enemyAI.TakeDamage(damage);
-                hitTarget = true;
-            }
-            else if (impAI != null)
-            {
-                impAI.TakeDamage(damage);
-                hitTarget = true;
-            }
+            enemyAI.TakeDamage(damage);
+            Vector3 spawnPos = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
+            DamageNumberSpawner.Show(dmgInt, spawnPos);
+            Debug.Log($"<color=cyan>[MinionHitbox]</color> Hit {other.name} for {damage} damage!");
+            return;
         }
 
-        // ถ้าโจมตีโดนเป้าหมายแล้ว ให้ปิด Collider ทันที (One-hit-per-swing)
-        if (hitTarget)
+        // Hit ImpAI
+        ImpAI impAI = other.GetComponent<ImpAI>();
+        if (impAI != null)
         {
-            Debug.Log($"<color=cyan>[MinionHitbox]</color> Hit {other.name} for {damage} damage! Disabling hitbox to prevent multi-hit.");
-            if (hitboxCollider != null) hitboxCollider.enabled = false;
+            impAI.TakeDamage(dmgInt);
+            Vector3 spawnPos = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
+            DamageNumberSpawner.Show(dmgInt, spawnPos);
+            Debug.Log($"<color=cyan>[MinionHitbox]</color> Hit {other.name} for {damage} damage!");
         }
     }
 }
