@@ -64,6 +64,7 @@ public class EnemyAI : MonoBehaviour
     private float targetStrafeY;
     private bool attackTracking; // หมุนตามเพลเยอร์ระหว่างท่าตี (ใช้กับ Combo)
     private float nextFlinchTime; // คูลดาวน์ท่าชะงัก (ป้องกันแสปมสตัน)
+    private int revivesRemaining; // จำนวนครั้งที่ลุกขึ้นได้อีก
 
     // ==================== UNITY ====================
 
@@ -98,6 +99,9 @@ public class EnemyAI : MonoBehaviour
 
         DisableWeaponCollider();
         GetComponent<CharacterAudio>()?.PlayRoar();
+
+        // ตั้งค่าลุกจาก SO
+        revivesRemaining = combatSO != null ? combatSO.reviveCount : 0;
 
         // ⭐ ถ้ามี HealthSystem ให้เชื่อม OnDie → Die() เพื่อรับ kill จากป้อมด้วย
         HealthSystem hs = GetComponent<HealthSystem>();
@@ -461,9 +465,16 @@ public class EnemyAI : MonoBehaviour
                 if (baseTransform != null)
                 {
                     agent.isStopped = false;
-                    agent.updateRotation = true; // เปิดการหมุนขณะวิ่ง
+                    agent.updateRotation = true;
                     agent.speed = baseSpeed;
                     agent.SetDestination(baseTransform.position);
+
+                    // รีเซ็ตสถานะ strafe ที่ค้างจากการต่อสู้
+                    isStrafing = false;
+                    hasRetreated = false;
+                    targetStrafeX = 0f;
+                    targetStrafeY = 0f;
+                    if (animator != null) animator.SetBool("IsStrafing", false);
                 }
                 break;
 
@@ -499,8 +510,8 @@ public class EnemyAI : MonoBehaviour
                             agent.updateRotation = false;
                             RotateTowardsTarget(); // หันหน้าหาเพลเยอร์ขณะถอย
 
-                            Vector3 awayFromPlayer = (transform.position - playerTransform.position).normalized;
-                            Vector3 retreatPos = transform.position + awayFromPlayer * 3f;
+                            Vector3 awayFromTarget = (transform.position - playerTransform.position).normalized;
+                            Vector3 retreatPos = transform.position + awayFromTarget * 3f;
 
                             agent.speed = combatSO.strafeSpeed;
                             agent.SetDestination(retreatPos);
@@ -540,10 +551,10 @@ public class EnemyAI : MonoBehaviour
                             agent.updateRotation = false;
                             RotateTowardsTarget(); // หันหน้าหาเพลเยอร์ขณะเดินวน
 
-                            Vector3 toPlayer = (playerTransform.position - transform.position).normalized;
-                            Vector3 strafeDir = Vector3.Cross(toPlayer, Vector3.up) * strafeDirection;
+                            Vector3 toTarget = (playerTransform.position - transform.position).normalized;
+                            Vector3 strafeDir = Vector3.Cross(toTarget, Vector3.up) * strafeDirection;
                             // รักษาระยะ ~ strafeRange
-                            Vector3 targetPos = playerTransform.position + toPlayer * -sRange + strafeDir * 3f;
+                            Vector3 targetPos = playerTransform.position + toTarget * -sRange + strafeDir * 3f;
 
                             agent.speed = combatSO.strafeSpeed;
                             agent.SetDestination(targetPos);
@@ -626,7 +637,8 @@ public class EnemyAI : MonoBehaviour
         if (animator != null && !skipFlinch && !flinchOnCooldown)
         {
             animator.SetTrigger("Damage");
-            nextFlinchTime = Time.time + 2f; // โดนสตันได้แค่ทุก 0.5 วิ
+            float fCooldown = combatSO.flinchCooldown;
+            nextFlinchTime = Time.time + fCooldown;
         }
 
         Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
@@ -653,9 +665,6 @@ public class EnemyAI : MonoBehaviour
             animator.SetTrigger("Die");
         }
 
-        if (countsInWaveUI)
-            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
-
         if (agent != null)
         {
             agent.isStopped = true;
@@ -669,11 +678,69 @@ public class EnemyAI : MonoBehaviour
 
         Vector3 vfxPos = deathVFXPoint != null ? deathVFXPoint.position : transform.position;
         VFXManager.Instance?.Play(stats?.deathVFX, vfxPos);
-        PowerBallDropper.Drop(transform.position, powerBallDropAmount);
         GetComponent<CharacterAudio>()?.PlayDeath();
+
+        // --- ระบบ Revive ---
+        if (revivesRemaining > 0)
+        {
+            revivesRemaining--;
+            float delay = combatSO != null ? combatSO.reviveDelay : 2f;
+            Invoke(nameof(Revive), delay);
+            Debug.Log($"[Combat] 💀→🔄 ตายแล้วจะลุก! เหลือลุกได้อีก {revivesRemaining} ครั้ง (รอ {delay}s)");
+            return; // ไม่ drop ไม่นับ wave ยัง
+        }
+
+        // --- ตายถาวร ---
+        if (countsInWaveUI)
+            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
         Invoke(nameof(PlayRemovalVFX), 2f);
         Destroy(gameObject, 3f);
+    }
+
+    /// <summary>ลุกขึ้นจากความตาย! (Phase 1: เล่นท่าลุก)</summary>
+    private void Revive()
+    {
+        // isDead ยังเป็น true → ตีไม่โดนระหว่างลุก
+
+        // ฟื้น HP ตามเปอร์เซ็นต์
+        float hpPercent = combatSO != null ? combatSO.reviveHPPercent : 0.5f;
+        currentHP = Mathf.Max(1f, stats != null ? stats.GetHP() * hpPercent : currentHP);
+        if (healthBar != null)
+        {
+            healthBar.maxValue = stats != null ? stats.GetHP() : 100;
+            healthBar.value = currentHP;
+        }
+
+        // เปิด Collider กลับ (ให้โดนตีได้ระหว่างลุก)
+        Collider mainCollider = GetComponent<Collider>();
+        if (mainCollider != null) mainCollider.enabled = true;
+
+        // เล่นท่าลุก (ยังไม่เปิด Agent → รอ Animation Event)
+        if (animator != null)
+            animator.SetTrigger("Revive");
+
+        Debug.Log($"[Combat] 🔄💀 กำลังลุก... HP={currentHP}");
+    }
+
+    /// <summary>เรียกจาก Animation Event ตอนท่า Revive จบ → เปิดการเคลื่อนที่</summary>
+    public void OnReviveComplete()
+    {
+        isDead = false; // ตอนนี้ค่อยโดนตีได้ + ขยับได้
+
+        // เปิด NavMeshAgent
+        if (agent != null)
+        {
+            agent.enabled = true;
+            agent.isStopped = false;
+        }
+
+        // รีเซ็ต state
+        currentState = EnemyState.ChasePlayer;
+        nextAttackTime = Time.time + 1f;
+
+        Debug.Log($"[Combat] 🔄✅ ลุกเสร็จ! พร้อมสู้แล้ว");
     }
 
     private void PlayRemovalVFX()
@@ -719,16 +786,22 @@ public class EnemyAI : MonoBehaviour
     /// <summary>เรียกจาก Animation Event ตอนกำลังฟัด → หยุด Tracking + พุ่งเข้าใส่</summary>
     public void AttackLunge()
     {
-        if (playerTransform == null) return;
+        // เลือกเป้าหมายตาม state ปัจจุบัน
+        Transform target = null;
+        if (currentState == EnemyState.AttackBase) target = baseTransform;
+        else if (currentState == EnemyState.AttackMinion || currentState == EnemyState.ChaseMinion) target = minionTransform;
+        else target = playerTransform;
+
+        if (target == null) return;
 
         // หยุด tracking + หันหน้าฟึบ
         attackTracking = false;
         SnapRotateTowardsTarget();
 
-        // พุ่งเข้าหาเพลเยอร์แบบไวมาก (ไม่วาป)
-        float dist = Vector3.Distance(transform.position, playerTransform.position);
+        // พุ่งเข้าหาเป้าหมายแบบไวมาก (ไม่วาป)
+        float dist = Vector3.Distance(transform.position, target.position);
         float lungeDistance = Mathf.Max(0f, dist - 3f); // เว้นห่าง 3 หน่วย
-        Vector3 dir = (playerTransform.position - transform.position).normalized;
+        Vector3 dir = (target.position - transform.position).normalized;
         dir.y = 0;
 
         if (lungeDistance > 0.1f)
