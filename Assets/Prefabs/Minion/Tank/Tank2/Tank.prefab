@@ -475,15 +475,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 9.73
+      value: 13.377507
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.48218
+      value: -0.00000018376613
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -28.16794
+      value: -16.6
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -601,7 +601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1582985431
+  GlobalObjectIdHash: 1193846426
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -652,6 +652,9 @@ MonoBehaviour:
   animator: {fileID: 7720295768223742058}
   data: {fileID: 11400000, guid: 63befe7b08d67a141905431b343d130f, type: 2}
   healthBar: {fileID: 6449176688522459705}
+  attackVFXPoint: {fileID: 0}
+  weaponHitboxes:
+  - {fileID: 2915587419807863897}
 --- !u!114 &7552314449380158402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -730,6 +733,10 @@ PrefabInstance:
     - target: {fileID: 2485612700527072660, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
       propertyPath: m_Name
       value: Shield_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
       propertyPath: m_IsTrigger

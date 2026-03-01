@@ -21,6 +21,10 @@ public class MinionData : ScriptableObject
     public Sprite picture;
     public Sprite icon;
 
+    [Header("VFX")]
+    [Tooltip("Particle/Effect ที่เล่นตอนโจมตี (เช่น ฝุ่นกระทืบเท้า)")]
+    public GameObject attackVFX;
+
     [Header("Base Stats (Level 0)")]
     public int cost;
     public float damage;
