@@ -227,7 +227,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1514851963179829448}
-  m_LocalEulerAnglesHint: {x: 0, y: 0.85975856, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0.85975945, z: 0}
 --- !u!1 &1554326406082013371
 GameObject:
   m_ObjectHideFlags: 0
@@ -5636,7 +5636,7 @@ Transform:
   m_Children:
   - {fileID: 4272287314024699174}
   m_Father: {fileID: 6068026626238654505}
-  m_LocalEulerAnglesHint: {x: 21.561996, y: -79.93883, z: -8.18462}
+  m_LocalEulerAnglesHint: {x: 83.58781, y: -164.68512, z: -175.55554}
 --- !u!65 &8871527286923256144
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5807,7 +5807,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3049892150408024943}
-  m_LocalEulerAnglesHint: {x: -39.114964, y: 94.306984, z: 9.099656}
+  m_LocalEulerAnglesHint: {x: -22.951374, y: 85.23342, z: 42.286297}
 --- !u!1 &5163025701583881051
 GameObject:
   m_ObjectHideFlags: 0
@@ -5964,7 +5964,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3049892150408024943}
-  m_LocalEulerAnglesHint: {x: 40.399498, y: -101.5539, z: 13.437549}
+  m_LocalEulerAnglesHint: {x: 34.208893, y: -85.90846, z: 32.62021}
 --- !u!1 &7180356472136704964
 GameObject:
   m_ObjectHideFlags: 0
@@ -6054,6 +6054,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   stats: {fileID: 11400000, guid: 8f575cf0407e766438fcce55ca611a72, type: 2}
+  combatSO: {fileID: 11400000, guid: a0a92f7d11a5c40439bc1134126b1e4c, type: 2}
   currentState: 0
   detectionRange: 17
   chaseRange: 28
@@ -6326,7 +6327,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8210518600174656413}
-  m_LocalEulerAnglesHint: {x: 0, y: -0.85957146, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -0.8595706, z: 0}
 --- !u!1 &7789009139908200514
 GameObject:
   m_ObjectHideFlags: 0
