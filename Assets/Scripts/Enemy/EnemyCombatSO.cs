@@ -7,9 +7,23 @@ public class EnemyCombatSO : ScriptableObject
     [Tooltip("จังหวะพักหลังโจมตีเสร็จ (วินาที)")]
     public float attackCooldown = 1.5f;
 
-    [Header("--- ระบบชะงัก (Hyper Armor) ---")]
+    [Header("--- ระบบชะงัก (Hyper Armor / Flinch) ---")]
     [Tooltip("ถ้าติ๊กไว้ ศัตรูจะไม่โดนขัดจังหวะ (ไม่เล่นท่า Damage) ขณะกำลังโจมตี")]
     public bool hasHyperArmor = true;
+
+    [Tooltip("คูลดาวน์ท่าชะงัก (วินาที) ป้องกัน spam stun — ยิ่งสูง ยิ่งโดน stun น้อย")]
+    public float flinchCooldown = 0.5f;
+
+    [Header("--- ระบบลุกขึ้น (Revive) ---")]
+    [Tooltip("จำนวนครั้งที่ลุกขึ้นได้หลังตาย (0 = ตายถาวร)")]
+    public int reviveCount = 0;
+
+    [Tooltip("เปอร์เซ็นต์ HP ที่ฟื้นกลับมา (0-1) เช่น 0.5 = ฟื้นมา 50%")]
+    [Range(0f, 1f)]
+    public float reviveHPPercent = 0.5f;
+
+    [Tooltip("เวลา (วินาที) ที่นอนอยู่ก่อนลุก")]
+    public float reviveDelay = 2f;
 
     [Header("--- เดินวนระหว่างรอ (Strafe) ---")]
     [Range(0f, 1f)]
