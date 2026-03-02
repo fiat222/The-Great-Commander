@@ -227,7 +227,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1514851963179829448}
-  m_LocalEulerAnglesHint: {x: 0, y: 0.85975945, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0.8597586, z: 0}
 --- !u!1 &1554326406082013371
 GameObject:
   m_ObjectHideFlags: 0
@@ -5636,7 +5636,7 @@ Transform:
   m_Children:
   - {fileID: 4272287314024699174}
   m_Father: {fileID: 6068026626238654505}
-  m_LocalEulerAnglesHint: {x: 83.58781, y: -164.68512, z: -175.55554}
+  m_LocalEulerAnglesHint: {x: 79.04227, y: 0.27870226, z: 107.95094}
 --- !u!65 &8871527286923256144
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5807,7 +5807,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3049892150408024943}
-  m_LocalEulerAnglesHint: {x: -22.951374, y: 85.23342, z: 42.286297}
+  m_LocalEulerAnglesHint: {x: -35.14586, y: 92.2822, z: 39.25695}
 --- !u!1 &5163025701583881051
 GameObject:
   m_ObjectHideFlags: 0
@@ -5964,7 +5964,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3049892150408024943}
-  m_LocalEulerAnglesHint: {x: 34.208893, y: -85.90846, z: 32.62021}
+  m_LocalEulerAnglesHint: {x: 38.743263, y: -88.26392, z: 25.632212}
 --- !u!1 &7180356472136704964
 GameObject:
   m_ObjectHideFlags: 0
@@ -6103,7 +6103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 872191278
+  GlobalObjectIdHash: 2497037109
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -6327,7 +6327,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8210518600174656413}
-  m_LocalEulerAnglesHint: {x: 0, y: -0.8595706, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -0.8595714, z: 0}
 --- !u!1 &7789009139908200514
 GameObject:
   m_ObjectHideFlags: 0
