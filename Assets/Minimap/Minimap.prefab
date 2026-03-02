@@ -25,7 +25,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6258695186690194225}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 3.6, y: 3.6, z: 3.6}
   m_ConstrainProportionsScale: 1
@@ -87,7 +87,6 @@ GameObject:
   - component: {fileID: 2832042931064507176}
   - component: {fileID: 815396503943033503}
   - component: {fileID: 1449953088666666438}
-  - component: {fileID: 7772651562856959172}
   m_Layer: 5
   m_Name: Map
   m_TagString: Untagged
@@ -152,23 +151,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &7772651562856959172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8111174802982516809}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4afbcb0fc8d378b4cbdbc2df2d50bd75, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MinimapUI
-  minimapPanel: {fileID: 2832042931064507176}
-  mapWorldSizeX: 250
-  mapWorldSizeZ: 300
-  terrainOffsetX: -126
-  terrainOffsetZ: -156
-  whiteDot: {fileID: 8791318296281487965, guid: 743ad9e382269864486b14c36da527a5, type: 3}
-  blueDot: {fileID: 4184127400048780903, guid: 825167a7c48cc1b468e25c6b5c8520ed, type: 3}
-  redDot: {fileID: 8542930977222177695, guid: 9cca708c711f3da498c936c68f792086, type: 3}
