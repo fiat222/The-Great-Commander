@@ -30,12 +30,12 @@ public class EnemyWeaponHitbox : MonoBehaviour
 
             if (player != null)
             {
-                player.TakeDamage(damage);
+                player.TakeDamage(damage, ownerAI != null ? ownerAI.transform.position : transform.position);
                 hitTarget = true;
             }
             else if (archer != null)
             {
-                archer.TakeDamage(damage);
+                archer.TakeDamage(damage, ownerAI != null ? ownerAI.transform.position : transform.position);
                 hitTarget = true;
             }
         }
