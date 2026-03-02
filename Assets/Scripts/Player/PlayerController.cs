@@ -76,6 +76,7 @@ public class PlayerController : MonoBehaviour
     private bool isInvincible;
     private bool isDead;
     public bool IsDead => isDead;
+    public bool IsDodging => isDodging; // เพิ่มเพื่อเปิดให้ WorkerSkill เข้าถึงสถานะกลิ้งได้
     private Coroutine rotationCoroutine;
 
     public bool isMovementLocked { get; set; }
@@ -136,6 +137,7 @@ public class PlayerController : MonoBehaviour
 
         HandleTargetLockInput();
         HandleRollInput();
+        HandleParryInput();
         HandleAttackInput();
         CheckAnimationLogic();
         UpdateWeaponEffect();
@@ -338,6 +340,35 @@ public class PlayerController : MonoBehaviour
         if (comboStep > 0 && Time.time - lastClickTime > comboResetTime) ResetCombo();
     }
 
+    // ==================== Parry ====================
+
+    private void HandleParryInput()
+    {
+        if (Input.GetMouseButtonDown(1)) // Right-Click
+        {
+            var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+
+            // ไม่ให้ Parry ถ้ากำลังกลิ้ง โดนตี หรือกำลัง Parry อยู่แล้ว
+            bool isBusy = sInfo.IsTag("Roll") || nInfo.IsTag("Roll") ||
+                          sInfo.IsTag("Hit") || nInfo.IsTag("Hit") ||
+                          sInfo.IsTag("Parry") || nInfo.IsTag("Parry");
+
+            if (isGrounded && !isDodging && !isBusy)
+            {
+                if (animator != null)
+                {
+                    animator.ResetTrigger("Attack"); // ยกเลิกการโจมตีที่อาจจะค้างอยู่
+                    animator.SetTrigger("Parry");
+                    
+                    // ถ้ายกเลิกคอมโบกลางคันได้ ก็เคลียร์ ResetCombo ได้
+                    ResetCombo();
+                    currentDashVelocity = Vector3.zero;
+                }
+            }
+        }
+    }
+
     private void TriggerAttack()
     {
         float targetAngle = mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : transform.eulerAngles.y;
@@ -407,6 +438,13 @@ public class PlayerController : MonoBehaviour
         if (animator != null) animator.SetInteger("ComboStep", 0);
     }
 
+    // ใช้สำหรับเคลียร์คอมโบเวลาเริ่มร่ายสกิล (เรียกแบบ Public ได้)
+    public void ResetComboAndDash()
+    {
+        ResetCombo();
+        currentDashVelocity = Vector3.zero;
+    }
+
     public void PerformAttackDash() => currentDashVelocity = transform.forward * attackDashForce;
 
     // ==================== Move ====================
@@ -417,7 +455,9 @@ public class PlayerController : MonoBehaviour
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         bool isLocked = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") ||
                                              sInfo.IsTag("Roll")   || nInfo.IsTag("Roll") ||
-                                             sInfo.IsTag("Hit")    || nInfo.IsTag("Hit"));
+                                             sInfo.IsTag("Hit")    || nInfo.IsTag("Hit") ||
+                                             sInfo.IsTag("Parry")  || nInfo.IsTag("Parry") ||
+                                             sInfo.IsTag("Skill")  || nInfo.IsTag("Skill"));
 
         if (groundCheck != null)
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -484,20 +524,33 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
-        if (animator != null) animator.SetTrigger("Damage");
+        
+        // เช็คว่ากำลังร่ายสกิลอยู่หรือเปล่า (Super Armor)
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+        bool isCastingSkill = sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
 
-        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
-        ResetCombo();
-        currentDashVelocity = Vector3.zero;
-
-        // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
-        Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
-        if (attackerPosition != default)
+        if (!isCastingSkill)
         {
-            knockbackDir = (transform.position - attackerPosition).normalized;
-            knockbackDir.y = 0; // ไม่ให้กระเด็นขึ้นฟ้า/มุดดิน
+            if (animator != null) animator.SetTrigger("Damage");
+
+            // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
+            ResetCombo();
+            currentDashVelocity = Vector3.zero;
+
+            // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
+            Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
+            if (attackerPosition != default)
+            {
+                knockbackDir = (transform.position - attackerPosition).normalized;
+                knockbackDir.y = 0; // ไม่ให้กระเด็นขึ้นฟ้า/มุดดิน
+            }
+            currentHitVelocity = knockbackDir * 4f; // 4f คือความแรงกระเด็น (ปรับแต่งเลขนี้ได้)
         }
-        currentHitVelocity = knockbackDir * 4f; // 4f คือความแรงกระเด็น (ปรับแต่งเลขนี้ได้)
+        else
+        {
+            Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จากสกิล!");
+        }
 
         var wh = GetComponentInChildren<WeaponHandler>();
         if (wh != null) wh.DisableHitbox();
