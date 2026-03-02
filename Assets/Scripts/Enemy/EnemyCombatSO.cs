@@ -42,4 +42,8 @@ public class EnemyCombatSO : ScriptableObject
 
     [Tooltip("จำนวนท่าโจมตีที่มี (ใช้สุ่ม AttackIndex 0 ถึง N-1)")]
     public int attackVariants = 1;
+
+    [Header("--- Ranged / Varying Attack Ranges ---")]
+    [Tooltip("ใส่ระยะโจมตีเฉพาะของแต่ละท่า (Index ตรงกับ AttackIndex)\nถ้าปล่อยว่าง หรือใส่ไม่ครบ จะกลับไปใช้ attackRange ปกติของ EnemyStatsSO")]
+    public float[] customAttackRanges;
 }

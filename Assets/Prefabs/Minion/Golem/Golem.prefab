@@ -2531,8 +2531,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 1.8487979, y: 0.90146625, z: 1.7446958}
-  m_Center: {x: -0.09051276, y: -0.049268693, z: 0.046884187}
+  m_Size: {x: 1.8487979, y: 0.9014662, z: 1.8243284}
+  m_Center: {x: -0.09051282, y: -0.049267557, z: 0.08670067}
 --- !u!114 &3912695506697957545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2682,6 +2682,7 @@ MonoBehaviour:
   attackVFXPoint: {fileID: 2406366281883495109}
   weaponHitboxes:
   - {fileID: 3912695506697957545}
+  weaponEffect: {fileID: 0}
 --- !u!114 &-4439622797799466387
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2694,7 +2695,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3843193883
+  GlobalObjectIdHash: 2075531667
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
