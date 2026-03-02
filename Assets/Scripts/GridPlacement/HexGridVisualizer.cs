@@ -5,17 +5,36 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexGridVisualizer : MonoBehaviour
 {
-    public HexGrid hexGrid; 
+    public HexGrid hexGrid;
     public Color lineColor = Color.white;
 
     private Mesh mesh;
+
+    private void OnEnable()
+    {
+        if (hexGrid != null)
+            hexGrid.OnGridUpdated.AddListener(CreateGridMesh);
+    }
+
+    private void OnDisable()
+    {
+        if (hexGrid != null)
+            hexGrid.OnGridUpdated.RemoveListener(CreateGridMesh);
+    }
 
     public void CreateGridMesh()
     {
         if (hexGrid == null) return;
 
-        mesh = new Mesh();
-        mesh.name = "HexGridMesh";
+        if (mesh == null)
+        {
+            mesh = new Mesh();
+            mesh.name = "HexGridMesh";
+        }
+        else
+        {
+            mesh.Clear();
+        }
 
         List<Vector3> vertices = new List<Vector3>();
         List<int> indices = new List<int>();
@@ -32,7 +51,7 @@ public class HexGridVisualizer : MonoBehaviour
                 int startIndex = vertices.Count;
                 for (int i = 0; i < 6; i++)
                 {
-                    float angleDeg = (hexGrid.Orientation == HexGridSystem3D<string>.HexOrientation.PointyTop)
+                    float angleDeg = (hexGrid.Orientation == HexGridSystem3D<GameObject>.HexOrientation.PointyTop)
                                      ? 60f * i - 30f : 60f * i;
                     float angleRad = Mathf.Deg2Rad * angleDeg;
 
