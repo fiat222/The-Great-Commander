@@ -78,18 +78,39 @@ public class PlacementManager : MonoBehaviour
 
         ghost = Instantiate(data.prefab);
 
-        // ปิด collider
+        // ปิด collider และ AI บน ghost ทั้งหมด
         foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
             c.enabled = false;
+        foreach (MonoBehaviour mb in ghost.GetComponentsInChildren<MonoBehaviour>())
+            mb.enabled = false;
 
-        // ทำโปร่งใส
+        // สีเริ่มต้น — จะถูก update ทุก frame ใน HandlePlacing
+        SetGhostColor(true);
+
+        if (gridVisual != null) gridVisual.gameObject.SetActive(true);
+    }
+
+    // -------------------------------------------------------
+    // เปลี่ยนสี ghost: เขียว = วางได้, แดง = ช่องเต็ม/นอก grid
+    // -------------------------------------------------------
+    private void SetGhostColor(bool canPlace)
+    {
+        if (ghost == null) return;
+        Color col = canPlace
+            ? new Color(0f, 1f, 0f, 0.45f)   // 🟢 โปร่งใสเขียว
+            : new Color(1f, 0f, 0f, 0.45f);   // 🔴 โปร่งใสแดง
+
         foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
         {
-            Color col = r.material.color;
-            col.a = 0.5f;
+            // เปลี่ยนผ่าน MaterialPropertyBlock เพื่อไม่ต้อง clone material
+            var mpb = new MaterialPropertyBlock();
+            r.GetPropertyBlock(mpb);
+            mpb.SetColor("_Color", col);
+            r.SetPropertyBlock(mpb);
+
+            // Fallback: เขียนตรงๆ ทับ material color ด้วย (รองรับทุก shader)
             r.material.color = col;
         }
-        if (gridVisual != null) gridVisual.gameObject.SetActive(true);
     }
 
     void HandlePlacing()
@@ -100,51 +121,59 @@ public class PlacementManager : MonoBehaviour
         {
             if (hexGrid == null) return;
 
-            // แปลงตำแหน่งเมาส์เป็นพิกัดช่อง (X, Y)
             hexGrid.GetGridPosition(hit.point, out int x, out int y);
-
-            //  หาพิกัดกึ่งกลางหกเหลี่ยม
-            // ใส่ true เพื่อให้ได้ตำแหน่งที่ Snap ลงจุดศูนย์กลาง
             Vector3 snappedPos = hexGrid.GetWorldPosition(x, y, true);
 
-            //  ย้าย Ghost ไปที่ตำแหน่งที่ Snap แล้ว
             ghost.transform.position = snappedPos;
 
-            // ถ้าคลิกซ้ายให้วางตัวละคร 
+            bool cellEmpty = hexGrid.IsCellEmpty(x, y);
+            SetGhostColor(cellEmpty);
+
             if (Input.GetMouseButtonDown(0))
             {
-                // กันการคลิกทะลุ UI
-                if (EventSystem.current.IsPointerOverGameObject()) return;
-
-                // วางทหารลงที่ตำแหน่ง snappedPos 
-                PlaceMinion(snappedPos);
+                PlaceMinion(snappedPos, x, y);
             }
         }
 
-        // คลิกขวาเพื่อยกเลิกการวาง (อยู่นอก Raycast เพราะไม่ต้องเช็กตำแหน่งพื้น)
+        // คลิกขวาเพื่อยกเลิกการวาง
         if (Input.GetMouseButtonDown(1))
         {
             CancelPlacement();
         }
     }
-    void PlaceMinion(Vector3 pos)
+
+
+    void PlaceMinion(Vector3 pos, int gridX, int gridY)
     {
         if (currentMinionData == null) return;
         if (Money < currentMinionData.cost) return;
+
+        // ⭐ เช็คว่าช่องว่างก่อนวาง
+        if (!hexGrid.IsCellEmpty(gridX, gridY))
+        {
+            Debug.LogWarning($"[PlacementManager] ช่อง ({gridX},{gridY}) มีตัวละครอยู่แล้ว!");
+            return;
+        }
 
         Money -= currentMinionData.cost;
         OnMoneyChanged?.Invoke(Money);
 
         GameObject obj = Instantiate(currentMinionData.prefab, pos, Quaternion.identity);
 
-        // ⭐ เพิ่ม 4 บรรทัดนี้
+        // ⭐ ลงทะเบียนใน Grid ว่าช่องนี้จับจองแล้ว
+        hexGrid.AddGridObject(gridX, gridY, obj);
+
+        // เซ็ตข้อมูลสำหรับ Sell
         SellMinion sell = obj.GetComponent<SellMinion>();
         if (sell != null)
-            sell.Setup(currentMinionData);
+            sell.Setup(currentMinionData, gridX, gridY);
 
         Destroy(ghost);
+        ghost = null;
         isPlacing = false;
         currentMinionData = null;
+
+        if (gridVisual != null) gridVisual.gameObject.SetActive(false);
     }
 
     // ===== CANCEL =====
@@ -154,6 +183,7 @@ public class PlacementManager : MonoBehaviour
         if (gridVisual != null) gridVisual.gameObject.SetActive(false);
 
         Destroy(ghost);
+        ghost = null;
         isPlacing = false;
         currentMinionData = null;
     }
@@ -163,6 +193,13 @@ public class PlacementManager : MonoBehaviour
     {
         Money += value;
         OnMoneyChanged?.Invoke(Money);
+    }
+
+    /// <summary>เรียกจาก SellMinion เพื่อเคลียร์ช่องใน Grid ด้วย</summary>
+    public void ClearGridCell(int gridX, int gridY)
+    {
+        if (hexGrid != null)
+            hexGrid.RemoveGridObject(gridX, gridY);
     }
 
     // ===== TOGGLE SELL MODE =====
