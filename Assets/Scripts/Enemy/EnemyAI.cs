@@ -65,6 +65,7 @@ public class EnemyAI : MonoBehaviour
     private bool attackTracking; // หมุนตามเพลเยอร์ระหว่างท่าตี (ใช้กับ Combo)
     private float nextFlinchTime; // คูลดาวน์ท่าชะงัก (ป้องกันแสปมสตัน)
     private int revivesRemaining; // จำนวนครั้งที่ลุกขึ้นได้อีก
+    private bool attackPreSelected; // เลือกท่าโจมตีไว้ล่วงหน้าแล้วหรือยัง
 
     // ==================== UNITY ====================
 
@@ -133,6 +134,25 @@ public class EnemyAI : MonoBehaviour
             agent.angularSpeed = 600f;
             agent.stoppingDistance = 0f;
         }
+    }
+
+    /// <summary>
+    /// ดึงระยะโจมตีของท่าที่จองไว้ ถ้าไม่จองไว้หรือตั้งค่าไม่ครบ ให้กลับไปใช้ค่า Default
+    /// </summary>
+    public float GetCurrentAttackRange()
+    {
+        if (combatSO == null || !attackPreSelected || animator == null)
+            return attackRange;
+
+        int pendingIndex = animator.GetInteger("AttackIndex");
+        
+        if (combatSO.customAttackRanges != null && pendingIndex < combatSO.customAttackRanges.Length)
+        {
+            float customRange = combatSO.customAttackRanges[pendingIndex];
+            if (customRange > 0f) return customRange; // ถ้าตั้งค่าเป็น 0 ถือว่าไม่ได้ตั้ง
+        }
+
+        return attackRange;
     }
 
     private void OnWaveScaled(EnemyStatsSO changedSO)
@@ -369,7 +389,7 @@ public class EnemyAI : MonoBehaviour
             // --- กำลังสู้ Minion → อยู่กับ Minion จนตาย ---
             case EnemyState.AttackMinion:
                 if (minionTransform == null) currentState = EnemyState.MoveToBase;
-                else if (distanceToMinion > attackRange) currentState = EnemyState.ChaseMinion;
+                else if (distanceToMinion > GetCurrentAttackRange()) currentState = EnemyState.ChaseMinion;
                 else if (inCooldown)
                 {
                     float threshold = 0.5f;
@@ -381,12 +401,12 @@ public class EnemyAI : MonoBehaviour
             case EnemyState.ChaseMinion:
                 if (minionTransform == null) currentState = EnemyState.MoveToBase;
                 else if (distanceToMinion > chaseRange) { minionTransform = null; currentState = EnemyState.MoveToBase; }
-                else if (distanceToMinion <= attackRange * 0.8f && !inCooldown) currentState = EnemyState.AttackMinion;
+                else if (distanceToMinion <= GetCurrentAttackRange() * 0.8f && !inCooldown) currentState = EnemyState.AttackMinion;
                 break;
 
             // --- กำลังสู้ Player → อยู่กับ Player จนตาย/หลุดระยะ ---
             case EnemyState.AttackPlayer:
-                if (playerDead || playerTransform == null || distanceToPlayer > attackRange)
+                if (playerDead || playerTransform == null || distanceToPlayer > GetCurrentAttackRange())
                     currentState = EnemyState.ChasePlayer;
                 else if (inCooldown) 
                 {
@@ -398,7 +418,7 @@ public class EnemyAI : MonoBehaviour
 
             case EnemyState.ChasePlayer:
                 if (playerDead || playerTransform == null || distanceToPlayer > chaseRange) currentState = EnemyState.MoveToBase;
-                else if (distanceToPlayer <= attackRange * 0.8f && !inCooldown) currentState = EnemyState.AttackPlayer;
+                else if (distanceToPlayer <= GetCurrentAttackRange() * 0.8f && !inCooldown) currentState = EnemyState.AttackPlayer;
                 break;
 
             // --- ตีฐาน / เดินไปฐาน → ล็อคสิ่งแรกที่เข้ามาในระยะ ---
@@ -443,8 +463,10 @@ public class EnemyAI : MonoBehaviour
         {
             // --- เช็คระยะให้ชัวร์อีกรอบก่อนจะกางกรงเล็บฟัน (ป้องกันการตีลม) ---
             bool canReach = false;
-            if (currentState == EnemyState.AttackPlayer && distanceToPlayer <= attackRange + 0.2f) canReach = true;
-            else if (currentState == EnemyState.AttackMinion && distanceToMinion <= attackRange + 0.2f) canReach = true;
+            float currentAtkRng = GetCurrentAttackRange();
+
+            if (currentState == EnemyState.AttackPlayer && distanceToPlayer <= currentAtkRng + 0.2f) canReach = true;
+            else if (currentState == EnemyState.AttackMinion && distanceToMinion <= currentAtkRng + 0.2f) canReach = true;
             else if (currentState == EnemyState.AttackBase && distanceToBase <= baseAttackRange + 0.5f) canReach = true;
 
             if (canReach)
@@ -460,14 +482,18 @@ public class EnemyAI : MonoBehaviour
                 {
                     animator.ResetTrigger("Damage"); // ยกเลิกท่าโดนตี ถ้ากำลังเล่นอยู่
 
-                    // สุ่มท่าโจมตี (0 ถึง attackVariants-1)
-                    int variants = combatSO.attackVariants;
-                    if (variants > 1)
-                        animator.SetInteger("AttackIndex", Random.Range(0, variants));
-                    else
-                        animator.SetInteger("AttackIndex", 0);
+                    // ถ้าไม่ได้เลือกท่าไว้ล่วงหน้า ให้สุ่มก่อนตี (เผื่อกรณี base/ไม่ได้ผ่านเข้า phase 3)
+                    if (!attackPreSelected) 
+                    {
+                        int variants = combatSO.attackVariants;
+                        if (variants > 1)
+                            animator.SetInteger("AttackIndex", Random.Range(0, variants));
+                        else
+                            animator.SetInteger("AttackIndex", 0);
+                    }
 
                     animator.SetTrigger(combatSO.attackTriggerName);
+                    attackPreSelected = false; // รีเซตสถานะการจองท่า
                     Debug.Log($"[Combat] ⚔️ โจมตี! ท่า={animator.GetInteger("AttackIndex")} cooldown={cooldown}s");
                 }
             }
@@ -512,7 +538,8 @@ public class EnemyAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     bool inCooldown = Time.time < nextAttackTime;
-                    float sRange = combatSO != null ? combatSO.strafeRange : attackRange + 2f;
+                    float currentAtkRng = GetCurrentAttackRange();
+                    float sRange = combatSO != null ? combatSO.strafeRange : currentAtkRng + 2f;
 
                     if (inCooldown && combatSO != null)
                     {
@@ -610,7 +637,7 @@ public class EnemyAI : MonoBehaviour
                     }
 
                     // === Phase 3: คูลดาวน์หมด → วิ่งเข้าหาเพลเยอร์ ===
-                    Debug.Log($"[Combat] 🏃 วิ่งเข้าตี! dist={distanceToPlayer:F1}, atkRange={attackRange:F1}");
+                    Debug.Log($"[Combat] 🏃 วิ่งเข้าตี! dist={distanceToPlayer:F1}, atkRange={GetCurrentAttackRange():F1}");
                     isStrafing = false;
                     hasRetreated = false; // รีเซ็ต ให้ถอยได้อีกรอบหน้า
                     if (animator != null)
@@ -618,6 +645,17 @@ public class EnemyAI : MonoBehaviour
                         animator.SetBool("IsStrafing", false);
                         targetStrafeX = 0f;
                         targetStrafeY = 0f;
+
+                        // สุ่มท่าโจมตีไว้ล่วงหน้าเลย (ทำทีเดียวต่อการวิ่ง 1 รอบ)
+                        if (combatSO != null && !attackPreSelected)
+                        {
+                            int variants = combatSO.attackVariants;
+                            if (variants > 1)
+                                animator.SetInteger("AttackIndex", Random.Range(0, variants));
+                            else
+                                animator.SetInteger("AttackIndex", 0);
+                            attackPreSelected = true;
+                        }
                     }
                     agent.updateRotation = true;
                     agent.speed = baseSpeed * 2.5f;
@@ -630,7 +668,8 @@ public class EnemyAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     bool inCooldownM = Time.time < nextAttackTime;
-                    float sRangeM = combatSO != null ? combatSO.strafeRange : attackRange + 2f;
+                    float currentAtkRngM = GetCurrentAttackRange();
+                    float sRangeM = combatSO != null ? combatSO.strafeRange : currentAtkRngM + 2f;
 
                     if (inCooldownM && combatSO != null)
                     {
@@ -722,6 +761,17 @@ public class EnemyAI : MonoBehaviour
                         animator.SetBool("IsStrafing", false);
                         targetStrafeX = 0f;
                         targetStrafeY = 0f;
+
+                        // สุ่มท่าโจมตีไว้ล่วงหน้าเลย
+                        if (combatSO != null && !attackPreSelected)
+                        {
+                            int variants = combatSO.attackVariants;
+                            if (variants > 1)
+                                animator.SetInteger("AttackIndex", Random.Range(0, variants));
+                            else
+                                animator.SetInteger("AttackIndex", 0);
+                            attackPreSelected = true;
+                        }
                     }
                     agent.updateRotation = true;
                     agent.speed = baseSpeed * 2.5f;
@@ -753,7 +803,10 @@ public class EnemyAI : MonoBehaviour
             healthBar.value = currentHP;
 
         // --- ระบบ Hyper Armor + Flinch Cooldown ---
-        bool isAttacking = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk"));
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        bool isAttacking = sInfo.IsTag("Attack") || nInfo.IsTag("Attack");
+
         bool skipFlinch = combatSO != null && combatSO.hasHyperArmor && isAttacking;
         bool flinchOnCooldown = Time.time < nextFlinchTime; // ยังอยู่ในช่วงป้องกัน spam
 
