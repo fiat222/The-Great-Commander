@@ -42,8 +42,8 @@ public class ImpProjectile : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            other.GetComponent<PlayerController>()?.TakeDamage(damage);
-            other.GetComponent<Archer>()?.TakeDamage(damage);
+            other.GetComponent<PlayerController>()?.TakeDamage(damage, transform.position);
+            other.GetComponent<Archer>()?.TakeDamage(damage, transform.position);
             Debug.Log($"<color=red>[ImpProjectile]</color> Hit Player! Damage: {damage}");
         }
         else if (other.CompareTag("Minion"))
