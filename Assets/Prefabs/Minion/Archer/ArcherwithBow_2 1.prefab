@@ -525,27 +525,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalScale.x
-      value: 2.13
+      value: 2.5000002
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalScale.y
-      value: 2.13
+      value: 2.5000002
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalScale.z
-      value: 2.13
+      value: 2.5000002
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 1.7737718
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.13999937
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -21.817095
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e2bda461d1298714f9fdbd51d9329f22, type: 3}
       propertyPath: m_LocalRotation.w
@@ -710,7 +710,7 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: 98305398f2dbc0a489e8d7e0539a9e0b, type: 2}
   arrowPrefab: {fileID: 3452513423560254742, guid: 01372e2815129ca4a9eb1bbb79cb15ca, type: 3}
   shootPoint: {fileID: 5029902436344996831}
-  arrowSpeed: 30
+  arrowSpeed: 35
   healthBar: {fileID: 1889873849882371019}
 --- !u!114 &-9147722433087647229
 MonoBehaviour:
@@ -724,7 +724,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2228405350
+  GlobalObjectIdHash: 1770229947
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
