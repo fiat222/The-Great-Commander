@@ -167,8 +167,8 @@ public class Archer : MonoBehaviour
     private void ApplyGravityDuringDodge()
     {
         if (groundCheck != null)
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-            
+            isGrounded = controller.isGrounded;
+
         if (isGrounded && verticalVelocity.y < 0) 
             verticalVelocity.y = -2f;
         else 
@@ -455,7 +455,7 @@ public class Archer : MonoBehaviour
         bool isLocked = isRolling || isHit || isDead || (animator != null && animator.IsInTransition(0) && nInfo.IsTag("Roll"));
 
         if (groundCheck != null)
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            isGrounded = controller.isGrounded;
         if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
 
         float h = Input.GetAxisRaw("Horizontal");
