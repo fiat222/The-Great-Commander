@@ -21,16 +21,21 @@ public class PlayerController : MonoBehaviour
     public float comboResetTime = 3.0f;
     public float attackDashForce = 5f;
     public float dashDecay = 10f;
-    public float rollForce = 20f;
-    public float rollDecay = 8f;
     [Range(0, 1)] public float forceTime = 0.2f;
     [Range(0, 1)] public float comboWindowTime = 0.5f;
     [Range(0, 1)] public float finisherWindowTime = 0.85f;
 
+    // ==================== Roll / Dodge ====================
+    [Header("Roll / Dodge Settings")]
+    public AnimationCurve dodgeCurve = AnimationCurve.Linear(0f, 15f, 0.5f, 0f);
+    private bool isDodging;
+    private float dodgeTimer;
+    private float dodgeCooldownTimer;
+
     private int comboStep;
     private float lastClickTime;
     private Vector3 currentDashVelocity;  // แรงพุ่งตอนฟัน
-    private Vector3 currentRollVelocity;  // แรงกลิ้ง (แยกกันแล้ว!)
+    private Vector3 currentHitVelocity;   // แรงกระเด็นตอนโดนทำดาเมจ
     private Vector3 rollDirection;
     private bool alreadyAppliedForce;
     private bool bufferCombo;
@@ -83,6 +88,15 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         if (Camera.main != null) mainCameraTransform = Camera.main.transform;
 
+        if (dodgeCurve != null && dodgeCurve.length > 0)
+        {
+            dodgeTimer = dodgeCurve[dodgeCurve.length - 1].time;
+        }
+        else
+        {
+            dodgeTimer = 0.5f; // Fallback
+        }
+
         ApplyStats(isFirstInit: true);
     }
 
@@ -117,12 +131,37 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (isDead) return;
+
+        if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
+
         HandleTargetLockInput();
         HandleRollInput();
         HandleAttackInput();
         CheckAnimationLogic();
         UpdateWeaponEffect();
-        Move();
+
+        if (!isDodging)
+        {
+            Move();
+        }
+        else
+        {
+            // ให้ลอยตกลงพื้นได้แม้กำลังกลิ้งอยู่
+            ApplyGravityDuringDodge();
+        }
+    }
+
+    private void ApplyGravityDuringDodge()
+    {
+        if (groundCheck != null)
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            
+        if (isGrounded && verticalVelocity.y < 0) 
+            verticalVelocity.y = -2f;
+        else 
+            verticalVelocity.y += gravity * Time.deltaTime;
+
+        controller.Move(verticalVelocity * Time.deltaTime);
     }
 
     private void UpdateWeaponEffect()
@@ -222,7 +261,8 @@ public class PlayerController : MonoBehaviour
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         bool isBusy = animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") ||
                                            sInfo.IsTag("Attack") || nInfo.IsTag("Attack"));
-        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy) return;
+                                           
+        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy || isDodging || dodgeCooldownTimer > 0) return;
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
@@ -238,12 +278,46 @@ public class PlayerController : MonoBehaviour
         }
         else { rollDirection = transform.forward; }
 
-        currentRollVelocity = rollDirection * rollForce;
+        StartCoroutine(DodgeRoutine());
+    }
+
+    private System.Collections.IEnumerator DodgeRoutine()
+    {
+        isDodging = true;
+        dodgeCooldownTimer = dodgeTimer + 0.15f; // Add slight cooldown after roll completes
+
         if (animator != null)
         {
-            animator.ResetTrigger("Damage"); // ตัดท่าโดนตีทิ้ง → กลิ้งเลย
+            animator.ResetTrigger("Damage"); 
             animator.SetTrigger("Roll");
         }
+
+        float timer = 0f;
+        bool heightCompressed = false;
+
+        while (timer < dodgeTimer)
+        {
+            if (!heightCompressed && timer > dodgeTimer / 3f)
+            {
+                controller.center = new Vector3(0, 1.25f, 0);
+                controller.height = 2.5f;
+                heightCompressed = true;
+            }
+
+            // อ่านค่าความเร็วจากกราฟ และคูณด้วยทิศทางที่เล็งไว้
+            float curveSpeed = dodgeCurve.Evaluate(timer);
+            Vector3 moveDir = rollDirection * curveSpeed;
+            
+            controller.Move(moveDir * Time.deltaTime);
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        // คืนค่า Hitbox ตาม Inspector 
+        controller.center = new Vector3(0, 2.45f, 0); 
+        controller.height = 4.93f; 
+        isDodging = false;
     }
 
     // ==================== Attack ====================
@@ -342,7 +416,8 @@ public class PlayerController : MonoBehaviour
         var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         bool isLocked = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") ||
-                                             sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
+                                             sInfo.IsTag("Roll")   || nInfo.IsTag("Roll") ||
+                                             sInfo.IsTag("Hit")    || nInfo.IsTag("Hit"));
 
         if (groundCheck != null)
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -358,18 +433,20 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isGrounded", isGrounded);
         }
 
+        Vector3 finalMove = Vector3.zero;
+
         // --- Attack Dash ---
         if (currentDashVelocity.magnitude > 0.1f)
         {
-            controller.Move(currentDashVelocity * Time.deltaTime);
+            finalMove += currentDashVelocity;
             currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, dashDecay * Time.deltaTime);
         }
 
-        // --- Roll ---
-        if (currentRollVelocity.magnitude > 0.1f)
+        // --- Hit Knockback ---
+        if (currentHitVelocity.magnitude > 0.1f)
         {
-            controller.Move(currentRollVelocity * Time.deltaTime);
-            currentRollVelocity = Vector3.Lerp(currentRollVelocity, Vector3.zero, rollDecay * Time.deltaTime);
+            finalMove += currentHitVelocity;
+            currentHitVelocity = Vector3.Lerp(currentHitVelocity, Vector3.zero, 10f * Time.deltaTime);
         }
 
         if (!isLocked)
@@ -381,7 +458,7 @@ public class PlayerController : MonoBehaviour
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle,
                                                     ref rotationVelocity, 1f / rotationSpeed);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
-                controller.Move(Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * moveSpeed * Time.deltaTime);
+                finalMove += Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * moveSpeed;
             }
 
             if (Input.GetButtonDown("Jump") && isGrounded)
@@ -392,7 +469,10 @@ public class PlayerController : MonoBehaviour
         }
 
         verticalVelocity.y += gravity * Time.deltaTime;
-        controller.Move(verticalVelocity * Time.deltaTime);
+        finalMove += verticalVelocity;
+
+        // รวบยอดเดินทีเดียว จะช่วยแก้บัค CharacterController ไถลบน Terrain ได้มหาศาล
+        controller.Move(finalMove * Time.deltaTime);
     }
 
     // ==================== Animation Events ====================
@@ -401,15 +481,24 @@ public class PlayerController : MonoBehaviour
     public void DisableInvincibility() => isInvincible = false;
 
     /// <summary>เรียกจาก EnemyAI หรือ Projectile ที่ชนผู้เล่น</summary>
-    public void TakeDamage(int rawDmg)
+    public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
 
-        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง
+        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
         ResetCombo();
         currentDashVelocity = Vector3.zero;
-        currentRollVelocity = Vector3.zero;
+
+        // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
+        Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
+        if (attackerPosition != default)
+        {
+            knockbackDir = (transform.position - attackerPosition).normalized;
+            knockbackDir.y = 0; // ไม่ให้กระเด็นขึ้นฟ้า/มุดดิน
+        }
+        currentHitVelocity = knockbackDir * 4f; // 4f คือความแรงกระเด็น (ปรับแต่งเลขนี้ได้)
+
         var wh = GetComponentInChildren<WeaponHandler>();
         if (wh != null) wh.DisableHitbox();
 
