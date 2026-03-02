@@ -109,7 +109,30 @@ public class ArcherAI : MonoBehaviour
     {
         if (arrowPrefab == null || shootPoint == null || currentTarget == null) return;
 
+        // เล็งเป้าหมาย: 1.จุดโดนตี(hitVFXPoint) 2.กลาง Collider 3.จุดอ้างอิงบวก Y
         Vector3 targetPos = currentTarget.position + Vector3.up * 1f;
+        
+        // พยายามดึงฮิตบ็อกซ์หรือตําแหน่งกลางจากสคริปต์ศัตรู
+        EnemyAI enemyAI = currentTarget.GetComponent<EnemyAI>();
+        ImpAI impAI = currentTarget.GetComponent<ImpAI>();
+        
+        if (enemyAI != null && enemyAI.hitVFXPoint != null)
+        {
+            targetPos = enemyAI.hitVFXPoint.position;
+        }
+        else if (impAI != null && impAI.hitVFXPoint != null)
+        {
+            targetPos = impAI.hitVFXPoint.position;
+        }
+        else
+        {
+            Collider targetCol = currentTarget.GetComponent<Collider>();
+            if (targetCol != null)
+            {
+                targetPos = targetCol.bounds.center;
+            }
+        }
+
         Vector3 direction = (targetPos - shootPoint.position).normalized;
 
         GameObject arrow = Instantiate(arrowPrefab, shootPoint.position, Quaternion.LookRotation(direction));
@@ -165,5 +188,14 @@ public class ArcherAI : MonoBehaviour
         currentTarget = enemies
             .OrderBy(e => Vector3.Distance(transform.position, e.transform.position))
             .First().transform;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        float range = data.attackrange;
+
+        // Attack Range (แดง)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, range);
     }
 }
