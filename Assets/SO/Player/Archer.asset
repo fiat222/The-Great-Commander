@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cd70768fa7ac14f9f544d816e83fd8, type: 3}
   m_Name: Archer
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
-  baseHP: 80
+  baseHP: 800
   baseSpeed: 10
   baseDefense: 2
   baseDamage: 15

@@ -185,18 +185,20 @@ public class EnemyAI : MonoBehaviour
     {
         if (animator == null || agent == null || !agent.enabled) return;
 
-        bool isAnimatorAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || 
-                                   animator.GetCurrentAnimatorStateInfo(0).IsTag("Atk");
+        bool isAnimatorAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack");
+
+        // ถ้ารับดาเมจอยู่ ให้ชะงัก (Hit Stun)
+        bool isAnimatorHit = animator.GetCurrentAnimatorStateInfo(0).IsTag("Hit");
 
         bool isAttackState = currentState == EnemyState.AttackPlayer || 
                              currentState == EnemyState.AttackBase || 
                              currentState == EnemyState.AttackMinion;
 
-        if (isAnimatorAttacking)
+        if (isAnimatorAttacking || isAnimatorHit)
         {
             agent.updateRotation = false;
 
-            if (attackTracking)
+            if (isAnimatorAttacking && attackTracking)
             {
                 // กำลังไกวอาวุธอยู่ → หมุนหาเพลเยอร์ไปเรื่อยๆ (สำหรับ Combo Tracking)
                 agent.isStopped = true;
@@ -205,7 +207,7 @@ public class EnemyAI : MonoBehaviour
             }
             else
             {
-                // กำลังฟันอยู่ → ล็อคทุกอย่าง
+                // กำลังฟัน หรือกำลังโดนตีชะงักอยู่ → ล็อคทุกอย่างให้อยู่กับที่
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
             }

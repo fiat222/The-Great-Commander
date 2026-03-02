@@ -35,13 +35,12 @@ public class Archer : MonoBehaviour
     [Range(1, 50)] public int maxDamage = 15;
     public float maxSpreadAngle = 10f;
 
-    // ==================== Roll ====================
-    [Header("Roll Settings")]
-    public float rollForce = 20f;
-    public float rollSpeed = 15f;
-    public float rollDecay = 8f;
-    public float dashDecay = 10f;
-    [Range(0, 1)] public float forceTime = 0.2f;
+    // ==================== Roll / Dodge ====================
+    [Header("Roll / Dodge Settings")]
+    public AnimationCurve dodgeCurve = AnimationCurve.Linear(0f, 15f, 0.5f, 0f);
+    private bool isDodging;
+    private float dodgeTimer;
+    private float dodgeCooldownTimer;
 
     // ==================== Target Lock ====================
     [Header("Target Lock Settings")]
@@ -59,7 +58,7 @@ public class Archer : MonoBehaviour
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundDistance = 0.4f;
+    public float groundDistance = 0.6f;
     public LayerMask groundMask;
 
     // ==================== Health UI ====================
@@ -74,7 +73,7 @@ public class Archer : MonoBehaviour
     private int currentHP;
     private bool isDead;
     public bool IsDead => isDead;
-    private Vector3 currentDashVelocity;
+    private Vector3 currentHitVelocity;
     private Vector3 rollDirection;
     private float rotationVelocity;
     private Vector3 verticalVelocity;
@@ -93,6 +92,15 @@ public class Archer : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         if (Camera.main != null) mainCameraTransform = Camera.main.transform;
+
+        if (dodgeCurve != null && dodgeCurve.length > 0)
+        {
+            dodgeTimer = dodgeCurve[dodgeCurve.length - 1].time;
+        }
+        else
+        {
+            dodgeTimer = 0.5f; // Fallback
+        }
 
         ApplyStats(isFirstInit: true);
 
@@ -138,11 +146,35 @@ public class Archer : MonoBehaviour
     private void Update()
     {
         if (isDead) return;
+
+        if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
+
         HandleTargetLockInput();
         HandleRollInput();
         HandleAimAndShootInput();
         CheckAnimationLogic();
-        Move();
+
+        if (!isDodging)
+        {
+            Move();
+        }
+        else
+        {
+            ApplyGravityDuringDodge();
+        }
+    }
+
+    private void ApplyGravityDuringDodge()
+    {
+        if (groundCheck != null)
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            
+        if (isGrounded && verticalVelocity.y < 0) 
+            verticalVelocity.y = -2f;
+        else 
+            verticalVelocity.y += gravity * Time.deltaTime;
+
+        controller.Move(verticalVelocity * Time.deltaTime);
     }
 
     // ==================== Target Lock ====================
@@ -218,12 +250,12 @@ public class Archer : MonoBehaviour
 
     private void HandleRollInput()
     {
-        bool isBusy = animator != null &&
-                      (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") ||
-                       animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
-                       animator.GetNextAnimatorStateInfo(0).IsTag("Attack") ||
-                       animator.GetNextAnimatorStateInfo(0).IsTag("Roll") || isAiming);
-        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy) return;
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        // ปลดล็อคให้กลิ้งได้แม้กำลังตั้งท่าโจมตี (Attack) หรือเล็งอยู่ เผื่อหนีฉุกเฉิน
+        bool isBusy = animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
+        
+        if (!Input.GetKeyDown(KeyCode.LeftShift) || !isGrounded || isBusy || isDodging || dodgeCooldownTimer > 0) return;
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
@@ -239,30 +271,86 @@ public class Archer : MonoBehaviour
         }
         else { rollDirection = transform.forward; }
 
-        currentDashVelocity = rollDirection * (rollForce * 0.5f);
-        if (animator != null) animator.SetTrigger("Roll");
+        StartCoroutine(DodgeRoutine());
+    }
+
+    private System.Collections.IEnumerator DodgeRoutine()
+    {
+        isDodging = true;
+        dodgeCooldownTimer = dodgeTimer + 0.15f; 
+
+        if (animator != null)
+        {
+            animator.ResetTrigger("Damage"); 
+            animator.ResetTrigger("DrawArrow");
+            animator.ResetTrigger("Shoot");
+            animator.SetTrigger("Roll");
+        }
+
+        float timer = 0f;
+        bool heightCompressed = false;
+
+        while (timer < dodgeTimer)
+        {
+            if (!heightCompressed && timer > dodgeTimer / 3f)
+            {
+                controller.center = new Vector3(0, 0.45f, 0);
+                controller.height = 0.9f;
+                heightCompressed = true;
+            }
+
+            float curveSpeed = dodgeCurve.Evaluate(timer);
+            Vector3 moveDir = rollDirection * curveSpeed;
+            
+            controller.Move(moveDir * Time.deltaTime);
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        controller.center = new Vector3(0, 0.9f, 0); 
+        controller.height = 1.8f; 
+        isDodging = false;
     }
 
     // ==================== Aim & Shoot ====================
 
     private void HandleAimAndShootInput()
     {
+        bool isPlayingRoll = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") || animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
+        bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
+        bool isTransitioning = animator != null && animator.IsInTransition(0);
+
+        bool isBusy = isPlayingRoll || isPlayingAttack || isTransitioning;
+
+        // ค้างคลิกซ้าย = เล็ง (ถ้าไม่ได้ติดสถานะอื่น)
         if (Input.GetMouseButtonDown(0))
         {
-            bool isBusy = animator != null &&
-                          (animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") ||
-                           animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
-            if (!isBusy) StartAiming();
+            if (!isBusy)
+            {
+                StartAiming();
+            }
         }
+
+        // ปล่อยคลิกซ้าย
         if (Input.GetMouseButtonUp(0))
         {
-            if (isAiming && !hasFiredThisAim) Shoot();
+            if (isAiming)
+            {
+                if (!hasFiredThisAim)
+                {
+                    Shoot();
+                }
+                StopAiming();
+            }
+        }
+
+        // ถ้ากำลังเล็งอยู่ แต่จู่ๆ เกิดติดสถานะ Roll หรือถูกโจมตี (isHit จัดการที่อื่นแล้ว) -> ให้ยกเลิกการเล็ง
+        if (isAiming && isPlayingRoll)
+        {
             StopAiming();
         }
 
-        bool isPlayingAttack = animator != null &&
-                               (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") ||
-                                animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
         if (isAiming || isPlayingAttack) { UpdateAimBlendTree(); FaceCamera(); }
     }
 
@@ -346,7 +434,11 @@ public class Archer : MonoBehaviour
         transform.rotation = target;
     }
 
-    private void CheckAnimationLogic() { }
+    private void CheckAnimationLogic() 
+    { 
+        // Archer doesn't need complex forceTime logic for roll, 
+        // PlayerController applies rollForce instantly.
+    }
 
     // ==================== Move ====================
 
@@ -355,9 +447,12 @@ public class Archer : MonoBehaviour
         var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
 
-        bool isRolling = animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
+        bool isRolling= animator != null && (sInfo.IsTag("Roll") || nInfo.IsTag("Roll"));
+        bool isHit = animator != null && (sInfo.IsTag("Hit") || nInfo.IsTag("Hit"));
         bool isPlayingAttack = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack"));
-        bool isLocked = isRolling;
+
+        // ล็อคห้ามใช้ WASD เดินเด็ดขาดเวลา: กลิ้ง, โดนตี, ตาย หรือกำลังเข้าสู่ท่ากลิ้ง
+        bool isLocked = isRolling || isHit || isDead || (animator != null && animator.IsInTransition(0) && nInfo.IsTag("Roll"));
 
         if (groundCheck != null)
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -368,6 +463,11 @@ public class Archer : MonoBehaviour
         float spd = (isAiming || isPlayingAttack) ? aimMoveSpeed : moveSpeed;
         Vector3 dir = new Vector3(h, 0f, v).normalized;
 
+        if (isLocked) 
+        {
+            dir = Vector3.zero; // ตัดแรงเดิน WASD เป็น 0 ทันทีที่โดนล็อค 
+        }
+
         if (animator != null)
         {
             if (!isAiming && !isPlayingAttack)
@@ -375,15 +475,14 @@ public class Archer : MonoBehaviour
             animator.SetBool("isGrounded", isGrounded);
         }
 
-        if (currentDashVelocity.magnitude > 0.1f)
-        {
-            controller.Move(currentDashVelocity * Time.deltaTime);
-            float decay = isRolling ? rollDecay : dashDecay;
-            currentDashVelocity = Vector3.Lerp(currentDashVelocity, Vector3.zero, decay * Time.deltaTime);
-        }
+        Vector3 finalMove = Vector3.zero;
 
-        if (isRolling && sInfo.normalizedTime % 1f < 0.75f)
-            controller.Move(rollDirection * rollSpeed * Time.deltaTime);
+        // --- Hit Knockback ---
+        if (currentHitVelocity.magnitude > 0.1f)
+        {
+            finalMove += currentHitVelocity;
+            currentHitVelocity = Vector3.Lerp(currentHitVelocity, Vector3.zero, 10f * Time.deltaTime);
+        }
 
         if (!isLocked)
         {
@@ -393,7 +492,7 @@ public class Archer : MonoBehaviour
                 {
                     float angle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg +
                                   (mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : 0);
-                    controller.Move(Quaternion.Euler(0f, angle, 0f) * Vector3.forward * spd * Time.deltaTime);
+                    finalMove += Quaternion.Euler(0f, angle, 0f) * Vector3.forward * spd;
                 }
             }
             else
@@ -405,8 +504,9 @@ public class Archer : MonoBehaviour
                     float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle,
                                                         ref rotationVelocity, 1f / rotationSpeed);
                     transform.rotation = Quaternion.Euler(0f, angle, 0f);
-                    controller.Move(Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * spd * Time.deltaTime);
+                    finalMove += Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward * spd;
                 }
+
                 if (Input.GetButtonDown("Jump") && isGrounded)
                 {
                     verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -416,7 +516,10 @@ public class Archer : MonoBehaviour
         }
 
         verticalVelocity.y += gravity * Time.deltaTime;
-        controller.Move(verticalVelocity * Time.deltaTime);
+        finalMove += verticalVelocity;
+        
+        // รวบยอดเดินทีเดียว จะช่วยแก้บัค CharacterController ไถลบน Terrain ได้มหาศาล
+        controller.Move(finalMove * Time.deltaTime);
     }
 
     // ==================== Animation Events ====================
@@ -424,10 +527,20 @@ public class Archer : MonoBehaviour
     public void EnableInvincibility() => isInvincible = true;
     public void DisableInvincibility() => isInvincible = false;
 
-    public void TakeDamage(int rawDmg)
+    public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
         if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
+
+        StopAiming();
+
+        Vector3 knockbackDir = -transform.forward;
+        if (attackerPosition != default)
+        {
+            knockbackDir = (transform.position - attackerPosition).normalized;
+            knockbackDir.y = 0;
+        }
+        currentHitVelocity = knockbackDir * 4f;
 
         // rawDmg - Defense ก่อน แล้วค่อยลบ HP (ต่ำสุด 1)
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
@@ -451,5 +564,24 @@ public class Archer : MonoBehaviour
         isDead = true;
         Debug.Log("<color=red>[Archer]</color> ตายแล้ว!");
         if (animator != null) animator.SetTrigger("Die");
+    }
+
+    private void OnDrawGizmos()
+    {
+        // 1. วาดวงกลมสีเขียว เช็คพื้น
+        if (groundCheck != null)
+        {
+            Gizmos.color = isGrounded ? Color.green : Color.red;
+            // วาดเส้นกรอบ
+            Gizmos.DrawWireSphere(groundCheck.position, groundDistance);
+            
+            // วาดวงทึบจางๆ ให้เห็นชัดๆ
+            Gizmos.color = isGrounded ? new Color(0, 1, 0, 0.2f) : new Color(1, 0, 0, 0.2f);
+            Gizmos.DrawSphere(groundCheck.position, groundDistance);
+        }
+
+        // 2. วาดระยะล็อคเป้า
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lockRange);
     }
 }
