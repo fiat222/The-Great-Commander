@@ -20,11 +20,11 @@ public class PlayerWeaponHitbox : MonoBehaviour
         hitThisSwing.Add(other);
 
         float damage = 10f;
-        if (customDamage > 0)
+        if (customDamage > 0)// ถ้าไฟล์อื่นเซ็ตอาเมจมาเอาค่านั้นมาใช้
         {
             damage = customDamage;
         }
-        else
+        else// ไม่งั้นก็เอาดาเมจปกติของตัวละครมาใช้
         {
             var pc = GetComponentInParent<PlayerController>();
             if (pc != null) damage = pc.AttackDamage;
