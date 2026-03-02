@@ -14,11 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinionData
   minionName: Skeleton
   prefab: {fileID: 2481845571369870494, guid: 21e7579a44187194d8e08075df8e097d, type: 3}
-  picture: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
+  picture: {fileID: 21300000, guid: 9ea150cd822650b4bb8cf5ea27b12a49, type: 3}
   icon: {fileID: 1601293249, guid: e74ddbd41ff599c4783ed1ec3d9648e6, type: 3}
+  attackVFX: {fileID: 0}
   cost: 20
   damage: 24
   defense: 1
   speed: 5
   hp: 40
   attackrange: 15
+  costEscalation: 1.5
+  hpMultiplier: 1.3
+  attackMultiplier: 1.2
+  defenseMultiplier: 1.3
+  maxLevel: 5

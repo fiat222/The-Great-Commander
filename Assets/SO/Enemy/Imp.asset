@@ -21,6 +21,15 @@ MonoBehaviour:
   hitVFX: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
   deathVFX: {fileID: 4809171458859421548, guid: 4e91ed1a8efe7044785b9bd97a47d87f, type: 3}
   removalVFX: {fileID: 4318940320840401929, guid: 842eb98046e1ca348b3c0807fcfe362d, type: 3}
+  attackSounds: []
+  attackVolume: 0.8
+  roarSounds: []
+  roarVolume: 1
+  roarLoop: 0
+  deathSounds: []
+  deathVolume: 1
+  minHearDistance: 3
+  maxHearDistance: 30
   baseDamage: 12
   baseDefense: 1
   baseSpeed: 6
