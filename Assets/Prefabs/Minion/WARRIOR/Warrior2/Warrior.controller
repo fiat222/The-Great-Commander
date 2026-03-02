@@ -76,7 +76,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: 9b8cc833ac134f642bafd33de69bca73, type: 2}
-  m_Tag: 
+  m_Tag: Attack
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -139,7 +139,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WALK
-  m_Speed: 0.5
+  m_Speed: 2
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -5368740732957682972}
@@ -316,7 +316,7 @@ AnimatorStateMachine:
     m_Position: {x: 240, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -1635420181325297561}
-    m_Position: {x: 250, y: 260, z: 0}
+    m_Position: {x: 240, y: 260, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 3868360186485168523}
     m_Position: {x: 300, y: 20, z: 0}
