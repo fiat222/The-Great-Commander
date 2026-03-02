@@ -56,6 +56,11 @@ public class GameManager : NetworkBehaviour
         p1SentCounts = new NetworkList<int>();
     }
 
+    void Start()
+    {
+        Debug.Log($"[Minimap] Start! IsServer={IsServer} IsClient={IsClient} IsHost={IsHost}");
+    }
+
     public override void OnNetworkSpawn()
     {
         // หา Spawner ตัวเดียวในซีน
