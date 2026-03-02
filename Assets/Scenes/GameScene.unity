@@ -2654,7 +2654,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.0680725, y: 0.09100569, z: -0.0062355055, w: 0.99350154}
-  m_LocalPosition: {x: 18.5, y: 9.778981, z: -43.421795}
+  m_LocalPosition: {x: 18.5, y: 7.478981, z: -43.421795}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3394,13 +3394,33 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player_Archer
       objectReference: {fileID: 0}
+    - target: {fileID: 2187872851626865004, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4131220506820624819, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.07
+      objectReference: {fileID: 0}
+    - target: {fileID: 4131220506820624819, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4131220506820624819, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 4335324387086569942, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.2546
+      objectReference: {fileID: 0}
     - target: {fileID: 4603717778075161300, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalPosition.x
       value: 18.5
       objectReference: {fileID: 0}
     - target: {fileID: 4603717778075161300, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.82
+      value: 2.52
       objectReference: {fileID: 0}
     - target: {fileID: 4603717778075161300, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
       propertyPath: m_LocalPosition.z
