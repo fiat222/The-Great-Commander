@@ -1,21 +1,18 @@
-using UnityEngine;
-using UnityEngine.UI;
+๏ปฟusing UnityEngine;
 using System.Collections.Generic;
 
 public class MinimapUI : MonoBehaviour
 {
     public static MinimapUI Instance { get; private set; }
 
-    [Header("Settings")]
-    public RectTransform minimapPanel; // ตัวกรอบรูปแมพ
-
-    // ตั้งค่าตามค่าที่ได้จาก Terrain
+    [Header("Map Settings โ€” เธ•เนเธญเธเธ•เธฃเธเธเธฑเธ Terrain เธเธฃเธดเธ")]
+    public RectTransform minimapPanel; // เธฅเธฒเธ MapUI เนเธชเนเธ•เธฃเธเธเธตเน
     public float mapWorldSizeX = 250f;
     public float mapWorldSizeZ = 300f;
     public float terrainOffsetX = -126f;
     public float terrainOffsetZ = -156f;
 
-    [Header("Prefabs")]
+    [Header("Dot Prefabs")]
     public GameObject whiteDot;
     public GameObject blueDot;
     public GameObject redDot;
@@ -27,42 +24,44 @@ public class MinimapUI : MonoBehaviour
     public void Refresh(MinimapUnitData[] units)
     {
         ClearIcons();
+
+        // เธ”เธถเธเธเธเธฒเธ” Panel เธเธฃเธดเธเน เธ“ runtime (เนเธกเน hardcode)
+        float panelW = minimapPanel.rect.width;
+        float panelH = minimapPanel.rect.height;
+
         foreach (var unit in units)
         {
-            GameObject icon = GetIcon(unit.UnitType);
+            GameObject prefab = GetPrefab(unit.UnitType);
+            if (prefab == null) continue;
 
-            // สำคัญ: ต้องเซ็ต Parent ก่อนคำนวณตำแหน่ง
+            GameObject icon = Instantiate(prefab);
             icon.transform.SetParent(minimapPanel, false);
-            icon.SetActive(true);
 
-            // คำนวณพิกัดจากโลกจริง -> อัตราส่วน 0 ถึง 1
-            float xRatio = (unit.Position.x - terrainOffsetX) / mapWorldSizeX;
-            float zRatio = (unit.Position.y - terrainOffsetZ) / mapWorldSizeZ;
-
-            // คูณกับขนาดจริงของ Rect ใน UI
-            // ไม่ว่ามินิแมพจะอยู่ขวาบนหรือที่ไหน anchoredPosition จะอ้างอิงจากมุมซ้ายล่างของ Panel เสมอ (ถ้า Icon Pivot เป็น 0.5)
-            float uiX = xRatio * minimapPanel.rect.width;
-            float uiY = zRatio * minimapPanel.rect.height;
+            // unit.Position.x = world X, unit.Position.y = world Z (เน€เธเนเธเนเธ Vector2.y)
+            float xRatio = Mathf.Clamp01((unit.Position.x - terrainOffsetX) / mapWorldSizeX);
+            float zRatio = Mathf.Clamp01((unit.Position.y - terrainOffsetZ) / mapWorldSizeZ);
 
             RectTransform rt = icon.GetComponent<RectTransform>();
-            // ตั้งค่า Anchor ของ Icon ให้เป็น Bottom-Left (0,0) เพื่อให้คำนวณจากมุมซ้ายล่างของกรอบ
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.zero;
-            rt.anchoredPosition = new Vector2(uiX, uiY);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(xRatio * panelW, zRatio * panelH);
 
             activeIcons.Add(icon);
         }
     }
 
-    private GameObject GetIcon(byte type)
+    private GameObject GetPrefab(byte type) => type switch
     {
-        GameObject prefab = type == 0 ? whiteDot : (type == 1 ? blueDot : redDot);
-        return Instantiate(prefab);
-    }
+        0 => whiteDot,
+        1 => blueDot,
+        _ => redDot
+    };
 
     private void ClearIcons()
     {
-        foreach (var icon in activeIcons) Destroy(icon);
+        foreach (var icon in activeIcons)
+            if (icon != null) Destroy(icon);
         activeIcons.Clear();
     }
 }
