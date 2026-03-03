@@ -16302,6 +16302,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tower Mage
       objectReference: {fileID: 0}
+    - target: {fileID: 1878320753386832747, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2912456600999082829, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 1560435879

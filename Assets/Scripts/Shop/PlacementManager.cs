@@ -84,15 +84,27 @@ public class PlacementManager : MonoBehaviour
         foreach (MonoBehaviour mb in ghost.GetComponentsInChildren<MonoBehaviour>())
             mb.enabled = false;
 
-        // สีเริ่มต้น — จะถูก update ทุก frame ใน HandlePlacing
-        SetGhostColor(true);
+        // ⭐ swap material ทุกชิ้นเป็น Transparent/Unlit ใหม่
+        // เพื่อให้ SetGhostColor ทำงานได้แน่นอน ไม่ขึ้น warning
+        var ghostMat = new Material(Shader.Find("Unlit/Color"));
+        ghostMat.color = new Color(0f, 1f, 0f, 0.45f);
+
+        // เปิด Transparency (สำหรับ Unlit/Color ต้องตั้งค่า render queue)
+        ghostMat.SetFloat("_Mode", 3);
+        ghostMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        ghostMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        ghostMat.SetInt("_ZWrite", 0);
+        ghostMat.DisableKeyword("_ALPHATEST_ON");
+        ghostMat.EnableKeyword("_ALPHABLEND_ON");
+        ghostMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        ghostMat.renderQueue = 3000;
+
+        foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
+            r.material = ghostMat;
 
         if (gridVisual != null) gridVisual.gameObject.SetActive(true);
     }
 
-    // -------------------------------------------------------
-    // เปลี่ยนสี ghost: เขียว = วางได้, แดง = ช่องเต็ม/นอก grid
-    // -------------------------------------------------------
     private void SetGhostColor(bool canPlace)
     {
         if (ghost == null) return;
@@ -101,16 +113,7 @@ public class PlacementManager : MonoBehaviour
             : new Color(1f, 0f, 0f, 0.45f);   // 🔴 โปร่งใสแดง
 
         foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
-        {
-            // เปลี่ยนผ่าน MaterialPropertyBlock เพื่อไม่ต้อง clone material
-            var mpb = new MaterialPropertyBlock();
-            r.GetPropertyBlock(mpb);
-            mpb.SetColor("_Color", col);
-            r.SetPropertyBlock(mpb);
-
-            // Fallback: เขียนตรงๆ ทับ material color ด้วย (รองรับทุก shader)
-            r.material.color = col;
-        }
+            r.material.color = col;  // material นี้เป็น Unlit/Color ที่เราสร้างเอง ไม่มี warning
     }
 
     void HandlePlacing()
