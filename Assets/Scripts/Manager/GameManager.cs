@@ -117,6 +117,7 @@ public class GameManager : NetworkBehaviour
 
         if (newValue == GamePhase.Planning)
         {
+            EnemyTracker.Instance?.ResetForNewWaveServerRpc();
             if (IsServer)
             {
                 currentWave.Value++;
