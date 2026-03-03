@@ -11,11 +11,13 @@ public class MinimapDataSender : NetworkBehaviour
     private float timer;
     private List<MinimapUnitData> dataBuffer = new List<MinimapUnitData>();
 
+    // ⭐ เพิ่ม: เก็บจำนวน Enemy ฝั่งตรงข้ามที่รับมาล่าสุด
+    private int opponentEnemyCount = -1;
+
     private void Awake() => Instance = this;
 
     void Update()
     {
-        Debug.Log("[Minimap] Update running");
         if (!IsSpawned) return;
 
         timer += Time.deltaTime;
@@ -35,13 +37,11 @@ public class MinimapDataSender : NetworkBehaviour
     {
         dataBuffer.Clear();
 
-        // เปลี่ยนจาก IsOwner มาใช้ OwnerClientId แทน
         ulong myClientId = NetworkManager.Singleton.LocalClientId;
         var players = GameObject.FindGameObjectsWithTag("Player");
         foreach (var p in players)
         {
             var netObj = p.GetComponent<NetworkObject>();
-            Debug.Log($"[Minimap] {p.name} OwnerClientId={netObj?.OwnerClientId} MyId={myClientId}");
             if (netObj != null && netObj.OwnerClientId == myClientId)
             {
                 dataBuffer.Add(new MinimapUnitData
@@ -69,7 +69,6 @@ public class MinimapDataSender : NetworkBehaviour
 
         if (dataBuffer.Count == 0) return;
 
-        Debug.Log($"[Minimap] ส่ง {dataBuffer.Count} units | IsServer={IsServer}");
         SendSceneDataServerRpc(dataBuffer.ToArray());
     }
 
@@ -78,23 +77,20 @@ public class MinimapDataSender : NetworkBehaviour
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        // Debug ดูก่อน
-        string ids = "";
-        foreach (var id in NetworkManager.Singleton.ConnectedClientsIds) ids += id + ", ";
-        Debug.Log($"[Minimap] SenderID={senderClientId} | ConnectedIDs={ids}");
+        // ⭐ เพิ่ม: นับ Enemy ในข้อมูลที่ส่งมา แล้วรายงานให้ EnemyTracker
+        int enemyCount = 0;
+        foreach (var u in units)
+            if (u.UnitType == 2) enemyCount++;
 
+        EnemyTracker.Instance?.ReportEnemyCountServerRpc(enemyCount, senderClientId);
+
+        // ── โค้ดเดิม ──────────────────────────────────────────────
         var targetIds = new List<ulong>();
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
             if (clientId != senderClientId)
                 targetIds.Add(clientId);
-        }
 
-        if (targetIds.Count == 0)
-        {
-            Debug.LogWarning("[Minimap] ไม่มี targetIds เลย! ตรวจสอบว่า Client เชื่อมต่ออยู่ไหม");
-            return;
-        }
+        if (targetIds.Count == 0) return;
 
         ClientRpcParams clientRpcParams = new ClientRpcParams
         {
