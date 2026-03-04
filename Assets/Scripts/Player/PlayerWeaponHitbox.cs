@@ -7,54 +7,69 @@ public class PlayerWeaponHitbox : MonoBehaviour
     private float customDamage = -1f;
     private HashSet<Collider> hitThisSwing = new HashSet<Collider>();
 
+    private const float HeadshotMultiplier = 1.3f;   // +30%
+
     void Awake() => hitboxCollider = GetComponent<Collider>();
 
     public void SetDamage(float dmg) => customDamage = dmg;
-
     public void ClearHitList() => hitThisSwing.Clear();
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Enemy")) return;
-        if (hitThisSwing.Contains(other)) return;
-        hitThisSwing.Add(other);
+        bool isHead = other.CompareTag("EnemyHead");
+        bool isBody = other.CompareTag("Enemy");
+        if (!isHead && !isBody) return;
 
-        float damage = 10f;
-        if (customDamage > 0)// ถ้าไฟล์อื่นเซ็ตอาเมจมาเอาค่านั้นมาใช้
-        {
-            damage = customDamage;
-        }
-        else// ไม่งั้นก็เอาดาเมจปกติของตัวละครมาใช้
+        // ป้องกันโดนซ้ำใน swing เดียว — ใช้ root เป็น key
+        GameObject enemyRoot = isHead
+            ? (other.GetComponent<EnemyHeadHitbox>()?.GetEnemyRoot() ?? other.transform.root.gameObject)
+            : other.gameObject;
+
+        Collider rootCol = enemyRoot.GetComponent<Collider>() ?? other;
+        if (hitThisSwing.Contains(rootCol)) return;
+        hitThisSwing.Add(rootCol);
+
+        // ── คำนวณ damage ──────────────────────────────────────────────────────
+        float baseDamage;
+        if (customDamage > 0)
+            baseDamage = customDamage;
+        else
         {
             var pc = GetComponentInParent<PlayerController>();
-            if (pc != null) damage = pc.AttackDamage;
+            baseDamage = pc != null ? pc.AttackDamage : 10f;
         }
 
-        int dmgInt = Mathf.RoundToInt(damage);
+        bool isHeadshot = isHead;
+        float finalDamage = isHeadshot ? baseDamage * HeadshotMultiplier : baseDamage;
+        int dmgInt = Mathf.RoundToInt(finalDamage);
 
-        EnemyAI enemyAI = other.GetComponent<EnemyAI>();
-        if (enemyAI != null)
+        // ── ส่งดาเมจ ──────────────────────────────────────────────────────────
+        HealthSystem hp = enemyRoot.GetComponent<HealthSystem>();
+        if (hp != null)
         {
-            enemyAI.TakeDamage(damage);
-            // ── แสดงตัวเลขดาเมจ ──
-            Vector3 spawnPos = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
-            DamageNumberSpawner.Show(dmgInt, spawnPos);
-            OnHitSuccess(other.name, damage);
-            return;
+            hp.TakeDamage(dmgInt);
         }
-
-        ImpAI impAI = other.GetComponent<ImpAI>();
-        if (impAI != null)
+        else
         {
-            impAI.TakeDamage(dmgInt);
-            Vector3 spawnPos2 = new Vector3(other.bounds.center.x, other.bounds.max.y, other.bounds.center.z);
-            DamageNumberSpawner.Show(dmgInt, spawnPos2);
-            OnHitSuccess(other.name, damage);
+            EnemyAI enemyAI = enemyRoot.GetComponent<EnemyAI>();
+            if (enemyAI != null)
+                enemyAI.TakeDamage(finalDamage);
+            else
+            {
+                ImpAI impAI = enemyRoot.GetComponent<ImpAI>();
+                if (impAI != null) impAI.TakeDamage(dmgInt);
+            }
         }
-    }
 
-    private void OnHitSuccess(string targetName, float dmg)
-    {
-        Debug.Log($"<color=green>[PlayerHitbox]</color> Hit {targetName} for {dmg} damage!");
+        // ── Damage Number ──────────────────────────────────────────────────────
+        Vector3 spawnPos = new Vector3(rootCol.bounds.center.x,
+                                       rootCol.bounds.max.y,
+                                       rootCol.bounds.center.z);
+        DamageNumberSpawner.Show(dmgInt, spawnPos);
+
+        if (isHeadshot)
+            Debug.Log($"<color=orange>[PlayerHitbox]</color> HEADSHOT {enemyRoot.name} for {dmgInt} (+30%)");
+        else
+            Debug.Log($"<color=green>[PlayerHitbox]</color> Hit {enemyRoot.name} for {dmgInt}");
     }
 }
