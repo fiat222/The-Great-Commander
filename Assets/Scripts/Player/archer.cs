@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Cinemachine;
 using UnityEngine.UI;
+using PlayerAudio;
 
 public class Archer : MonoBehaviour
 {
@@ -54,6 +55,7 @@ public class Archer : MonoBehaviour
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
+    private PlayerAudioComponent playerAudio;
 
     // ==================== Ground Check ====================
     [Header("Ground Check")]
@@ -84,6 +86,9 @@ public class Archer : MonoBehaviour
     private bool isAiming;
     private bool hasFiredThisAim;
     private float lastAccuracy;
+    private bool forceNextShot100Accuracy;
+    private bool hasForcedTarget;
+    private Vector3 forcedTargetPosition;
 
     // ==================== Lifecycle ====================
 
@@ -92,6 +97,8 @@ public class Archer : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         if (Camera.main != null) mainCameraTransform = Camera.main.transform;
+
+        playerAudio = GetComponent<PlayerAudioComponent>();
 
         if (dodgeCurve != null && dodgeCurve.length > 0)
         {
@@ -323,6 +330,10 @@ public class Archer : MonoBehaviour
 
         bool isBusy = isPlayingRoll || isPlayingAttack || isTransitioning;
 
+        ArcherSkill skill = GetComponent<ArcherSkill>();
+        // ถ้ากำลังชี้เป้าสกิลอยู่ ให้บังคับชาร์จความแรง 100% เสมอ
+        bool isSkillActive = skill != null && skill.IsSkillActive;
+
         // ค้างคลิกซ้าย = เล็ง (ถ้าไม่ได้ติดสถานะอื่น)
         if (Input.GetMouseButtonDown(0))
         {
@@ -371,24 +382,55 @@ public class Archer : MonoBehaviour
     private void Shoot()
     {
         hasFiredThisAim = true;
-        lastAccuracy = crosshair != null ? crosshair.GetAccuracy() : 1f;
+        
+        if (forceNextShot100Accuracy)
+        {
+            lastAccuracy = 1f;
+            forceNextShot100Accuracy = false; // รีเซตเมื่อยิงเสร็จ
+        }
+        else
+        {
+            lastAccuracy = crosshair != null ? crosshair.GetAccuracy() : 1f;
+        }
+        
         if (animator != null) animator.SetTrigger("Shoot");
+    }
+
+    /// <summary>เรียกจาก Skill เพื่อบังคับให้ลูกดอกธรรมดาที่แถมออกไป แรง 100% ทันที พร้อมล็อคเป้า</summary>
+    public void ForceNextShotAccuracy(Vector3? targetPos = null)
+    {
+        forceNextShot100Accuracy = true;
+        if (targetPos.HasValue)
+        {
+            hasForcedTarget = true;
+            forcedTargetPosition = targetPos.Value;
+        }
     }
 
     public void SpawnArrow()
     {
         if (arrowPrefab == null || arrowSpawnPoint == null) return;
 
-        // ใช้ ViewportPointToRay เพื่อความแม่นยำสูงสุดที่จุดกึ่งกลางหน้าจอ
-        Ray ray = mainCameraTransform != null ? 
-                  Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)) : 
-                  new Ray(transform.position + Vector3.up * 1.5f, transform.forward);
+        Vector3 targetPt;
 
-        // เล็งกระแทกทุกอย่าง ยกเว้น Player และ Minion เพื่อให้จุดเล็ง (targetPt) ถูกต้องเสมอ
-        int mask = ~(LayerMask.GetMask("Player") | LayerMask.GetMask("Minion"));
+        if (hasForcedTarget)
+        {
+            targetPt = forcedTargetPosition;
+            hasForcedTarget = false; // รีเซตเมื่อยิงเสร็จ
+        }
+        else
+        {
+            // ใช้ ViewportPointToRay เพื่อความแม่นยำสูงสุดที่จุดกึ่งกลางหน้าจอ
+            Ray ray = mainCameraTransform != null ? 
+                      Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)) : 
+                      new Ray(transform.position + Vector3.up * 1.5f, transform.forward);
 
-        Vector3 targetPt = Physics.Raycast(ray, out RaycastHit hit, 200f, mask)
-            ? hit.point : ray.GetPoint(200f);
+            // เล็งกระแทกทุกอย่าง ยกเว้น Player และ Minion เพื่อให้จุดเล็ง (targetPt) ถูกต้องเสมอ
+            int mask = ~(LayerMask.GetMask("Player") | LayerMask.GetMask("Minion"));
+
+            targetPt = Physics.Raycast(ray, out RaycastHit hit, 200f, mask)
+                ? hit.point : ray.GetPoint(200f);
+        }
 
         Vector3 dir = (targetPt - arrowSpawnPoint.position).normalized;
         float finalSpd = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, lastAccuracy);
@@ -523,6 +565,32 @@ public class Archer : MonoBehaviour
     }
 
     // ==================== Animation Events ====================
+
+    // เล่นเสียงธนูโดยใช้โควต้าของ Attack1 
+    public void PlayShootSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Attack1);
+    }
+
+    public void PlayChargeBowSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.ChargeBow);
+    }
+
+    public void PlayJumpSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Jump);
+    }
+
+    public void PlayRollSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Roll);
+    }
+
+    public void PlayHitSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Hit);
+    }
 
     public void EnableInvincibility() => isInvincible = true;
     public void DisableInvincibility() => isInvincible = false;
