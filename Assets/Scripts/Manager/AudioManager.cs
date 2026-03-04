@@ -20,7 +20,12 @@ public class AudioManager : MonoBehaviour
 
     [Header("BGM Settings")]
     [Range(0f, 1f)] public float bgmVolume = 0.8f;
+    [Range(0f, 1f)] public float sfxVolume = 1f;
     [Min(0.1f)]     public float crossfadeDuration = 1.5f;
+
+    // Properties สำหรับ AudioSettingsUI อ่านค่าตั้งต้น
+    public float BgmVolume => bgmVolume;
+    public float SfxVolume => sfxVolume;
 
     [Header("SFX 2D (Global)")]
     [Tooltip("AudioSource สำหรับเสียง 2D เช่น UI, Pickup")]
@@ -147,6 +152,24 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || sfxSource == null) return;
         sfxSource.PlayOneShot(clip, volume);
+    }
+
+    // ─────────────────────────────────────────
+    //  Volume Control (เรียกจาก AudioSettingsUI)
+    // ─────────────────────────────────────────
+
+    /// <summary>ปรับ Volume ของ BGM และ Source ที่กำลังเล่นทันที</summary>
+    public void SetBGMVolume(float v)
+    {
+        bgmVolume = v;
+        if (activeBGMSource != null) activeBGMSource.volume = v;
+    }
+
+    /// <summary>ปรับ Volume ของ SFX Source ทันที</summary>
+    public void SetSFXVolume(float v)
+    {
+        sfxVolume = v;
+        if (sfxSource != null) sfxSource.volume = v;
     }
 
     // ─────────────────────────────────────────
