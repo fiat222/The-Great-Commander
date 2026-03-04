@@ -27,11 +27,11 @@ public class TowerAttack : MonoBehaviour
     {
         if (rangeVFXPrefab != null)
         {
-            // ⭐ ไม่ parent ใต้ Tower เพราะ Tower มี scale ใหญ่ (เช่น 8,11,8)
-            // ทำให้ localScale ถูก multiply ทับจนวงกลมใหญ่เกินหรือผิดรูป
             rangeInstance = Instantiate(rangeVFXPrefab, transform.position, Quaternion.identity);
+            rangeInstance.transform.SetParent(this.transform);
+            rangeInstance.transform.localPosition = new Vector3(0, 0f, 0);
 
-            // คำนวณ scale ใน world space โดยตรง
+            // แก้ vfx เพี้ยน
             float finalScale = (range * 2f) / vfxDefaultSize;
             rangeInstance.transform.localScale = new Vector3(finalScale, 1f, finalScale);
 
@@ -100,26 +100,16 @@ public class TowerAttack : MonoBehaviour
     {
         if (target != null)
         {
-            if (attackLaser != null)
-            {
-                attackLaser.enabled = true;
-                attackLaser.SetPosition(0, firePoint.position);
-                attackLaser.SetPosition(1, GetEnemyCenter(target));
-            }
+            attackLaser.enabled = true;
+            attackLaser.SetPosition(0, firePoint.position);
+            attackLaser.SetPosition(1, GetEnemyCenter(target)); // ชี้ไปกลางตัวเหมือนลูกไฟ
 
-            if (rangeInstance != null)
-            {
-                // ⭐ ติดตามตำแหน่ง Tower แทนการ parent (หลีกเลี่ยง scale บิดเบือน)
-                rangeInstance.transform.position = new Vector3(
-                    transform.position.x,
-                    rangeInstance.transform.position.y, // คงความสูงเดิมของ VFX
-                    transform.position.z);
-                rangeInstance.SetActive(true);
-            }
+            // แสดงขอบเขตค้างไว้ ไม่กะพริบ
+            if (rangeInstance != null) rangeInstance.SetActive(true);
         }
         else
         {
-            if (attackLaser != null) attackLaser.enabled = false;
+            attackLaser.enabled = false;
             if (rangeInstance != null) rangeInstance.SetActive(false);
         }
     }
