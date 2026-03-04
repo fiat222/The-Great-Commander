@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayerAudio;
 using Unity.Cinemachine;
 using UnityEngine.UI;
 
@@ -53,6 +54,11 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
+    private PlayerAudioComponent playerAudio;
+
+    [Header("VFX")]
+    public GameObject parryHitVFXPrefab; // ใส่ Prefab เอฟเฟคตอนกันติด (สะเก็ดไฟ/แสงกระแทก)
+    public Transform parryVFXSpawnPoint; // [ใหม่] จุดโฟกัสที่จะให้เอฟเฟคเล่น (แนะนำให้สร้าง Empty GameObject ติดไว้ตรงดาบ/โล่ แล้วลากมาใส่)
 
     // ==================== Ground Check ====================
     [Header("Ground Check")]
@@ -74,6 +80,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 verticalVelocity;
     private bool isGrounded;
     private bool isInvincible;
+    private bool isParrying;
     private bool isDead;
     public bool IsDead => isDead;
     public bool IsDodging => isDodging; // เพิ่มเพื่อเปิดให้ WorkerSkill เข้าถึงสถานะกลิ้งได้
@@ -88,6 +95,8 @@ public class PlayerController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         if (Camera.main != null) mainCameraTransform = Camera.main.transform;
+
+        playerAudio = GetComponent<PlayerAudioComponent>();
 
         if (dodgeCurve != null && dodgeCurve.length > 0)
         {
@@ -517,13 +526,84 @@ public class PlayerController : MonoBehaviour
 
     // ==================== Animation Events ====================
 
+    /// <summary>เรียกจาก Animation Event พร้อมส่งเลข 1, 2, 3 มาด้วย</summary>
+    public void PlayAttackSoundEvent(int soundIndex)
+    {
+        if (playerAudio != null && soundIndex >= 1 && soundIndex <= 3)
+        {
+            // แปลงค่า int เป็น Enum (0 = Attack1, 1 = Attack2, etc.)
+            PlayerSoundType type = (PlayerSoundType)(soundIndex - 1);
+            playerAudio.PlaySound(type);
+        }
+    }
+
     public void EnableInvincibility() => isInvincible = true;
     public void DisableInvincibility() => isInvincible = false;
+
+    public void EnableParryWindow() => isParrying = true;
+    public void DisableParryWindow() => isParrying = false;
+    public void PlayParryCastSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.ParryCast);
+    }
+    
+    public void PlayJumpSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Jump);
+    }
+
+    public void PlayRollSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Roll);
+    }
+
+    public void PlayHitSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Hit);
+    }
+
+    public void UsingSkill1SoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.UsingSkill1);
+    }
+
+    public void PlaySkill1SoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Skill1);
+    }
 
     /// <summary>เรียกจาก EnemyAI หรือ Projectile ที่ชนผู้เล่น</summary>
     public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
-        if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
+        if (isDead) return;
+
+        // ถ้าโดนโจมตีตอนกำลังตั้งการ์ด (Parry)
+        if (isParrying)
+        {
+            Debug.Log("<color=yellow>[Player]</color> Parry สำเร็จ!");
+            if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.ParrySuccess);
+            
+            // แสดง VFX ตรงจุดที่ตั้งไว้ หรือจุดที่ดาบอยู่
+            if (parryHitVFXPrefab != null)
+            {
+                // กำหนดค่าตั้งต้นกัน Error ลืมลากเอาไว้ที่หน้าผู้เล่น
+                Vector3 vfxSpawnPos = transform.position + transform.forward * 1f + Vector3.up * 1.5f;
+
+                if (parryVFXSpawnPoint != null)
+                {
+                    // ถ้าลากจุด Spawn ใส่มา ให้โผล่ตรงนั้นเลย (แม่นยำที่สุด)
+                    vfxSpawnPos = parryVFXSpawnPoint.position;
+                }
+
+                GameObject vfx = Instantiate(parryHitVFXPrefab, vfxSpawnPos, Quaternion.identity);
+                Destroy(vfx, 2f); // สมมติว่าเอฟเฟคอยู่นาน 2 วิ
+            }
+
+            // TODO: ในอนาคตสามารถใส่คำสั่งให้ศัตรูชะงัก (Stun) หรือคูลดาวน์สกิลได้ตรงนี้
+            return; // ไม่รับดาเมจ
+        }
+
+        if (isInvincible) { print("ไม่โดนเว้ย (อมตะ/กลิ้ง)"); return; }
         
         // เช็คว่ากำลังร่ายสกิลอยู่หรือเปล่า (Super Armor)
         var sInfo = animator.GetCurrentAnimatorStateInfo(0);
@@ -538,6 +618,9 @@ public class PlayerController : MonoBehaviour
             ResetCombo();
             currentDashVelocity = Vector3.zero;
 
+            // บังคับปิดดาเมจของอาวุธทันทีเพื่อไม่ให้ตีสวนตอนชะงัก
+            if (weaponHandler != null) weaponHandler.DisableHitbox();
+
             // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
             Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
             if (attackerPosition != default)
@@ -551,9 +634,6 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จากสกิล!");
         }
-
-        var wh = GetComponentInChildren<WeaponHandler>();
-        if (wh != null) wh.DisableHitbox();
 
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
