@@ -2381,6 +2381,73 @@ Transform:
   - {fileID: 6051508569291928343}
   m_Father: {fileID: 8428189315356756652}
   m_LocalEulerAnglesHint: {x: 7.563507, y: -1.504703, z: -7.6909876}
+--- !u!1 &1854176096428662326
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2724389431279125512}
+  - component: {fileID: 1880830677860181970}
+  - component: {fileID: 491337090828879981}
+  m_Layer: 0
+  m_Name: HeadHitbox
+  m_TagString: EnemyHead
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2724389431279125512
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854176096428662326}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.31029716, y: 0.0063940976, z: 0.002087142, w: 0.9506159}
+  m_LocalPosition: {x: 0.00002107747, y: 0.0012822341, z: 0.0015667315}
+  m_LocalScale: {x: 0.0050761425, y: 0.005076144, z: 0.005076143}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3970034343917109061}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &1880830677860181970
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854176096428662326}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5418918
+  m_Center: {x: -0.024361372, y: 0.03556615, z: 0.017530382}
+--- !u!114 &491337090828879981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854176096428662326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23899f85c0139784ba6e811a94d8b8a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHeadHitbox
+  enemyRoot: {fileID: 5368589936721224680}
 --- !u!1 &1931834040822455397
 GameObject:
   m_ObjectHideFlags: 0
@@ -6058,6 +6125,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8631387113815272690}
+  - {fileID: 2724389431279125512}
   m_Father: {fileID: 2612541645923212222}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4564374162475099810
@@ -11903,7 +11971,7 @@ Transform:
   m_GameObject: {fileID: 7969264364928350748}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.9307, y: -0, z: -0.80104}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
   m_LocalScale: {x: 1.97, y: 1.97, z: 1.97}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -11950,7 +12018,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2027599513
+  GlobalObjectIdHash: 3685616709
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -12004,10 +12072,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 1.54
+  m_Radius: 0.35407493
+  m_Height: 1.1095686
   m_Direction: 1
-  m_Center: {x: 0, y: 0.7, z: 0}
+  m_Center: {x: 0, y: 0.4847846, z: -0.14592509}
 --- !u!114 &2506690989477773532
 MonoBehaviour:
   m_ObjectHideFlags: 0
