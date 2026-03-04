@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using PlayerAudio;
 
 /// <summary>
 /// Archer Skill — ฝนธนู AoE
@@ -62,6 +63,7 @@ public class ArcherSkill : MonoBehaviour
 
     // ==================== Runtime ====================
     private Archer archer;
+    private PlayerAudioComponent playerAudio;
     private bool isSkillActive = false;
     private bool isOnCooldown = false;
     private float cooldownTimer = 0f;
@@ -74,6 +76,7 @@ public class ArcherSkill : MonoBehaviour
     private void Awake()
     {
         archer = GetComponent<Archer>();
+        playerAudio = GetComponent<PlayerAudioComponent>();
     }
 
     private void Start()
@@ -109,7 +112,10 @@ public class ArcherSkill : MonoBehaviour
         }
 
         if (isSkillActive && Input.GetMouseButtonDown(0))
+        {
+            archer.ForceNextShotAccuracy(aoeTargetPos);
             StartCoroutine(FireRainOfArrows());
+        }
     }
 
     // ==================== Skill Logic ====================
@@ -145,6 +151,7 @@ public class ArcherSkill : MonoBehaviour
         isSkillActive = false;
         DestroyIndicator();
         if (hintUI != null) hintUI.HideHint();
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Skill1);
 
         if (rainArrowPrefab == null)
         {
