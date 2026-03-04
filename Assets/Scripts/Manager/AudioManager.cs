@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -25,6 +26,23 @@ public class AudioManager : MonoBehaviour
     [Header("SFX 2D (Global)")]
     [Tooltip("AudioSource สำหรับเสียง 2D เช่น UI, Pickup")]
     [SerializeField] private AudioSource sfxSource;
+
+    public enum SoundType 
+    { 
+        None
+    }
+
+    [System.Serializable]
+    public class SoundEntry
+    {
+        public SoundType soundType;
+        public AudioClip clip;
+    }
+
+    [Header("SFX Library")]
+    public SoundEntry[] sfxLibrary;
+
+    private Dictionary<SoundType, AudioClip> sfxDict = new Dictionary<SoundType, AudioClip>();
 
     // ─────────────────────────────────────────
     //  Private
@@ -55,6 +73,22 @@ public class AudioManager : MonoBehaviour
         SetupBGMSource(bgmSourceB);
 
         activeBGMSource = bgmSourceA;
+
+        // โหลด Library ลงมาพักไว้ให้ระบบดึงง่ายๆ
+        foreach (var entry in sfxLibrary)
+        {
+            if (entry.clip != null)
+            {
+                if (!sfxDict.ContainsKey(entry.soundType))
+                {
+                    sfxDict.Add(entry.soundType, entry.clip);
+                }
+                else
+                {
+                    Debug.LogWarning($"[AudioManager] มีเสียงประเภท '{entry.soundType}' ซ้ำกันในระบบ!");
+                }
+            }
+        }
     }
 
     void OnEnable()
@@ -147,6 +181,19 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || sfxSource == null) return;
         sfxSource.PlayOneShot(clip, volume);
+    }
+
+    /// <summary>เล่นเสียงโดยเรียกผ่าน Enum SoundType</summary>
+    public void PlaySound(SoundType type, float volume = 1f)
+    {
+        if (sfxDict.TryGetValue(type, out AudioClip clip))
+        {
+            PlaySFX2D(clip, volume);
+        }
+        else
+        {
+            Debug.LogWarning($"[AudioManager] หาไฟล์เสียงประเภท '{type}' ไม่เจอ! ตรวจสอบการตั้งค่าใน AudioManager ด้วย");
+        }
     }
 
     // ─────────────────────────────────────────
