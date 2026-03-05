@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
@@ -12,6 +13,10 @@ public class EnemyTracker : NetworkBehaviour
     [Tooltip("Panel กลางจอ — ใช้ร่วมกันทั้ง Wave Clear และ Death Countdown")]
     public GameObject      centerPanel;
     public TextMeshProUGUI centerText;
+
+    [Header("Kill Opponent Button")]
+    [Tooltip("ปุ่ม Kill Opponent — โผล่เมื่อ Enemy ฝั่งเราหมด กดแล้วนับถอยหลัง 15 วิฝั่งตรงข้าม")]
+    public GameObject killOpponentButton;
 
     [Header("Win / Lose UI")]
     public GameObject youWinUI;
@@ -31,16 +36,37 @@ public class EnemyTracker : NetworkBehaviour
 
     // ─── State ────────────────────────────────────────────────────
     private Coroutine activeCoroutine;
-    private bool      countdownRunning  = false;
-    private bool      phaseChangeQueued = false;
+    private bool      countdownRunning   = false;
+    private bool      phaseChangeQueued  = false;
+    private bool      p0EverHadEnemies   = false; // ต้องเคยเจอ Enemy > 0 ก่อนถึงจะนับว่าคลีย์
+    private bool      p1EverHadEnemies   = false;
 
     // ────────────────────────────────────────────────────────────
     private void Awake()
     {
         Instance = this;
-        SetUI(centerPanel, false);
-        SetUI(youWinUI,    false);
-        SetUI(youLostUI,   false);
+        SetUI(centerPanel,          false);
+        SetUI(killOpponentButton,   false);
+        SetUI(youWinUI,             false);
+        SetUI(youLostUI,            false);
+    }
+
+    private void OnEnable()
+    {
+        if (killOpponentButton != null)
+        {
+            var btn = killOpponentButton.GetComponent<Button>();
+            if (btn != null) btn.onClick.AddListener(OnKillOpponentPressed);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (killOpponentButton != null)
+        {
+            var btn = killOpponentButton.GetComponent<Button>();
+            if (btn != null) btn.onClick.RemoveListener(OnKillOpponentPressed);
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -63,13 +89,20 @@ public class EnemyTracker : NetworkBehaviour
         if (senderClientId == 0) p0EnemyCount.Value = count;
         else                     p1EnemyCount.Value = count;
 
+        // ต้องเคยเจอ Enemy > 0 ก่อน ถึงจะนับว่า "คลีย์" ได้
+        if (count > 0)
+        {
+            if (senderClientId == 0) p0EverHadEnemies = true;
+            else                     p1EverHadEnemies = true;
+        }
+
         // ตรวจ Clear
-        if (senderClientId == 0 && !p0Cleared.Value && count == 0)
+        if (senderClientId == 0 && !p0Cleared.Value && count == 0 && p0EverHadEnemies)
         {
             p0Cleared.Value = true;
             Debug.Log("<color=cyan>[EnemyTracker]</color> P0 Enemy หมดแล้ว!");
         }
-        else if (senderClientId != 0 && !p1Cleared.Value && count == 0)
+        else if (senderClientId != 0 && !p1Cleared.Value && count == 0 && p1EverHadEnemies)
         {
             p1Cleared.Value = true;
             Debug.Log("<color=cyan>[EnemyTracker]</color> P1 Enemy หมดแล้ว!");
@@ -92,18 +125,17 @@ public class EnemyTracker : NetworkBehaviour
         if (p0Done && p1Done)
         {
             phaseChangeQueued = true;
+            HideKillOpponentButtonClientRpc();  // ซ่อนปุ่มก่อน
             ShowWaveClearClientRpc();
             return;
         }
 
-        // ⏳ ฝั่งใดหมดก่อน → บังคับฝั่งตรงข้ามตาย
-        // p1Done=true, p0ยังไม่หมด → p0 ต้องตาย (targetIsP0=true)
-        // p0Done=true, p1ยังไม่หมด → p1 ต้องตาย (targetIsP0=false)
+        // ⏳ ฝั่งใดหมดก่อน → โชว์ปุ่ม Kill Opponent ให้คนที่คลีย์
         if ((p0Done || p1Done) && !countdownRunning)
         {
-            countdownRunning = true;
-            bool targetIsP0 = p1Done && !p0Done;
-            StartDeathCountdownClientRpc(targetIsP0);
+            // winnerIsP0 = true ถ้า P0 คลีย์ก่อน
+            bool winnerIsP0 = p0Done && !p1Done;
+            ShowKillOpponentButtonClientRpc(winnerIsP0);
         }
     }
 
@@ -112,6 +144,50 @@ public class EnemyTracker : NetworkBehaviour
     //            เพราะ Server ส่ง RPC มาตรงๆ อยู่แล้ว)
     // ────────────────────────────────────────────────────────────
     private void EvaluateOnClient() { /* ไว้ขยายในอนาคต */ }
+
+    // ────────────────────────────────────────────────────────────
+    //  KILL OPPONENT BUTTON
+    // ────────────────────────────────────────────────────────────
+
+    /// <summary>โชว์ปุ่ม Kill Opponent เฉพาะคนที่คลีย์ Enemy ก่อน</summary>
+    [ClientRpc]
+    private void ShowKillOpponentButtonClientRpc(bool winnerIsP0)
+    {
+        ulong myId = NetworkManager.Singleton.LocalClientId;
+        bool iAmWinner = (winnerIsP0 && myId == 0) || (!winnerIsP0 && myId != 0);
+        SetUI(killOpponentButton, iAmWinner);
+    }
+
+    /// <summary>ซ่อนปุ่มทุก Client</summary>
+    [ClientRpc]
+    private void HideKillOpponentButtonClientRpc()
+    {
+        SetUI(killOpponentButton, false);
+    }
+
+    /// <summary>ผู้เล่นกดปุ่ม Kill Opponent → แจ้ง Server เริ่ม Countdown ฝั่งตรงข้าม</summary>
+    private void OnKillOpponentPressed()
+    {
+        SetUI(killOpponentButton, false); // ซ่อนปุ่มทันทีหลังกด
+        RequestKillOpponentServerRpc(NetworkManager.Singleton.LocalClientId);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void RequestKillOpponentServerRpc(ulong senderClientId)
+    {
+        // ต้องอยู่ใน Combat เท่านั้น + ต้องมีฝั่งใดฝั่งหนึ่งคลีย์จริงๆ
+        if (GameManager.Instance == null ||
+            GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+        if (countdownRunning || phaseChangeQueued) return;
+        if (!p0Cleared.Value && !p1Cleared.Value) return;
+
+        countdownRunning = true;
+        HideKillOpponentButtonClientRpc();
+
+        // ฝั่งตรงข้ามต้องตาย — targetIsP0 = true ถ้าคนกดเป็น P1 (ก็คือ P0 ต้องตาย)
+        bool targetIsP0 = senderClientId != 0;
+        StartDeathCountdownClientRpc(targetIsP0);
+    }
 
     // ────────────────────────────────────────────────────────────
     //  CLIENT RPCs
@@ -195,6 +271,9 @@ public class EnemyTracker : NetworkBehaviour
         p1Cleared.Value    = false;
         countdownRunning   = false;
         phaseChangeQueued  = false;
+        p0EverHadEnemies   = false;
+        p1EverHadEnemies   = false;
+        HideKillOpponentButtonClientRpc();
     }
 
     // ────────────────────────────────────────────────────────────
