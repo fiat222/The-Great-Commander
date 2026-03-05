@@ -57,8 +57,10 @@ public class PlayerController : MonoBehaviour
     private PlayerAudioComponent playerAudio;
 
     [Header("VFX")]
-    public GameObject parryHitVFXPrefab; // ใส่ Prefab เอฟเฟคตอนกันติด (สะเก็ดไฟ/แสงกระแทก)
-    public Transform parryVFXSpawnPoint; // [ใหม่] จุดโฟกัสที่จะให้เอฟเฟคเล่น (แนะนำให้สร้าง Empty GameObject ติดไว้ตรงดาบ/โล่ แล้วลากมาใส่)
+    public GameObject parryHitVFXPrefab;
+    public Transform parryVFXSpawnPoint;
+    public GameObject hitVFXPrefab;       // เอฟเฟคตอนโดนตี (เลือดกระเซ็น/แสงกระแทก)
+    public Transform hitVFXSpawnPoint;    // จุดเล่นเอฟเฟค (แนะนำตรงลำตัว)
 
     // ==================== Ground Check ====================
     [Header("Ground Check")]
@@ -612,14 +614,32 @@ public class PlayerController : MonoBehaviour
 
         if (!isCastingSkill)
         {
-            if (animator != null) animator.SetTrigger("Damage");
+            if (animator != null)
+            {
+                animator.ResetTrigger("Attack"); // ยกเลิก Trigger ฟันที่ค้างอยู่ในคิว
+                animator.SetTrigger("Damage");
+            }
 
             // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
             ResetCombo();
             currentDashVelocity = Vector3.zero;
 
-            // บังคับปิดดาเมจของอาวุธทันทีเพื่อไม่ให้ตีสวนตอนชะงัก
+            // บังคับปิดดาเมจของอาวุธทันที — ทั้ง 2 ทาง เพื่อความมั่นใจ
             if (weaponHandler != null) weaponHandler.DisableHitbox();
+            
+
+            // เล่นเสียงโดนฟัน (เสียงอาวุธกระแทก) คู่กับเสียงคนร้อง
+            if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
+
+            // เล่น VFX ตอนโดนตี
+            if (hitVFXPrefab != null)
+            {
+                Vector3 vfxPos = hitVFXSpawnPoint != null 
+                    ? hitVFXSpawnPoint.position 
+                    : transform.position + Vector3.up * 1.5f;
+                GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.identity);
+                Destroy(vfx, 2f);
+            }
 
             // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
             Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition

@@ -37,9 +37,15 @@ MonoBehaviour:
   - soundType: 7
     clip: {fileID: 8300000, guid: c4b9ebd01aabe9544bc045b7203d3e47, type: 3}
     volume: 1
-  - soundType: 8
+  - soundType: 11
     clip: {fileID: 8300000, guid: d441521739cfa124486d21340c7a8960, type: 3}
     volume: 1
-  - soundType: 9
+  - soundType: 12
     clip: {fileID: 8300000, guid: d6af2e2d1b26bf149b7ef80beeab8296, type: 3}
     volume: 1
+  - soundType: 9
+    clip: {fileID: 8300000, guid: 33a4a9b9b51f1af428996c196c83acec, type: 3}
+    volume: 0.6
+  - soundType: 8
+    clip: {fileID: 8300000, guid: 070f8f91254603d40b1eac5799dc3c7f, type: 3}
+    volume: 0.5

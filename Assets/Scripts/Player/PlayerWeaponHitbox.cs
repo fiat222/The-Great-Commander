@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using PlayerAudio;
 
 public class PlayerWeaponHitbox : MonoBehaviour
 {
     private Collider hitboxCollider;
     private float customDamage = -1f;
-    private HashSet<Collider> hitThisSwing = new HashSet<Collider>();
+    private HashSet<GameObject> hitThisSwing = new HashSet<GameObject>();
 
     private const float HeadshotMultiplier = 1.3f;   // +30%
 
@@ -14,20 +15,28 @@ public class PlayerWeaponHitbox : MonoBehaviour
     public void SetDamage(float dmg) => customDamage = dmg;
     public void ClearHitList() => hitThisSwing.Clear();
 
+    /// <summary>ปิด collider โดยตรง + ล้างสมุดจด</summary>
+    public void ForceDisable()
+    {
+        if (hitboxCollider != null) hitboxCollider.enabled = false;
+        hitThisSwing.Clear();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
+        // ถ้า hitbox ถูกปิดไปแล้ว (เช่น โดนตีกลางท่าฟัน) ไม่ต้องทำอะไรอีก
+        if (hitboxCollider != null && !hitboxCollider.enabled) return;
+        if (other == null) return;
+
         bool isHead = other.CompareTag("EnemyHead");
         bool isBody = other.CompareTag("Enemy");
         if (!isHead && !isBody) return;
 
-        // ป้องกันโดนซ้ำใน swing เดียว — ใช้ root เป็น key
-        GameObject enemyRoot = isHead
-            ? (other.GetComponent<EnemyHeadHitbox>()?.GetEnemyRoot() ?? other.transform.root.gameObject)
-            : other.gameObject;
+        // ใช้ root ของ hierarchy เป็น key กันโดนซ้ำ — ไม่ว่าจะโดนชิ้นส่วนไหนก็ map กลับศัตรูตัวเดียว
+        GameObject enemyRoot = other.transform.root.gameObject;
 
-        Collider rootCol = enemyRoot.GetComponent<Collider>() ?? other;
-        if (hitThisSwing.Contains(rootCol)) return;
-        hitThisSwing.Add(rootCol);
+        if (hitThisSwing.Contains(enemyRoot)) return;
+        hitThisSwing.Add(enemyRoot);
 
         // ── คำนวณ damage ──────────────────────────────────────────────────────
         float baseDamage;
@@ -42,6 +51,11 @@ public class PlayerWeaponHitbox : MonoBehaviour
         bool isHeadshot = isHead;
         float finalDamage = isHeadshot ? baseDamage * HeadshotMultiplier : baseDamage;
         int dmgInt = Mathf.RoundToInt(finalDamage);
+
+        // ดึงจุดกึ่งกลางจาก other โดยตรงชัวร์สุด เพราะ other คืนค่ามาแล้วแน่ๆ ว่าไม่เป็น null
+        Vector3 spawnPos = new Vector3(other.bounds.center.x, 
+                                       other.bounds.max.y, 
+                                       other.bounds.center.z);
 
         // ── ส่งดาเมจ ──────────────────────────────────────────────────────────
         HealthSystem hp = enemyRoot.GetComponent<HealthSystem>();
@@ -61,10 +75,14 @@ public class PlayerWeaponHitbox : MonoBehaviour
             }
         }
 
+        // ── เสียงตอนโดนตี ────────────────────────────────────────────────────────
+        var audioComp = GetComponentInParent<PlayerAudioComponent>();
+        if (audioComp != null)
+        {
+            audioComp.PlaySound(PlayerSoundType.AttackHit);
+        }
+
         // ── Damage Number ──────────────────────────────────────────────────────
-        Vector3 spawnPos = new Vector3(rootCol.bounds.center.x,
-                                       rootCol.bounds.max.y,
-                                       rootCol.bounds.center.z);
         DamageNumberSpawner.Show(dmgInt, spawnPos);
 
         if (isHeadshot)
