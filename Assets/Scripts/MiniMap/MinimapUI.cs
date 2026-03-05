@@ -25,9 +25,9 @@ public class MinimapUI : MonoBehaviour
     {
         ClearIcons();
 
-        // ดึงขนาด Panel จริงๆ ณ runtime (ไม่ hardcode)
-        float panelW = minimapPanel.rect.width;
-        float panelH = minimapPanel.rect.height;
+        // ดึงขนาดจริงของ Panel หลังจาก Scale
+        float panelW = minimapPanel.rect.width * minimapPanel.lossyScale.x;
+        float panelH = minimapPanel.rect.height * minimapPanel.lossyScale.y;
 
         foreach (var unit in units)
         {
@@ -37,7 +37,6 @@ public class MinimapUI : MonoBehaviour
             GameObject icon = Instantiate(prefab);
             icon.transform.SetParent(minimapPanel, false);
 
-            // unit.Position.x = world X, unit.Position.y = world Z (เก็บใน Vector2.y)
             float xRatio = Mathf.Clamp01((unit.Position.x - terrainOffsetX) / mapWorldSizeX);
             float zRatio = Mathf.Clamp01((unit.Position.y - terrainOffsetZ) / mapWorldSizeZ);
 
@@ -45,7 +44,11 @@ public class MinimapUI : MonoBehaviour
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.zero;
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(xRatio * panelW, zRatio * panelH);
+            // ใช้ rect.width/height ปกติ เพราะ icon อยู่ใน parent เดียวกัน
+            rt.anchoredPosition = new Vector2(
+                xRatio * minimapPanel.rect.width,
+                zRatio * minimapPanel.rect.height
+            );
 
             activeIcons.Add(icon);
         }
