@@ -2521,7 +2521,6 @@ GameObject:
   - component: {fileID: 2710073875938099266}
   - component: {fileID: 8222893807471953391}
   - component: {fileID: 6982041918979044033}
-  - component: {fileID: 1149898199259591970}
   - component: {fileID: 4835149807319562328}
   m_Layer: 0
   m_Name: PlayerWarrior
@@ -2748,31 +2747,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAudio.PlayerAudioComponent
   audioDataSO: {fileID: 11400000, guid: 21a8ecd020464db4ea687cbce0df2843, type: 2}
---- !u!114 &1149898199259591970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7711133326226633498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4276539368
-  InScenePlacedSourceGlobalObjectIdHash: 195356216
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!82 &4835149807319562328
 AudioSource:
   m_ObjectHideFlags: 0
