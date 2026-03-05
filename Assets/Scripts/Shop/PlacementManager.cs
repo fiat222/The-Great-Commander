@@ -19,6 +19,7 @@ public class PlacementManager : MonoBehaviour
 
     // ===== SELL OVERLAY =====
     [SerializeField] private GameObject sellCursorOverlay;
+    [SerializeField] private GameObject sellButton; // ปุ่ม Sell บน UI (ลากมาใส่ใน Inspector)
     private RectTransform sellCursorRect;
 
     private bool isSellingMode = false;
@@ -27,6 +28,16 @@ public class PlacementManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+    }
+
+    void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+    }
+
+    void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
     }
 
     [Header("Grid Visuals")]
@@ -212,5 +223,24 @@ public class PlacementManager : MonoBehaviour
 
         if (sellCursorOverlay != null)
             sellCursorOverlay.SetActive(isSellingMode);
+    }
+
+    // ===== PHASE CHANGE HANDLER =====
+    private void HandlePhaseChanged(GamePhase phase)
+    {
+        if (phase == GamePhase.Combat)
+        {
+            // ปิดโหมดขายถ้าเปิดอยู่
+            if (isSellingMode) ToggleSellMode();
+            // ยกเลิกการวางถ้ากำลังวาง
+            if (isPlacing) CancelPlacement();
+            // ซ่อนปุ่ม Sell
+            if (sellButton != null) sellButton.SetActive(false);
+        }
+        else // Planning
+        {
+            // โชว์ปุ่ม Sell กลับมา
+            if (sellButton != null) sellButton.SetActive(true);
+        }
     }
 }
