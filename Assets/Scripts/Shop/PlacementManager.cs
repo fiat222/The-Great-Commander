@@ -19,6 +19,7 @@ public class PlacementManager : MonoBehaviour
 
     // ===== SELL OVERLAY =====
     [SerializeField] private GameObject sellCursorOverlay;
+    [SerializeField] private GameObject sellButton; // ปุ่ม Sell บน UI (ลากมาใส่ใน Inspector)
     private RectTransform sellCursorRect;
 
     private bool isSellingMode = false;
@@ -27,6 +28,16 @@ public class PlacementManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+    }
+
+    void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+    }
+
+    void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
     }
 
     [Header("Grid Visuals")]
@@ -78,18 +89,42 @@ public class PlacementManager : MonoBehaviour
 
         ghost = Instantiate(data.prefab);
 
-        // ปิด collider
+        // ปิด collider และ AI บน ghost ทั้งหมด
         foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
             c.enabled = false;
+        foreach (MonoBehaviour mb in ghost.GetComponentsInChildren<MonoBehaviour>())
+            mb.enabled = false;
 
-        // ทำโปร่งใส
+        // ⭐ swap material ทุกชิ้นเป็น Transparent/Unlit ใหม่
+        // เพื่อให้ SetGhostColor ทำงานได้แน่นอน ไม่ขึ้น warning
+        var ghostMat = new Material(Shader.Find("Unlit/Color"));
+        ghostMat.color = new Color(0f, 1f, 0f, 0.45f);
+
+        // เปิด Transparency (สำหรับ Unlit/Color ต้องตั้งค่า render queue)
+        ghostMat.SetFloat("_Mode", 3);
+        ghostMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        ghostMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        ghostMat.SetInt("_ZWrite", 0);
+        ghostMat.DisableKeyword("_ALPHATEST_ON");
+        ghostMat.EnableKeyword("_ALPHABLEND_ON");
+        ghostMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        ghostMat.renderQueue = 3000;
+
         foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
-        {
-            Color col = r.material.color;
-            col.a = 0.5f;
-            r.material.color = col;
-        }
+            r.material = ghostMat;
+
         if (gridVisual != null) gridVisual.gameObject.SetActive(true);
+    }
+
+    private void SetGhostColor(bool canPlace)
+    {
+        if (ghost == null) return;
+        Color col = canPlace
+            ? new Color(0f, 1f, 0f, 0.45f)   // 🟢 โปร่งใสเขียว
+            : new Color(1f, 0f, 0f, 0.45f);   // 🔴 โปร่งใสแดง
+
+        foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
+            r.material.color = col;  // material นี้เป็น Unlit/Color ที่เราสร้างเอง ไม่มี warning
     }
 
     void HandlePlacing()
@@ -100,51 +135,59 @@ public class PlacementManager : MonoBehaviour
         {
             if (hexGrid == null) return;
 
-            // แปลงตำแหน่งเมาส์เป็นพิกัดช่อง (X, Y)
             hexGrid.GetGridPosition(hit.point, out int x, out int y);
-
-            //  หาพิกัดกึ่งกลางหกเหลี่ยม
-            // ใส่ true เพื่อให้ได้ตำแหน่งที่ Snap ลงจุดศูนย์กลาง
             Vector3 snappedPos = hexGrid.GetWorldPosition(x, y, true);
 
-            //  ย้าย Ghost ไปที่ตำแหน่งที่ Snap แล้ว
             ghost.transform.position = snappedPos;
 
-            // ถ้าคลิกซ้ายให้วางตัวละคร 
+            bool cellEmpty = hexGrid.IsCellEmpty(x, y);
+            SetGhostColor(cellEmpty);
+
             if (Input.GetMouseButtonDown(0))
             {
-                // กันการคลิกทะลุ UI
-                if (EventSystem.current.IsPointerOverGameObject()) return;
-
-                // วางทหารลงที่ตำแหน่ง snappedPos 
-                PlaceMinion(snappedPos);
+                PlaceMinion(snappedPos, x, y);
             }
         }
 
-        // คลิกขวาเพื่อยกเลิกการวาง (อยู่นอก Raycast เพราะไม่ต้องเช็กตำแหน่งพื้น)
+        // คลิกขวาเพื่อยกเลิกการวาง
         if (Input.GetMouseButtonDown(1))
         {
             CancelPlacement();
         }
     }
-    void PlaceMinion(Vector3 pos)
+
+
+    void PlaceMinion(Vector3 pos, int gridX, int gridY)
     {
         if (currentMinionData == null) return;
         if (Money < currentMinionData.cost) return;
+
+        // ⭐ เช็คว่าช่องว่างก่อนวาง
+        if (!hexGrid.IsCellEmpty(gridX, gridY))
+        {
+            Debug.LogWarning($"[PlacementManager] ช่อง ({gridX},{gridY}) มีตัวละครอยู่แล้ว!");
+            return;
+        }
 
         Money -= currentMinionData.cost;
         OnMoneyChanged?.Invoke(Money);
 
         GameObject obj = Instantiate(currentMinionData.prefab, pos, Quaternion.identity);
 
-        // ⭐ เพิ่ม 4 บรรทัดนี้
+        // ⭐ ลงทะเบียนใน Grid ว่าช่องนี้จับจองแล้ว
+        hexGrid.AddGridObject(gridX, gridY, obj);
+
+        // เซ็ตข้อมูลสำหรับ Sell
         SellMinion sell = obj.GetComponent<SellMinion>();
         if (sell != null)
-            sell.Setup(currentMinionData);
+            sell.Setup(currentMinionData, gridX, gridY);
 
         Destroy(ghost);
+        ghost = null;
         isPlacing = false;
         currentMinionData = null;
+
+        if (gridVisual != null) gridVisual.gameObject.SetActive(false);
     }
 
     // ===== CANCEL =====
@@ -154,6 +197,7 @@ public class PlacementManager : MonoBehaviour
         if (gridVisual != null) gridVisual.gameObject.SetActive(false);
 
         Destroy(ghost);
+        ghost = null;
         isPlacing = false;
         currentMinionData = null;
     }
@@ -165,6 +209,13 @@ public class PlacementManager : MonoBehaviour
         OnMoneyChanged?.Invoke(Money);
     }
 
+    /// <summary>เรียกจาก SellMinion เพื่อเคลียร์ช่องใน Grid ด้วย</summary>
+    public void ClearGridCell(int gridX, int gridY)
+    {
+        if (hexGrid != null)
+            hexGrid.RemoveGridObject(gridX, gridY);
+    }
+
     // ===== TOGGLE SELL MODE =====
     public void ToggleSellMode()
     {
@@ -172,5 +223,24 @@ public class PlacementManager : MonoBehaviour
 
         if (sellCursorOverlay != null)
             sellCursorOverlay.SetActive(isSellingMode);
+    }
+
+    // ===== PHASE CHANGE HANDLER =====
+    private void HandlePhaseChanged(GamePhase phase)
+    {
+        if (phase == GamePhase.Combat)
+        {
+            // ปิดโหมดขายถ้าเปิดอยู่
+            if (isSellingMode) ToggleSellMode();
+            // ยกเลิกการวางถ้ากำลังวาง
+            if (isPlacing) CancelPlacement();
+            // ซ่อนปุ่ม Sell
+            if (sellButton != null) sellButton.SetActive(false);
+        }
+        else // Planning
+        {
+            // โชว์ปุ่ม Sell กลับมา
+            if (sellButton != null) sellButton.SetActive(true);
+        }
     }
 }

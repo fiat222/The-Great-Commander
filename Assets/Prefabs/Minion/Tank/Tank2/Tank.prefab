@@ -463,27 +463,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 13.377507
+      value: -3.2064567
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.00000018376613
+      value: 0.13999982
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -16.6
+      value: -24.528503
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: be27dde5d2b9fe044b95debaea3244dd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -601,7 +601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1193846426
+  GlobalObjectIdHash: 610193152
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -655,6 +655,7 @@ MonoBehaviour:
   attackVFXPoint: {fileID: 0}
   weaponHitboxes:
   - {fileID: 2915587419807863897}
+  weaponEffect: {fileID: 3925583668974097745}
 --- !u!114 &7552314449380158402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -735,8 +736,24 @@ PrefabInstance:
       value: Shield_01
       objectReference: {fileID: 0}
     - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_Size.z
+      value: 0.16628765
+      objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_Center.x
+      value: 0.000025947642
+      objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_Center.y
+      value: -0.0804042
+      objectReference: {fileID: 0}
+    - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+      propertyPath: m_Center.z
+      value: 0.045750912
       objectReference: {fileID: 0}
     - target: {fileID: 4886840828700154174, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
       propertyPath: m_IsTrigger
@@ -809,6 +826,11 @@ PrefabInstance:
 --- !u!4 &2486718325382074474 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6278123915614803766, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
+  m_PrefabInstance: {fileID: 8476611589963810652}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3925583668974097745 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4888799061307953677, guid: ab18323bf86ff494db33808b9be2d30c, type: 3}
   m_PrefabInstance: {fileID: 8476611589963810652}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &6331026163160126152 stripped

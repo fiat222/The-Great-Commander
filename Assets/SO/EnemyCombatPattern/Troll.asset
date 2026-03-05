@@ -15,9 +15,16 @@ MonoBehaviour:
   attackCooldown: 4
   hasHyperArmor: 1
   flinchCooldown: 3
+  reviveCount: 0
+  reviveHPPercent: 0.5
+  reviveDelay: 2
   strafeChance: 0.8
   strafeRange: 11
-  strafeDuration: 2
+  strafeDuration: 4
   strafeSpeed: 5
   attackTriggerName: Attack
-  attackVariants: 2
+  attackVariants: 3
+  customAttackRanges:
+  - 8
+  - 9
+  - 28
