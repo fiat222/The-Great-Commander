@@ -1843,6 +1843,7 @@ GameObject:
   - component: {fileID: 5125956134675401398}
   - component: {fileID: 324712951203097200}
   - component: {fileID: 4044980493835599248}
+  - component: {fileID: 4109439620186060376}
   m_Layer: 0
   m_Name: Warrior
   m_TagString: Player
@@ -1904,6 +1905,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bccc92b64e226ce4cbc55dd75768b510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  stats: {fileID: 0}
   moveSpeed: 12
   rotationSpeed: 13
   jumpHeight: 3
@@ -1911,20 +1913,44 @@ MonoBehaviour:
   comboResetTime: 3
   attackDashForce: 5
   dashDecay: 10
-  rollForce: 30
-  rollSpeed: 15
-  rollDecay: 8
   forceTime: 0.2
   comboWindowTime: 0.5
   finisherWindowTime: 0.85
+  dodgeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 15
+      inSlope: 0
+      outSlope: -30
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 0
+      inSlope: -30
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   lockRange: 40
   targetGroup: {fileID: 2738960164931860380}
   cameraPivot: {fileID: 2479080598641253388}
+  weaponHandler: {fileID: 0}
   groundCheck: {fileID: 7245822445751316474}
   groundDistance: 0.4
   groundMask:
     serializedVersion: 2
     m_Bits: 64
+  maxHP: 100
+  healthBar: {fileID: 0}
 --- !u!114 &5125956134675401398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1938,6 +1964,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHandler
   weaponHitbox: {fileID: 8761899491318234677}
+  weaponEffect: {fileID: 0}
 --- !u!143 &324712951203097200
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1988,6 +2015,19 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &4109439620186060376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5957606178006511347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425076dfedb797842904e502ee2b495a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &6016876350527302851
 GameObject:
   m_ObjectHideFlags: 0

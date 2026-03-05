@@ -161,6 +161,8 @@ GameObject:
   - component: {fileID: 8827161945562319959}
   - component: {fileID: 8189086302731242032}
   - component: {fileID: 7667149021259208673}
+  - component: {fileID: 329709590460532486}
+  - component: {fileID: 243611222270950472}
   m_Layer: 0
   m_Name: Archer
   m_TagString: Player
@@ -361,6 +363,44 @@ MonoBehaviour:
   colorActive: {r: 0.7056604, g: 0.6912278, b: 0.6750374, a: 0.77254903}
   colorCooldown: {r: 0.35, g: 0.35, b: 0.35, a: 1}
   hintUI: {fileID: 0}
+--- !u!114 &329709590460532486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 244403281665110954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &243611222270950472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 244403281665110954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425076dfedb797842904e502ee2b495a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &599173591773862127
 GameObject:
   m_ObjectHideFlags: 0

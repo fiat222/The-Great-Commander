@@ -1246,7 +1246,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5362698613283540056}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08421212, y: -0.0000000122891555, z: 0.0000000010385851, w: 0.99644786}
+  m_LocalRotation: {x: 0.08421111, y: -0.00000015639712, z: 0.000000013217322, w: 0.996448}
   m_LocalPosition: {x: 1.4312671, y: 2.4300003, z: -2.572937}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
@@ -1523,8 +1523,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5497730276686074822}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.16567734, y: 0.00000001499699, z: -0.0000000025194806, w: 0.98618007}
-  m_LocalPosition: {x: 1.4312671, y: 2.516075, z: -2.4820626}
+  m_LocalRotation: {x: -0.23670903, y: -0.15252624, z: -0.03765598, w: 0.95879436}
+  m_LocalPosition: {x: 2.080435, y: 0.07000028, z: -0.57766646}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1607,7 +1607,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 0
+    Value: -18.077896
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -1617,7 +1617,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 22
+    Value: -10
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -1704,7 +1704,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0.2
         DecelTime: 0.2
@@ -1717,7 +1717,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0
         DecelTime: 0
@@ -2458,6 +2458,7 @@ GameObject:
   - component: {fileID: 5752395655869448421}
   - component: {fileID: 8222893807471953391}
   - component: {fileID: 1149898199259591970}
+  - component: {fileID: 6148375916243500758}
   m_Layer: 0
   m_Name: PlayerWarrior
   m_TagString: Player
@@ -2625,7 +2626,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1057235062
+  GlobalObjectIdHash: 3549820115
   InScenePlacedSourceGlobalObjectIdHash: 195356216
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2638,6 +2639,19 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &6148375916243500758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7711133326226633498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425076dfedb797842904e502ee2b495a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &7869010101243521864
 GameObject:
   m_ObjectHideFlags: 0
