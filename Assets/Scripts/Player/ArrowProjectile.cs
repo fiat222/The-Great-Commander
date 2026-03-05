@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using PlayerAudio;
 
 public class ArrowProjectile : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class ArrowProjectile : MonoBehaviour
 
     private float speed;
     private int damage;
+    private PlayerAudioComponent ownerAudio;
     private Vector3 velocity;
     private bool isFlying = false;
     private bool noGravity = false;
@@ -17,19 +19,20 @@ public class ArrowProjectile : MonoBehaviour
     private readonly Quaternion rotationOffset = Quaternion.Euler(90f, 0f, 0f);
 
     /// <summary>ยิงปกติ (charge shot) — มี gravity</summary>
-    public void Launch(Vector3 direction, float launchSpeed, int launchDamage)
+    public void Launch(Vector3 direction, float launchSpeed, int launchDamage, PlayerAudioComponent audio = null)
     {
-        LaunchInternal(direction, launchSpeed, launchDamage, false);
+        LaunchInternal(direction, launchSpeed, launchDamage, false, audio);
     }
 
     /// <summary>ยิงเร็ว — ไม่มี gravity บินตรงเสมอ</summary>
-    public void LaunchStraight(Vector3 direction, float launchSpeed, int launchDamage)
+    public void LaunchStraight(Vector3 direction, float launchSpeed, int launchDamage, PlayerAudioComponent audio = null)
     {
-        LaunchInternal(direction, launchSpeed, launchDamage, true);
+        LaunchInternal(direction, launchSpeed, launchDamage, true, audio);
     }
 
-    private void LaunchInternal(Vector3 direction, float launchSpeed, int launchDamage, bool straight)
+    private void LaunchInternal(Vector3 direction, float launchSpeed, int launchDamage, bool straight, PlayerAudioComponent audio)
     {
+        ownerAudio = audio;
         speed = launchSpeed;
         damage = launchDamage;
         noGravity = straight;
@@ -81,6 +84,12 @@ public class ArrowProjectile : MonoBehaviour
             // ถ้าโดนหัว ให้ใช้ root เป็นเป้า, ถ้าโดน body ปกติใช้ other
             GameObject target = isHeadshot ? enemyRoot : other.gameObject;
 
+            // เตรียมพิกัดตัวเลขดาเมจก่อนส่งดาเมจ (ป้องกันบัคศัตรูตายแล้วลบ hitbox ทิ้ง)
+            Collider displayCol = isHeadshot ? enemyRoot.GetComponentInChildren<Collider>() : other;
+            Vector3 spawnPos = displayCol != null
+                ? new Vector3(displayCol.bounds.center.x, displayCol.bounds.max.y, displayCol.bounds.center.z)
+                : other.bounds.center;
+
             HealthSystem hp = target.GetComponent<HealthSystem>();
             if (hp != null)
             {
@@ -98,12 +107,9 @@ public class ArrowProjectile : MonoBehaviour
                 }
             }
 
-            Collider displayCol = isHeadshot ? enemyRoot.GetComponentInChildren<Collider>() : other;
-            Vector3 spawnPos = displayCol != null
-                ? new Vector3(displayCol.bounds.center.x, displayCol.bounds.max.y, displayCol.bounds.center.z)
-                : other.bounds.center;
-
             DamageNumberSpawner.Show(finalDamage, spawnPos);
+            
+            if (ownerAudio != null) ownerAudio.PlaySound(PlayerSoundType.AttackHit);
 
             if (isHeadshot)
                 Debug.Log($"<color=orange>[Arrow]</color> HEADSHOT! Damage: {finalDamage} (+30%)");

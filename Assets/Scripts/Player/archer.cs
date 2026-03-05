@@ -63,6 +63,10 @@ public class Archer : MonoBehaviour
     private Transform mainCameraTransform;
     private PlayerAudioComponent playerAudio;
 
+    [Header("Hit VFX")]
+    public GameObject hitVFXPrefab;       // เอฟเฟคตอนโดนตี
+    public Transform hitVFXSpawnPoint;    // จุดเล่นเอฟเฟค (ลำตัว)
+
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -447,7 +451,7 @@ public class Archer : MonoBehaviour
         {
             // quick shot: บินตรง ไม่มี gravity
             pendingQuickShot = false;
-            proj?.LaunchStraight(dir, quickShotSpeed, quickShotDamage);
+            proj?.LaunchStraight(dir, quickShotSpeed, quickShotDamage, playerAudio);
             Debug.Log($"<color=cyan>[Archer]</color> Quick Shot! Spd:{quickShotSpeed:F1} Dmg:{quickShotDamage}");
         }
         else
@@ -455,7 +459,7 @@ public class Archer : MonoBehaviour
             // charge shot: เหมือนเดิมทุกอย่าง
             finalSpd = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, lastAccuracy);
             finalDmg = Mathf.RoundToInt(Mathf.Lerp(minDamage, maxDamage, lastAccuracy));
-            proj?.Launch(dir, finalSpd, finalDmg);
+            proj?.Launch(dir, finalSpd, finalDmg, playerAudio);
             Debug.Log($"<color=cyan>[Archer]</color> Charge Shot! Acc:{lastAccuracy:P0} Spd:{finalSpd:F1} Dmg:{finalDmg}");
         }
     }
@@ -616,6 +620,19 @@ public class Archer : MonoBehaviour
             knockbackDir.y = 0;
         }
         currentHitVelocity = knockbackDir * 4f;
+
+        // เล่นเสียงโดนฟัน (เสียงอาวุธกระแทก) คู่กับเสียงคนร้อง
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
+
+        // เล่น VFX ตอนโดนตี
+        if (hitVFXPrefab != null)
+        {
+            Vector3 vfxPos = hitVFXSpawnPoint != null 
+                ? hitVFXSpawnPoint.position 
+                : transform.position + Vector3.up * 1.5f;
+            GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.identity);
+            Destroy(vfx, 2f);
+        }
 
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
