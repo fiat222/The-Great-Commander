@@ -10,6 +10,11 @@ TagManager:
   - Crosshair
   - Minion
   - EnemyAtk
+  - Interact
+  - MinimapPlayerIcon
+  - MinimapMinionIcon
+  - MinimapEnemyIcon
+  - EnemyHead
   layers:
   - Default
   - TransparentFX

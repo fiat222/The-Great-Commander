@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayerAudio;
 using Unity.Cinemachine;
 using UnityEngine.UI;
 
@@ -53,6 +54,13 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     private Animator animator;
     private Transform mainCameraTransform;
+    private PlayerAudioComponent playerAudio;
+
+    [Header("VFX")]
+    public GameObject parryHitVFXPrefab;
+    public Transform parryVFXSpawnPoint;
+    public GameObject hitVFXPrefab;       // เอฟเฟคตอนโดนตี (เลือดกระเซ็น/แสงกระแทก)
+    public Transform hitVFXSpawnPoint;    // จุดเล่นเอฟเฟค (แนะนำตรงลำตัว)
 
     // ==================== Ground Check ====================
     [Header("Ground Check")]
@@ -74,8 +82,10 @@ public class PlayerController : MonoBehaviour
     private Vector3 verticalVelocity;
     private bool isGrounded;
     private bool isInvincible;
+    private bool isParrying;
     private bool isDead;
     public bool IsDead => isDead;
+    public bool IsDodging => isDodging; // เพิ่มเพื่อเปิดให้ WorkerSkill เข้าถึงสถานะกลิ้งได้
     private Coroutine rotationCoroutine;
 
     public bool isMovementLocked { get; set; }
@@ -87,6 +97,8 @@ public class PlayerController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         if (Camera.main != null) mainCameraTransform = Camera.main.transform;
+
+        playerAudio = GetComponent<PlayerAudioComponent>();
 
         if (dodgeCurve != null && dodgeCurve.length > 0)
         {
@@ -136,6 +148,7 @@ public class PlayerController : MonoBehaviour
 
         HandleTargetLockInput();
         HandleRollInput();
+        HandleParryInput();
         HandleAttackInput();
         CheckAnimationLogic();
         UpdateWeaponEffect();
@@ -338,6 +351,35 @@ public class PlayerController : MonoBehaviour
         if (comboStep > 0 && Time.time - lastClickTime > comboResetTime) ResetCombo();
     }
 
+    // ==================== Parry ====================
+
+    private void HandleParryInput()
+    {
+        if (Input.GetMouseButtonDown(1)) // Right-Click
+        {
+            var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+
+            // ไม่ให้ Parry ถ้ากำลังกลิ้ง โดนตี หรือกำลัง Parry อยู่แล้ว
+            bool isBusy = sInfo.IsTag("Roll") || nInfo.IsTag("Roll") ||
+                          sInfo.IsTag("Hit") || nInfo.IsTag("Hit") ||
+                          sInfo.IsTag("Parry") || nInfo.IsTag("Parry");
+
+            if (isGrounded && !isDodging && !isBusy)
+            {
+                if (animator != null)
+                {
+                    animator.ResetTrigger("Attack"); // ยกเลิกการโจมตีที่อาจจะค้างอยู่
+                    animator.SetTrigger("Parry");
+                    
+                    // ถ้ายกเลิกคอมโบกลางคันได้ ก็เคลียร์ ResetCombo ได้
+                    ResetCombo();
+                    currentDashVelocity = Vector3.zero;
+                }
+            }
+        }
+    }
+
     private void TriggerAttack()
     {
         float targetAngle = mainCameraTransform != null ? mainCameraTransform.eulerAngles.y : transform.eulerAngles.y;
@@ -407,6 +449,13 @@ public class PlayerController : MonoBehaviour
         if (animator != null) animator.SetInteger("ComboStep", 0);
     }
 
+    // ใช้สำหรับเคลียร์คอมโบเวลาเริ่มร่ายสกิล (เรียกแบบ Public ได้)
+    public void ResetComboAndDash()
+    {
+        ResetCombo();
+        currentDashVelocity = Vector3.zero;
+    }
+
     public void PerformAttackDash() => currentDashVelocity = transform.forward * attackDashForce;
 
     // ==================== Move ====================
@@ -417,7 +466,9 @@ public class PlayerController : MonoBehaviour
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         bool isLocked = animator != null && (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") ||
                                              sInfo.IsTag("Roll")   || nInfo.IsTag("Roll") ||
-                                             sInfo.IsTag("Hit")    || nInfo.IsTag("Hit"));
+                                             sInfo.IsTag("Hit")    || nInfo.IsTag("Hit") ||
+                                             sInfo.IsTag("Parry")  || nInfo.IsTag("Parry") ||
+                                             sInfo.IsTag("Skill")  || nInfo.IsTag("Skill"));
 
         if (groundCheck != null)
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -477,30 +528,132 @@ public class PlayerController : MonoBehaviour
 
     // ==================== Animation Events ====================
 
+    /// <summary>เรียกจาก Animation Event พร้อมส่งเลข 1, 2, 3 มาด้วย</summary>
+    public void PlayAttackSoundEvent(int soundIndex)
+    {
+        if (playerAudio != null && soundIndex >= 1 && soundIndex <= 3)
+        {
+            // แปลงค่า int เป็น Enum (0 = Attack1, 1 = Attack2, etc.)
+            PlayerSoundType type = (PlayerSoundType)(soundIndex - 1);
+            playerAudio.PlaySound(type);
+        }
+    }
+
     public void EnableInvincibility() => isInvincible = true;
     public void DisableInvincibility() => isInvincible = false;
+
+    public void EnableParryWindow() => isParrying = true;
+    public void DisableParryWindow() => isParrying = false;
+    public void PlayParryCastSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.ParryCast);
+    }
+    
+    public void PlayJumpSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Jump);
+    }
+
+    public void PlayRollSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Roll);
+    }
+
+    public void PlayHitSoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Hit);
+    }
+
+    public void UsingSkill1SoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.UsingSkill1);
+    }
+
+    public void PlaySkill1SoundEvent()
+    {
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Skill1);
+    }
 
     /// <summary>เรียกจาก EnemyAI หรือ Projectile ที่ชนผู้เล่น</summary>
     public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
-        if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
-        if (animator != null) animator.SetTrigger("Damage");
+        if (isDead) return;
 
-        // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
-        ResetCombo();
-        currentDashVelocity = Vector3.zero;
-
-        // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
-        Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
-        if (attackerPosition != default)
+        // ถ้าโดนโจมตีตอนกำลังตั้งการ์ด (Parry)
+        if (isParrying)
         {
-            knockbackDir = (transform.position - attackerPosition).normalized;
-            knockbackDir.y = 0; // ไม่ให้กระเด็นขึ้นฟ้า/มุดดิน
-        }
-        currentHitVelocity = knockbackDir * 4f; // 4f คือความแรงกระเด็น (ปรับแต่งเลขนี้ได้)
+            Debug.Log("<color=yellow>[Player]</color> Parry สำเร็จ!");
+            if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.ParrySuccess);
+            
+            // แสดง VFX ตรงจุดที่ตั้งไว้ หรือจุดที่ดาบอยู่
+            if (parryHitVFXPrefab != null)
+            {
+                // กำหนดค่าตั้งต้นกัน Error ลืมลากเอาไว้ที่หน้าผู้เล่น
+                Vector3 vfxSpawnPos = transform.position + transform.forward * 1f + Vector3.up * 1.5f;
 
-        var wh = GetComponentInChildren<WeaponHandler>();
-        if (wh != null) wh.DisableHitbox();
+                if (parryVFXSpawnPoint != null)
+                {
+                    // ถ้าลากจุด Spawn ใส่มา ให้โผล่ตรงนั้นเลย (แม่นยำที่สุด)
+                    vfxSpawnPos = parryVFXSpawnPoint.position;
+                }
+
+                GameObject vfx = Instantiate(parryHitVFXPrefab, vfxSpawnPos, Quaternion.identity);
+                Destroy(vfx, 2f); // สมมติว่าเอฟเฟคอยู่นาน 2 วิ
+            }
+
+            // TODO: ในอนาคตสามารถใส่คำสั่งให้ศัตรูชะงัก (Stun) หรือคูลดาวน์สกิลได้ตรงนี้
+            return; // ไม่รับดาเมจ
+        }
+
+        if (isInvincible) { print("ไม่โดนเว้ย (อมตะ/กลิ้ง)"); return; }
+        
+        // เช็คว่ากำลังร่ายสกิลอยู่หรือเปล่า (Super Armor)
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+        bool isCastingSkill = sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
+
+        if (!isCastingSkill)
+        {
+            if (animator != null)
+            {
+                animator.ResetTrigger("Attack"); // ยกเลิก Trigger ฟันที่ค้างอยู่ในคิว
+                animator.SetTrigger("Damage");
+            }
+
+            // โดนตี → ยกเลิกท่าโจมตี + ปิดอาวุธ + หยุดแรงพุ่ง + กระเด็นถอยหลัง
+            ResetCombo();
+            currentDashVelocity = Vector3.zero;
+
+            // บังคับปิดดาเมจของอาวุธทันที — ทั้ง 2 ทาง เพื่อความมั่นใจ
+            if (weaponHandler != null) weaponHandler.DisableHitbox();
+            
+
+            // เล่นเสียงโดนฟัน (เสียงอาวุธกระแทก) คู่กับเสียงคนร้อง
+            if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
+
+            // เล่น VFX ตอนโดนตี
+            if (hitVFXPrefab != null)
+            {
+                Vector3 vfxPos = hitVFXSpawnPoint != null 
+                    ? hitVFXSpawnPoint.position 
+                    : transform.position + Vector3.up * 1.5f;
+                GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.identity);
+                Destroy(vfx, 2f);
+            }
+
+            // คำนวณทิศทางกระเด็น (ออกจากศูนย์กลางของคนที่ตี)
+            Vector3 knockbackDir = -transform.forward; // ค่าเริ่มต้นถ้าไม่มี attackerPosition
+            if (attackerPosition != default)
+            {
+                knockbackDir = (transform.position - attackerPosition).normalized;
+                knockbackDir.y = 0; // ไม่ให้กระเด็นขึ้นฟ้า/มุดดิน
+            }
+            currentHitVelocity = knockbackDir * 4f; // 4f คือความแรงกระเด็น (ปรับแต่งเลขนี้ได้)
+        }
+        else
+        {
+            Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จากสกิล!");
+        }
 
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);

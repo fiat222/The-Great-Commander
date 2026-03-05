@@ -466,8 +466,12 @@ PrefabInstance:
       value: Sword_01
       objectReference: {fileID: 0}
     - target: {fileID: 1127450730860520516, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.91
+      objectReference: {fileID: 0}
+    - target: {fileID: 1127450730860520516, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.061
+      value: -0.001
       objectReference: {fileID: 0}
     - target: {fileID: 1127450730860520516, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -475,7 +479,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1127450730860520516, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.02
+      value: 0.018
       objectReference: {fileID: 0}
     - target: {fileID: 1127450730860520516, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -543,6 +547,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afa87ef291105514996b9753d0af2a01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinionWeaponHitbox
+--- !u!1 &2778136103531272416 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3325366150754827247, guid: 8d7f15a7f8991214ba5d1ed9cee7229a, type: 3}
+  m_PrefabInstance: {fileID: 624873298981954319}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6234772671614471868
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -671,15 +680,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b696944056f442e4aaedb8237c1adb1a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 22.418694
+      value: 3.269863
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b696944056f442e4aaedb8237c1adb1a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0000026898742
+      value: 0.13999942
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b696944056f442e4aaedb8237c1adb1a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -9.167109
+      value: -22.66114
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b696944056f442e4aaedb8237c1adb1a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -805,7 +814,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 900831985
+  GlobalObjectIdHash: 2750504497
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -860,6 +869,7 @@ MonoBehaviour:
   weaponHitboxes:
   - {fileID: 6205212585405980344}
   - {fileID: 5847651318420073559}
+  weaponEffect: {fileID: 2778136103531272416}
 --- !u!136 &1710440360949739365
 CapsuleCollider:
   m_ObjectHideFlags: 0

@@ -463,27 +463,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.9
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.07
+      value: 9.5541
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.60149
+      value: 0.14000016
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -27.79134
+      value: -24.78315
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5c9f341ba3d6fb241a0ac56b0b7622ef, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1004,7 +1004,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2541189046
+  GlobalObjectIdHash: 1119073863
   InScenePlacedSourceGlobalObjectIdHash: 2266564534
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1055,6 +1055,10 @@ MonoBehaviour:
   animator: {fileID: 8363957252051643219}
   data: {fileID: 11400000, guid: b584eb5dd906daa4593159b49ea80890, type: 2}
   healthBar: {fileID: 4431598803427957965}
+  attackVFXPoint: {fileID: 0}
+  weaponHitboxes:
+  - {fileID: 2400794247861525794}
+  weaponEffect: {fileID: 5291302515081420746}
 --- !u!136 &4205946848482960832
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1179,6 +1183,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 89.922
       objectReference: {fileID: 0}
+    - target: {fileID: 1783348576182170147, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+      propertyPath: m_Name
+      value: MinionSlashFX
+      objectReference: {fileID: 0}
+    - target: {fileID: 9088562470666235261, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9088562470666235261, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
       propertyPath: m_IsTrigger
       value: 1
@@ -1191,6 +1203,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 2400794247861525794}
   m_SourcePrefab: {fileID: 100100000, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+--- !u!1 &5291302515081420746 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1783348576182170147, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}
+  m_PrefabInstance: {fileID: 5895706204990500329}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &6142790411120546583 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 355312524381552382, guid: 9fec7447fe24279449dd9dac5d478394, type: 3}

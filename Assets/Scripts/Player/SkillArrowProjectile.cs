@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using PlayerAudio;
 
 /// <summary>
 /// Skill Arrow — ทะลุทุกตัว, ดาเมจสูง, หายเร็ว
@@ -21,6 +22,7 @@ public class SkillArrowProjectile : MonoBehaviour
 
     private float speed;
     private int damage;
+    private PlayerAudioComponent ownerAudio;
     private Vector3 velocity;
     private bool isFlying = false;
 
@@ -29,8 +31,9 @@ public class SkillArrowProjectile : MonoBehaviour
     // กันโดน enemy ตัวเดิมซ้ำขณะทะลุผ่าน
     private System.Collections.Generic.HashSet<Collider> hitTargets = new();
 
-    public void Launch(Vector3 direction, float launchSpeed, int launchDamage)
+    public void Launch(Vector3 direction, float launchSpeed, int launchDamage, PlayerAudioComponent audio = null)
     {
+        ownerAudio = audio;
         speed = launchSpeed;
         damage = launchDamage;
         velocity = direction.normalized * speed;
@@ -61,6 +64,7 @@ public class SkillArrowProjectile : MonoBehaviour
         {
             hitTargets.Add(other);
             DealDamage(other);
+            if (ownerAudio != null) ownerAudio.PlaySound(PlayerSoundType.AttackHit);
             Debug.Log($"<color=magenta>[SkillArrow]</color> ทะลุ! Hit: {other.name} Dmg: {damage}");
 
             // ไม่หยุด ไม่ปัก → ทะลุต่อ (isFlying ยังเป็น true)

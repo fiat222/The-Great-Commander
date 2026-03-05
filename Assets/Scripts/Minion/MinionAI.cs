@@ -25,6 +25,7 @@ public class MinionAI : MonoBehaviour
     [Header("Weapons")]
     [Tooltip("ใส่ Hitbox ทุกชิ้นที่ใช้โจมตี (เช่น ดาบ, โล่)")]
     public MinionWeaponHitbox[] weaponHitboxes;
+    public GameObject weaponEffect;
 
     void Start()
     {
@@ -50,6 +51,8 @@ public class MinionAI : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        UpdateWeaponEffect();
 
         FindClosestEnemy();
 
@@ -156,6 +159,19 @@ public class MinionAI : MonoBehaviour
             var hitbox = weaponHitboxes[index];
             if (hitbox != null) hitbox.DisableHitbox();
         }
+    }
+
+    private void UpdateWeaponEffect()
+    {
+        if (weaponEffect == null || animator == null) return;
+
+        var sInfo = animator.GetCurrentAnimatorStateInfo(0);
+        var nInfo = animator.GetNextAnimatorStateInfo(0);
+
+        bool inAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack");
+
+        if (weaponEffect.activeSelf != inAttack)
+            weaponEffect.SetActive(inAttack);
     }
 
     public void PlayAttackVFX()

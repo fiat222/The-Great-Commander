@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 722874545bdb3aa4dab29acc4a6e4b2c, type: 3}
+  m_Name: WarriorAudioData
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAudio.PlayerAudioSO
+  audioEntries:
+  - soundType: 0
+    clip: {fileID: 8300000, guid: a554cf866ca0b5246b7db4937f24cf30, type: 3}
+    volume: 1
+  - soundType: 1
+    clip: {fileID: 8300000, guid: 18867df800a7abd4c9810454eb823a29, type: 3}
+    volume: 1
+  - soundType: 2
+    clip: {fileID: 8300000, guid: 4cf46606cd779cb40b7632b70850cd44, type: 3}
+    volume: 1
+  - soundType: 3
+    clip: {fileID: 8300000, guid: 340d1a1e87bd7934a98af7238ea9a49d, type: 3}
+    volume: 1
+  - soundType: 4
+    clip: {fileID: 8300000, guid: 6447368d87a7cc54b859a1f934c48565, type: 3}
+    volume: 1
+  - soundType: 5
+    clip: {fileID: 8300000, guid: dc90b066dcea0db479682ebe73289c9d, type: 3}
+    volume: 1
+  - soundType: 6
+    clip: {fileID: 8300000, guid: 43114b5e20e05454aaae47c87a945b37, type: 3}
+    volume: 1
+  - soundType: 7
+    clip: {fileID: 8300000, guid: c4b9ebd01aabe9544bc045b7203d3e47, type: 3}
+    volume: 1
+  - soundType: 11
+    clip: {fileID: 8300000, guid: d441521739cfa124486d21340c7a8960, type: 3}
+    volume: 1
+  - soundType: 12
+    clip: {fileID: 8300000, guid: d6af2e2d1b26bf149b7ef80beeab8296, type: 3}
+    volume: 1
+  - soundType: 9
+    clip: {fileID: 8300000, guid: 33a4a9b9b51f1af428996c196c83acec, type: 3}
+    volume: 0.6
+  - soundType: 8
+    clip: {fileID: 8300000, guid: 070f8f91254603d40b1eac5799dc3c7f, type: 3}
+    volume: 0.5

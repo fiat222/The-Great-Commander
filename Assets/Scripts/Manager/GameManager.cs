@@ -45,8 +45,10 @@ public class GameManager : NetworkBehaviour
 
     // Economy Settings ย้ายไปอยู่ใน MinionData แล้วครับ
 
-    // Crosshair สำหรับปิด/เปิด ในแต่ละเฟส
+    // Crosshair + Skill UI สำหรับปิด/เปิด ในแต่ละเฟส
     [SerializeField] private GameObject crosshairObject;
+    [SerializeField] private GameObject skillUI; // รูปสกิล (โชว์เฉพาะ Combat)
+    [SerializeField] private GameObject nextPhaseButton; // ปุ่มเปลี่ยนเฟส (โชว์เฉพาะ Planning)
     private void Awake()
     {
         Instance = this;
@@ -54,6 +56,11 @@ public class GameManager : NetworkBehaviour
         // --- เตรียม NetworkList ตามจำนวนมอนเตอร์ที่มีใน Pool ---
         p0SentCounts = new NetworkList<int>();
         p1SentCounts = new NetworkList<int>();
+    }
+
+    void Start()
+    {
+        Debug.Log($"[Minimap] Start! IsServer={IsServer} IsClient={IsClient} IsHost={IsHost}");
     }
 
     public override void OnNetworkSpawn()
@@ -112,6 +119,7 @@ public class GameManager : NetworkBehaviour
 
         if (newValue == GamePhase.Planning)
         {
+            EnemyTracker.Instance?.ResetForNewWaveServerRpc();
             if (IsServer)
             {
                 currentWave.Value++;
@@ -175,17 +183,27 @@ public class GameManager : NetworkBehaviour
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            // ปิด crosshair ในเฟส Planning
+            // ปิด crosshair + skill UI ในเฟส Planning
             if (crosshairObject != null)
                 crosshairObject.SetActive(false);
+            if (skillUI != null)
+                skillUI.SetActive(false);
+            // โชว์ปุ่ม Next Phase ในเฟส Planning
+            if (nextPhaseButton != null)
+                nextPhaseButton.SetActive(true);
         }
         else
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            // เปิด crosshair ในเฟส Combat
+            // เปิด crosshair + skill UI ในเฟส Combat
             if (crosshairObject != null)
                 crosshairObject.SetActive(true);
+            if (skillUI != null)
+                skillUI.SetActive(true);
+            // ซ่อนปุ่ม Next Phase ในเฟส Combat
+            if (nextPhaseButton != null)
+                nextPhaseButton.SetActive(false);
         }
     }
 
@@ -214,7 +232,7 @@ public class GameManager : NetworkBehaviour
         if (!IsServer) return;
         if (systemEnemyPool == null || systemEnemyPool.Length == 0) return;
 
-        int totalToSpawn = 6 + (currentWave.Value - 1) * 2;
+        int totalToSpawn = 1 + (currentWave.Value - 1) * 2;
         int[] counts = new int[systemEnemyPool.Length];
 
         // สุ่มแจกจ่ายจำนวนให้ครบ totalToSpawn

@@ -24,5 +24,7 @@ public class WeaponHandler : MonoBehaviour
     public void DisableHitbox() 
     {
         weaponHitbox.enabled = false;
+        var hitbox = weaponHitbox.GetComponent<PlayerWeaponHitbox>();
+        if (hitbox != null) hitbox.ClearHitList();
     }
 }
