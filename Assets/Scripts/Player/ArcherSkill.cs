@@ -174,7 +174,7 @@ public class ArcherSkill : MonoBehaviour
             Vector3 spawnPos = groundPos - arrowDir * spawnHeight;
 
             var arrow = Instantiate(rainArrowPrefab, spawnPos, Quaternion.identity);
-            arrow.GetComponent<RainArrowProjectile>()?.Launch(arrowDir, arrowSpeed, dmg);
+            arrow.GetComponent<RainArrowProjectile>()?.Launch(arrowDir, arrowSpeed, dmg, playerAudio);
 
             yield return new WaitForSeconds(fireInterval);
         }

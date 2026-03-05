@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using PlayerAudio;
 
 /// <summary>
 /// ลูกธนูฝน — ยิงลงมาจากด้านบนเฉียงตามทิศกล้อง
@@ -9,14 +10,16 @@ public class RainArrowProjectile : MonoBehaviour
     public float lifetime = 3f;
 
     private int damage;
+    private PlayerAudioComponent ownerAudio;
     private Vector3 velocity;
     private bool isFlying = false;
 
     private readonly Quaternion rotationOffset = Quaternion.Euler(90f, 0f, 0f);
     private System.Collections.Generic.HashSet<Collider> hitTargets = new();
 
-    public void Launch(Vector3 direction, float speed, int dmg)
+    public void Launch(Vector3 direction, float speed, int dmg, PlayerAudioComponent audio = null)
     {
+        ownerAudio = audio;
         damage = dmg;
         velocity = direction.normalized * speed;
         isFlying = true;
@@ -43,6 +46,7 @@ public class RainArrowProjectile : MonoBehaviour
         {
             hitTargets.Add(other);
             DealDamage(other);
+            if (ownerAudio != null) ownerAudio.PlaySound(PlayerSoundType.AttackHit);
             Debug.Log($"<color=yellow>[RainArrow]</color> Hit: {other.name} Dmg: {damage}");
             return; // ทะลุต่อ
         }
