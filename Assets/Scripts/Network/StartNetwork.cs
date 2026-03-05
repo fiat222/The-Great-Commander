@@ -1,32 +1,46 @@
 ﻿using UnityEngine;
-using Unity.Netcode;              // ใช้ระบบ Multiplayer ของ Unity (NGO)
+using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
 public class StartNetwork : MonoBehaviour
 {
     private void Awake()
     {
-        // ทำให้ GameObject นี้ (ซึ่งมี NetworkManager อยู่ด้วย)
-        // ไม่ถูกทำลายเมื่อเปลี่ยน Scene
-        // สำคัญมาก เพราะถ้า NetworkManager หาย Multiplayer จะหลุดทันที
         DontDestroyOnLoad(gameObject);
     }
 
     public void StartHost()
     {
-        // เริ่มโหมด Host
-        // Host = Server + Client ในเครื่องเดียวกัน
-        NetworkManager.Singleton.StartHost();
+        var nm = NetworkManager.Singleton;
+        if (nm == null) return;
 
-        // สั่งให้ Server โหลด Scene ชื่อ "GameScene"
-        // และจะ Sync Scene ไปยัง Client อัตโนมัติ (เพราะเปิด Enable Scene Management)
-        NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+        nm.NetworkConfig.ConnectionApproval = true;
+        nm.ConnectionApprovalCallback = ApproveConnection;
+
+        if (!nm.StartHost())
+        {
+            Debug.LogError("[StartNetwork] StartHost failed — port 7777 may be in use.");
+            return;
+        }
+
+        nm.SceneManager.LoadScene("CharacterSelectScene", LoadSceneMode.Single);
     }
 
     public void StartClient()
     {
-        // เริ่มโหมด Client
-        // Client จะพยายามเชื่อมต่อไปยัง Host
-        NetworkManager.Singleton.StartClient();
+        var nm = NetworkManager.Singleton;
+        if (nm == null) return;
+
+        nm.NetworkConfig.ConnectionApproval = true;
+        nm.StartClient();
+    }
+
+    private void ApproveConnection(
+        NetworkManager.ConnectionApprovalRequest request,
+        NetworkManager.ConnectionApprovalResponse response)
+    {
+        response.Approved = true;
+        response.CreatePlayerObject = false;
+        response.Pending = false;
     }
 }
