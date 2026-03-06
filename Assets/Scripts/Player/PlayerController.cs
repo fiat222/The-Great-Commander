@@ -94,6 +94,9 @@ public class PlayerController : MonoBehaviour
 
     public bool isMovementLocked { get; set; }
 
+    /// <summary>ถ้า false = ห้าม Input ทั้งหมด (ใช้ตอน Planning Phase)</summary>
+    private bool inputEnabled = true;
+
     // ==================== Lifecycle ====================
 
     private void Awake()
@@ -150,8 +153,28 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
     }
 
+    private void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+    }
+
+    private void OnPhaseChanged(GamePhase phase)
+    {
+        inputEnabled = (phase == GamePhase.Combat);
+    }
+
     private void Start()
     {
+        // เซ็ต inputEnabled ตาม phase ปัจจุบัน ณ ตอน spawn
+        // (เพราะ OnPhaseChangedGlobal อาจ fire ไปก่อน player นี้จะ spawn)
+        if (GameManager.Instance != null)
+            inputEnabled = (GameManager.Instance.CurrentPhase == GamePhase.Combat);
+
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
@@ -163,6 +186,13 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
 
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
+
+        if (!inputEnabled)
+        {
+            // Planning phase: ล็อก input ทั้งหมด แต่ยังให้ gravity ทำงาน
+            if (!isDodging) ApplyGravityOnly();
+            return;
+        }
 
         HandleTargetLockInput();
         HandleRollInput();
@@ -180,6 +210,15 @@ public class PlayerController : MonoBehaviour
             // ให้ลอยตกลงพื้นได้แม้กำลังกลิ้งอยู่
             ApplyGravityDuringDodge();
         }
+    }
+
+    private void ApplyGravityOnly()
+    {
+        if (groundCheck != null)
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
+        else verticalVelocity.y += gravity * Time.deltaTime;
+        controller.Move(verticalVelocity * Time.deltaTime);
     }
 
     private void ApplyGravityDuringDodge()
@@ -699,5 +738,8 @@ public class PlayerController : MonoBehaviour
         
         if (animator != null) animator.SetTrigger("Die");
         if (controller != null) controller.enabled = false;
+
+        SpectatorController.Instance?.EnterSpectate(transform);
+
     }
 }

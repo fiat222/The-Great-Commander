@@ -228,19 +228,44 @@ public class PlacementManager : MonoBehaviour
     // ===== PHASE CHANGE HANDLER =====
     private void HandlePhaseChanged(GamePhase phase)
     {
+        // ยกเลิกสถานะ Placing/Selling ทุกครั้งที่เปลี่ยนเฟส (reset state ให้สะอาด)
+        if (isPlacing) CancelPlacement();
+        if (isSellingMode) ToggleSellMode();
+
         if (phase == GamePhase.Combat)
         {
-            // ปิดโหมดขายถ้าเปิดอยู่
-            if (isSellingMode) ToggleSellMode();
-            // ยกเลิกการวางถ้ากำลังวาง
-            if (isPlacing) CancelPlacement();
-            // ซ่อนปุ่ม Sell
+            // Planning→Combat: Minion อยู่เพื่อสู้ แค่ซ่อนปุ่ม Sell
             if (sellButton != null) sellButton.SetActive(false);
         }
-        else // Planning
+        else // Planning (Combat→Planning)
         {
-            // โชว์ปุ่ม Sell กลับมา
+            // Combat→Planning: ลบ Minion ทั้งหมด เริ่มรอบใหม่
+            DespawnAllMinions();
             if (sellButton != null) sellButton.SetActive(true);
         }
+    }
+
+    /// <summary>ทำลาย Minion ทั้งหมดที่วางบน Grid และเคลียร์ข้อมูลกริด</summary>
+    private void DespawnAllMinions()
+    {
+        if (hexGrid == null) return;
+
+        int width  = hexGrid.GridSize.x;
+        int height = hexGrid.GridSize.y;
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                GameObject obj = hexGrid.GetGridObject(x, y);
+                if (obj != null)
+                {
+                    Destroy(obj);
+                    hexGrid.RemoveGridObject(x, y);
+                }
+            }
+        }
+
+        Debug.Log("<color=orange>[PlacementManager]</color> All minions despawned.");
     }
 }
