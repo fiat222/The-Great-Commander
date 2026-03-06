@@ -14,7 +14,11 @@ public class StartNetworkTest : MonoBehaviour
     public static StartNetworkTest Instance { get; private set; }
 
     [SerializeField] private string gameSceneName = "GameScene";
+    [SerializeField] private string characterSelectSceneName = "CharacterSelectScene";
     [SerializeField] private ushort port = 7777;
+
+    /// <summary>True = Solo Play (Host-only), False = Duo Play (Networked 2 players)</summary>
+    public static bool IsSolo { get; private set; }
 
     private const string BASE36_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private const int CODE_LENGTH = 7;
@@ -28,22 +32,24 @@ public class StartNetworkTest : MonoBehaviour
 
     // PUBLIC API
 
-    // Solo Play: StartHost แล้วโหลด GameScene ทันที ไม่รอ Client
+    // Solo Play: StartHost แล้วโหลด CharacterSelectScene ก่อน → GameScene
     public void StartSolo()
     {
+        IsSolo = true;
         string localIP = GetLocalIPAddress();
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         transport.SetConnectionData(localIP, port);
 
         NetworkManager.Singleton.StartHost();
-        Debug.Log("<color=cyan>[RoomTest]</color> Solo Play! Loading GameScene ...");
-        NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+        Debug.Log("<color=cyan>[RoomTest]</color> Solo Play! Loading CharacterSelectScene ...");
+        NetworkManager.Singleton.SceneManager.LoadScene(characterSelectSceneName, LoadSceneMode.Single);
     }
 
     // Host: StartHost แล้วรอ Client เชื่อมต่อ
     // Room Code 7 ตัวที่ Client ต้องพิมพ์
     public string CreateRoom()
     {
+        IsSolo = false;
         string localIP = GetLocalIPAddress();
 
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
@@ -126,14 +132,14 @@ public class StartNetworkTest : MonoBehaviour
 
     // PRIVATE
 
-    //เมื่อ Client เชื่อมต่อสำเร็จ — ถ้ามี 2 คนแล้วให้โหลด GameScene
+    //เมื่อ Client เชื่อมต่อสำเร็จ — ถ้ามี 2 คนแล้วให้โหลด CharacterSelectScene
     private void OnClientConnected(ulong clientId)
     {
         if (NetworkManager.Singleton.ConnectedClients.Count >= 2)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-            Debug.Log("<color=green>[RoomTest]</color> 2 Players ready! Loading GameScene...");
-            NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+            Debug.Log("<color=green>[RoomTest]</color> 2 Players ready! Loading CharacterSelectScene...");
+            NetworkManager.Singleton.SceneManager.LoadScene(characterSelectSceneName, LoadSceneMode.Single);
         }
     }
 

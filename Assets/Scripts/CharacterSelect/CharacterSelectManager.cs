@@ -106,7 +106,12 @@ public class CharacterSelectManager : NetworkBehaviour
         else
             p2Ready.Value = ready;
 
-        if (p1Ready.Value && p2Ready.Value)
+        // Solo: รอแค่ p1 Ready / Duo: รอทั้งคู่ Ready
+        bool allReady = StartNetworkTest.IsSolo
+            ? p1Ready.Value
+            : p1Ready.Value && p2Ready.Value;
+
+        if (allReady)
         {
             OnAllReadyAndStarting?.Invoke();
             Invoke(nameof(LoadGameScene), 2f);
