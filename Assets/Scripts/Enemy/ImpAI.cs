@@ -205,6 +205,13 @@ public class ImpAI : MonoBehaviour
 
     private void UpdateTargetsAndDistances()
     {
+        // ถ้า playerTransform หาย (เช่น respawn ใหม่) ให้ค้นหาใหม่
+        if (playerTransform == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) playerTransform = p.transform;
+        }
+
         // อัปเดตระยะ Player
         if (playerTransform != null)
             distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
