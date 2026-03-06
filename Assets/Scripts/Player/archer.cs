@@ -729,6 +729,8 @@ public class Archer : MonoBehaviour
         isDead = true;
         Debug.Log("<color=red>[Archer]</color> ตายแล้ว!");
         if (animator != null) animator.SetTrigger("Die");
+
+        SpectatorController.Instance?.EnterSpectate(transform);
     }
 
     private void OnDrawGizmos()
