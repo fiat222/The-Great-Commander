@@ -33,7 +33,7 @@ MonoBehaviour:
   baseDamage: 30
   baseDefense: 4
   baseSpeed: 7
-  baseHP: 1000
+  baseHP: 100
   waveHpMultiplier: 1.15
   waveAttackMultiplier: 1.12
   waveDefenseMultiplier: 1.1

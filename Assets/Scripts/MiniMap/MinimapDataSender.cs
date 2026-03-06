@@ -77,13 +77,6 @@ public class MinimapDataSender : NetworkBehaviour
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        // ⭐ เพิ่ม: นับ Enemy ในข้อมูลที่ส่งมา แล้วรายงานให้ EnemyTracker
-        int enemyCount = 0;
-        foreach (var u in units)
-            if (u.UnitType == 2) enemyCount++;
-
-        EnemyTracker.Instance?.ReportEnemyCountServerRpc(enemyCount, senderClientId);
-
         // ── โค้ดเดิม ──────────────────────────────────────────────
         var targetIds = new List<ulong>();
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
