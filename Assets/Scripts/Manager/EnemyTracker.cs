@@ -24,6 +24,8 @@ public class EnemyTracker : NetworkBehaviour
 
     [Header("Settings")]
     public float countdownDuration = 15f;
+    [Tooltip("เอฟเฟคสายฟ้าเวลาโดนระบบสั่งตายตอนจบ 15 วิ")]
+    public GameObject deathLightningVFX;
 
     // ─── NetworkVariables (Server เขียน / ทุกคนอ่าน) ──────────────
     // จำนวน Enemy แต่ละฝั่ง (อัปเดตทุก tick จาก MinimapDataSender)
@@ -35,11 +37,14 @@ public class EnemyTracker : NetworkBehaviour
     private NetworkVariable<bool> p1Cleared    = new NetworkVariable<bool>(false);
 
     // ─── State ────────────────────────────────────────────────────
+    // ─── State ────────────────────────────────────────────────────
     private Coroutine activeCoroutine;
     private bool      countdownRunning   = false;
     private bool      phaseChangeQueued  = false;
-    private bool      p0EverHadEnemies   = false; // ต้องเคยเจอ Enemy > 0 ก่อนถึงจะนับว่าคลีย์
-    private bool      p1EverHadEnemies   = false;
+
+    // การนับศัตรูในเครื่องตัวเองแบบแม่นยำเป๊ะๆ 100%
+    private int       localRemainingEnemies = 0;
+    private bool      localHasCountedStart  = false;
 
     // ────────────────────────────────────────────────────────────
     private void Awake()
@@ -74,38 +79,102 @@ public class EnemyTracker : NetworkBehaviour
         // ฟัง NetworkVariable เพื่ออัปเดต UI ทุก Client
         p0Cleared.OnValueChanged += (_, __) => EvaluateOnClient();
         p1Cleared.OnValueChanged += (_, __) => EvaluateOnClient();
+
+        GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+        GameManager.OnSystemEnemyDied += HandleLocalEnemyDied;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
+        GameManager.OnSystemEnemyDied -= HandleLocalEnemyDied;
     }
 
     // ────────────────────────────────────────────────────────────
-    //  SERVER — รับรายงาน Enemy Count จาก MinimapDataSender
+    //  LOCAL COUNTING (นับจำนวนแบบเป๊ะๆ แทนการใช้ Minimap)
     // ────────────────────────────────────────────────────────────
-    [Rpc(SendTo.Server)]
-    public void ReportEnemyCountServerRpc(int count, ulong senderClientId)
+    private void HandlePhaseChanged(GamePhase newPhase)
     {
-        if (GameManager.Instance == null ||
-            GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
-
-        // อัปเดตค่าให้ตรงฝั่ง
-        if (senderClientId == 0) p0EnemyCount.Value = count;
-        else                     p1EnemyCount.Value = count;
-
-        // ต้องเคยเจอ Enemy > 0 ก่อน ถึงจะนับว่า "คลีย์" ได้
-        if (count > 0)
+        if (newPhase == GamePhase.Combat)
         {
-            if (senderClientId == 0) p0EverHadEnemies = true;
-            else                     p1EverHadEnemies = true;
+            CalculateLocalTotalEnemies();
+        }
+        else
+        {
+            localHasCountedStart = false;
+        }
+    }
+
+    private void CalculateLocalTotalEnemies()
+    {
+        if (GameManager.Instance == null) return;
+
+        int total = 0;
+
+        // 1. รับจำนวน System Enemies รันตาม Draft
+        string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
+        if (!string.IsNullOrEmpty(draft))
+        {
+            string[] parts = draft.Split('|');
+            foreach (string p in parts)
+            {
+                string[] sub = p.Split(':');
+                if (sub.Length == 2)
+                    total += int.Parse(sub[1]);
+            }
         }
 
-        // ตรวจ Clear
-        if (senderClientId == 0 && !p0Cleared.Value && count == 0 && p0EverHadEnemies)
+        // 2. รับจำนวน Sent Enemies จากเพื่อน
+        ulong myId = NetworkManager.Singleton.LocalClientId;
+        if (myId == 0) // เราคือ Host -> ดูโควต้าที่ Client (p1) ส่งมาหาเรา
+        {
+            foreach (int count in GameManager.Instance.p1SentCounts)
+                total += count;
+        }
+        else // เราคือ Client -> ดูโควต้าที่ Host (p0) ส่งมาหาเรา
+        {
+            foreach (int count in GameManager.Instance.p0SentCounts)
+                total += count;
+        }
+
+        localRemainingEnemies = total;
+        localHasCountedStart = true;
+        Debug.Log($"<color=cyan>[EnemyTracker]</color> Calculated exact enemies for Combat: {total}");
+
+        // ถ้าบังเอิญเวฟนี้ไม่มีมอนสเตอร์เลยสักตัว ก็ถือว่าเคลียร์ทันที
+        if (total == 0)
+        {
+            ReportWaveClearedServerRpc(myId);
+        }
+    }
+
+    private void HandleLocalEnemyDied(int typeIndex)
+    {
+        if (!localHasCountedStart) return;
+        if (GameManager.Instance == null || GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
+
+        localRemainingEnemies--;
+        Debug.Log($"<color=cyan>[EnemyTracker]</color> Enemy Died! Remaining: {localRemainingEnemies}");
+
+        if (localRemainingEnemies <= 0)
+        {
+            localHasCountedStart = false; // นับเสร็จแล้ว
+            ReportWaveClearedServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+    }
+
+    [Rpc(SendTo.Server)]
+    private void ReportWaveClearedServerRpc(ulong senderClientId)
+    {
+        if (senderClientId == 0 && !p0Cleared.Value)
         {
             p0Cleared.Value = true;
-            Debug.Log("<color=cyan>[EnemyTracker]</color> P0 Enemy หมดแล้ว!");
+            Debug.Log("<color=cyan>[EnemyTracker]</color> P0 Enemy หมดแล้ว! (Local Count Confirmed)");
         }
-        else if (senderClientId != 0 && !p1Cleared.Value && count == 0 && p1EverHadEnemies)
+        else if (senderClientId != 0 && !p1Cleared.Value)
         {
             p1Cleared.Value = true;
-            Debug.Log("<color=cyan>[EnemyTracker]</color> P1 Enemy หมดแล้ว!");
+            Debug.Log("<color=cyan>[EnemyTracker]</color> P1 Enemy หมดแล้ว! (Local Count Confirmed)");
         }
 
         EvaluateOnServer();
@@ -271,8 +340,6 @@ public class EnemyTracker : NetworkBehaviour
         p1Cleared.Value    = false;
         countdownRunning   = false;
         phaseChangeQueued  = false;
-        p0EverHadEnemies   = false;
-        p1EverHadEnemies   = false;
         HideKillOpponentButtonClientRpc();
     }
 
@@ -284,13 +351,22 @@ public class EnemyTracker : NetworkBehaviour
         foreach (var p in GameObject.FindGameObjectsWithTag("Player"))
         {
             var netObj = p.GetComponent<NetworkObject>();
-            if (netObj == null || netObj.OwnerClientId != NetworkManager.Singleton.LocalClientId)
+            
+            // ถ้ามีบอกว่าเป็นของคนอื่นให้ข้ามไป แต่ถ้า "ไม่มี NetworkObject" ให้ถือว่าเป็นตัวละครของเครื่องนี้เลย
+            if (netObj != null && netObj.OwnerClientId != NetworkManager.Singleton.LocalClientId)
                 continue;
 
             // ลองหา PlayerController ก่อน (Warrior)
             var pc = p.GetComponent<PlayerController>();
             if (pc != null)
             {
+                if (deathLightningVFX != null)
+                {
+                    // เสกจากจุดที่สูงขึ้นไป 5 เมตรจากตัวผู้เล่นแบบรักษาการหมุนตาม Prefab ต้นฉบับ
+                    GameObject vfx = Instantiate(deathLightningVFX, p.transform.position + Vector3.up * 8f, deathLightningVFX.transform.rotation);
+                    Destroy(vfx, 2f);
+                }
+
                 pc.TakeDamage(999999);
                 Debug.Log("[EnemyTracker] บังคับ PlayerController ตาย");
                 return;
@@ -300,6 +376,13 @@ public class EnemyTracker : NetworkBehaviour
             var archer = p.GetComponent<Archer>();
             if (archer != null)
             {
+                if (deathLightningVFX != null)
+                {
+                    // เสกจากจุดที่สูงขึ้นไป 5 เมตรแบบรักษาการหมุนตาม Prefab ต้นฉบับ
+                    GameObject vfx = Instantiate(deathLightningVFX, p.transform.position + Vector3.up * 8f, deathLightningVFX.transform.rotation);
+                    Destroy(vfx, 2f);
+                }
+
                 archer.TakeDamage(999999);
                 Debug.Log("[EnemyTracker] บังคับ Archer ตาย");
                 return;

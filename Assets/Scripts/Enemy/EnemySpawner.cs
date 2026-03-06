@@ -126,7 +126,16 @@ public class EnemySpawner : NetworkBehaviour
         if (ai != null)
         {
             ai.typeIndex = index;
-            ai.countsInWaveUI = isSystem;
+            ai.countsInWaveUI = true; // ให้ UI ลดจำนวนเสมอไม่ว่าจะเป็น System หรือ Sent
+        }
+        else
+        {
+            ImpAI imp = enemy.GetComponent<ImpAI>();
+            if (imp != null)
+            {
+                imp.typeIndex = index;
+                imp.countsInWaveUI = true;
+            }
         }
     }
 }
