@@ -23,6 +23,10 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<GamePhase> currentPhase = new NetworkVariable<GamePhase>(GamePhase.Planning);
     public GamePhase CurrentPhase => currentPhase.Value;
 
+    [Header("Debug")]
+    [Tooltip("แสดงเฉพาะไว้ดูใน Inspector")]
+    [SerializeField] private GamePhase displayPhase;
+
     [Header("Wave System")]
     public TextMeshProUGUI waveText;
     private NetworkVariable<int> currentWave = new NetworkVariable<int>(1);
@@ -69,6 +73,7 @@ public class GameManager : NetworkBehaviour
         globalSpawner = FindFirstObjectByType<EnemySpawner>();
         if (globalSpawner != null) Debug.Log("<color=green>[GameManager]</color> Global Spawner Linked.");
 
+        displayPhase = currentPhase.Value;
         currentPhase.OnValueChanged += OnPhaseChanged;
         
         // ผูก Event ให้ UI อัปเดตเมื่อค่าใน List เปลี่ยนครับ
@@ -113,6 +118,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
     {
+        displayPhase = newValue;
         UpdatePhaseUI(newValue);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
         UpdateCursorState(newValue);

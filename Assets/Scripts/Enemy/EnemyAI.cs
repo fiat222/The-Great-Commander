@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public enum EnemyState { MoveToBase, ChasePlayer, AttackPlayer, AttackBase, ChaseMinion, AttackMinion }
 
@@ -838,6 +839,7 @@ public class EnemyAI : MonoBehaviour
         {
             animator.SetFloat("Speed", 0f);
             animator.SetBool("IsAttacking", false);
+            animator.SetBool("isDead", true);
             animator.SetTrigger("Die");
         }
 
@@ -869,6 +871,7 @@ public class EnemyAI : MonoBehaviour
         // --- ตายถาวร ---
         if (countsInWaveUI)
             GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+            
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 
         Invoke(nameof(PlayRemovalVFX), 2f);

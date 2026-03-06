@@ -223,7 +223,7 @@ Transform:
   m_GameObject: {fileID: 1053625436251099676}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.4312671, y: 1.1700004, z: 1.4110631}
+  m_LocalPosition: {x: 1.4312671, y: 1.1700003, z: 1.4110631}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2522,6 +2522,7 @@ GameObject:
   - component: {fileID: 8222893807471953391}
   - component: {fileID: 6982041918979044033}
   - component: {fileID: 4835149807319562328}
+  - component: {fileID: 5110688888310898615}
   m_Layer: 0
   m_Name: PlayerWarrior
   m_TagString: Player
@@ -2662,6 +2663,8 @@ MonoBehaviour:
   parryVFXSpawnPoint: {fileID: 595841772876591803}
   hitVFXPrefab: {fileID: 6823302871133167919, guid: 3138a83bedbd6ad4481ba0b061da2eb6, type: 3}
   hitVFXSpawnPoint: {fileID: 7229640162813394162}
+  freelookCamera: {fileID: 5664849722078882424}
+  targetLockCamera: {fileID: 3588336575911302007}
   groundCheck: {fileID: 6728241864739391125}
   groundDistance: 0.4
   groundMask:
@@ -2844,6 +2847,31 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5110688888310898615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7711133326226633498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &7869010101243521864
 GameObject:
   m_ObjectHideFlags: 0

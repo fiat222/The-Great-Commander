@@ -62,6 +62,10 @@ public class PlayerController : MonoBehaviour
     public GameObject hitVFXPrefab;       // เอฟเฟคตอนโดนตี (เลือดกระเซ็น/แสงกระแทก)
     public Transform hitVFXSpawnPoint;    // จุดเล่นเอฟเฟค (แนะนำตรงลำตัว)
 
+    [Header("Player Cameras")]
+    public CinemachineCamera freelookCamera;
+    public CinemachineCamera targetLockCamera;
+
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -144,6 +148,14 @@ public class PlayerController : MonoBehaviour
         }
 
         Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
+    }
+
+    private void Start()
+    {
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
+        }
     }
 
     private void Update()
@@ -584,6 +596,16 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
         if (isDead) return;
+
+        // --- ระบบล็อกเป้าสั่งตาย (เช่น จาก Death Countdown) ---
+        if (rawDmg >= 999999)
+        {
+            currentHP = 0;
+            if (healthBar != null) healthBar.value = 0;
+            Debug.Log("<color=red>[Player]</color> โดนสั่งตายทันที (System Kill)!");
+            Die();
+            return;
+        }
 
         // ถ้าโดนโจมตีตอนกำลังตั้งการ์ด (Parry)
         if (isParrying)

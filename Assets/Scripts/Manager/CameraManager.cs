@@ -28,6 +28,25 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        if (GameManager.Instance != null)
+        {
+            // Sync initial state incase OnNetworkSpawn triggered before CameraManager was ready
+            SetPhaseCamera(GameManager.Instance.CurrentPhase);
+        }
+    }
+
+    public void RegisterPlayerCameras(CinemachineCamera freeLook, CinemachineCamera targetLock)
+    {
+        this.freelookCamera = freeLook;
+        this.targetLockCamera = targetLock;
+        if (GameManager.Instance != null)
+        {
+            SetPhaseCamera(GameManager.Instance.CurrentPhase);
+        }
+    }
+
     public void SetPhaseCamera(GamePhase phase)
     {
         ResetAllPriorities();
