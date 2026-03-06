@@ -67,6 +67,10 @@ public class Archer : MonoBehaviour
     public GameObject hitVFXPrefab;       // เอฟเฟคตอนโดนตี
     public Transform hitVFXSpawnPoint;    // จุดเล่นเอฟเฟค (ลำตัว)
 
+    [Header("Player Cameras")]
+    public CinemachineCamera freelookCamera;
+    public CinemachineCamera targetLockCamera;
+
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -165,6 +169,14 @@ public class Archer : MonoBehaviour
         Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} " +
                   $"| HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} " +
                   $"MinDmg:{minDamage} MaxDmg:{maxDamage}");
+    }
+
+    private void Start()
+    {
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
+        }
     }
 
     private void Update()
@@ -618,7 +630,19 @@ public class Archer : MonoBehaviour
 
     public void TakeDamage(int rawDmg, Vector3 attackerPosition = default)
     {
-        if (isDead || isInvincible) { print("ไม่โดนเว้ย"); return; }
+        if (isDead) return;
+
+        // --- ระบบล็อกเป้าสั่งตาย (เช่น จาก Death Countdown) ---
+        if (rawDmg >= 999999)
+        {
+            currentHP = 0;
+            if (healthBar != null) healthBar.value = 0;
+            Debug.Log("<color=red>[Archer]</color> โดนสั่งตายทันที (System Kill)!");
+            Die();
+            return;
+        }
+
+        if (isInvincible) { print("ไม่โดนเว้ย"); return; }
         if (animator != null) animator.SetTrigger("Damage");
 
         StopAiming();

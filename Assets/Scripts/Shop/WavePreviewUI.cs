@@ -25,21 +25,51 @@ public class WavePreviewUI : MonoBehaviour
     private Dictionary<int, int> sentCounts = new Dictionary<int, int>();
     private List<WaveIconItem> combatIcons = new List<WaveIconItem>();
 
+    private bool hasInitialized = false;
+
+    void OnEnable()
+    {
+        TryInitialize();
+    }
+
     void Start()
     {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.systemWaveDraft.OnValueChanged += OnWaveDraftChanged;
-            GameManager.OnSystemEnemyDied += HandleEnemyDeath;
-            GameManager.OnPhaseChangedGlobal += RefreshLayoutOnPhaseChange;
+        TryInitialize();
+    }
 
-            // ✨ เพิ่มการดักจับเมื่อมีการส่งมอนสเตอร์มาเพิ่มแบบ Real-time (ใช้ OnListChanged สำหรับ NetworkList)
-            GameManager.Instance.p0SentCounts.OnListChanged += OnSentListChanged;
-            GameManager.Instance.p1SentCounts.OnListChanged += OnSentListChanged;
-        }
+    void Update()
+    {
+        if (!hasInitialized) TryInitialize();
+    }
+
+    private void TryInitialize()
+    {
+        if (hasInitialized || GameManager.Instance == null) return;
+
+        GameManager.Instance.systemWaveDraft.OnValueChanged += OnWaveDraftChanged;
+        GameManager.OnSystemEnemyDied += HandleEnemyDeath;
+        GameManager.OnPhaseChangedGlobal += RefreshLayoutOnPhaseChange;
+
+        GameManager.Instance.p0SentCounts.OnListChanged += OnSentListChanged;
+        GameManager.Instance.p1SentCounts.OnListChanged += OnSentListChanged;
         
-        // เริ่มต้นให้แสดงผลตามข้อมูลที่มีอยู่
+        hasInitialized = true;
         RefreshLayout();
+        Debug.Log($"<color=cyan>[WavePreviewUI]</color> Initialized successfully. Phase: {GameManager.Instance.CurrentPhase}");
+    }
+
+    void OnDisable()
+    {
+        if (!hasInitialized || GameManager.Instance == null) return;
+
+        GameManager.Instance.systemWaveDraft.OnValueChanged -= OnWaveDraftChanged;
+        GameManager.OnSystemEnemyDied -= HandleEnemyDeath;
+        GameManager.OnPhaseChangedGlobal -= RefreshLayoutOnPhaseChange;
+
+        GameManager.Instance.p0SentCounts.OnListChanged -= OnSentListChanged;
+        GameManager.Instance.p1SentCounts.OnListChanged -= OnSentListChanged;
+
+        hasInitialized = false;
     }
 
     private void OnSentListChanged(NetworkListEvent<int> changeEvent)
@@ -71,6 +101,7 @@ public class WavePreviewUI : MonoBehaviour
         // 2. คำนวณ Incoming (ศัตรูที่จะมาบุกเรา)
         incomingCounts.Clear();
         string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
+        Debug.Log($"<color=cyan>[WavePreviewUI]</color> Draft value currently: '{draft}'");
         if (!string.IsNullOrEmpty(draft))
         {
             string[] parts = draft.Split('|');
@@ -150,7 +181,7 @@ public class WavePreviewUI : MonoBehaviour
                 WaveIconItem item = obj.GetComponent<WaveIconItem>();
                 if (item != null)
                 {
-                    item.Setup(data.picture != null ? data.picture : data.icon, count);
+                    item.Setup(data.picture != null ? data.picture : data.icon, count, index);
                     if (container == combatContainer) combatIcons.Add(item);
                 }
             }
@@ -176,34 +207,24 @@ public class WavePreviewUI : MonoBehaviour
 
     private void UpdateCombatUIOnly()
     {
-        // แทนที่จะสร้างใหม่หมด เราจะแค่ Update ตัวเลขใน CombatIcons ครับ
-        int i = 0;
-        foreach (var pair in incomingCounts)
+        // อัปเดตตัวเลขใน CombatIcons โดยอ้างอิงจาก EnemyTypeIndex
+        foreach (var item in combatIcons)
         {
-            if (i < combatIcons.Count)
+            if (item == null) continue;
+
+            int typeIndex = item.EnemyTypeIndex;
+            if (incomingCounts.ContainsKey(typeIndex))
             {
-                // เราต้องการแค่เปลี่ยน Text ไม่ต้องเซ็ต Sprite ใหม่ก็ได้ครับ (ประหยัด Performance)
-                // แต่ถ้าจะเอาชัวร์ก็เรียก Setup ใหม่ได้
-                MinionData data = GameManager.Instance.systemEnemyPool[pair.Key];
-                combatIcons[i].Setup(data.picture != null ? data.picture : data.icon, pair.Value);
+                int currentValue = incomingCounts[typeIndex];
                 
-                // ถ้าเหลือ 0 อาจจะทำให้มันจางลง หรือหายไปก็ได้ครับ (พี่เลือกตามชอบเลย)
-                if (pair.Value <= 0) combatIcons[i].gameObject.SetActive(false);
+                MinionData data = GameManager.Instance.systemEnemyPool[typeIndex];
+                item.Setup(data.picture != null ? data.picture : data.icon, currentValue, typeIndex);
+                
+                // ถ้าเหลือ 0 ให้ซ่อนไอคอนไป
+                if (currentValue <= 0) item.gameObject.SetActive(false);
             }
-            i++;
         }
     }
 
-    private void OnDestroy()
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.systemWaveDraft.OnValueChanged -= OnWaveDraftChanged;
-            GameManager.OnSystemEnemyDied -= HandleEnemyDeath;
-            GameManager.OnPhaseChangedGlobal -= RefreshLayoutOnPhaseChange;
-
-            GameManager.Instance.p0SentCounts.OnListChanged -= OnSentListChanged;
-            GameManager.Instance.p1SentCounts.OnListChanged -= OnSentListChanged;
-        }
-    }
+    // OnDestroy logic moved to OnDisable
 }
