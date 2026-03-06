@@ -24,7 +24,33 @@ public class LocalPlayerSpawner : MonoBehaviour
 
     private void Awake() => Instance = this;
 
+    private void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+    }
+
+    private void OnPhaseChanged(GamePhase phase)
+    {
+        RespawnPlayer();
+    }
+
     private void Start() => Invoke(nameof(SpawnMyPlayer), 0.1f);
+
+    /// <summary>ทำลาย Player เดิม แล้ว Spawn ใหม่ที่ Spawn Point (เรียกทุกครั้งที่เปลี่ยนเฟส)</summary>
+    public void RespawnPlayer()
+    {
+        if (spawnedPlayer != null)
+        {
+            Destroy(spawnedPlayer);
+            spawnedPlayer = null;
+        }
+        SpawnMyPlayer();
+    }
 
     private void SpawnMyPlayer()
     {
