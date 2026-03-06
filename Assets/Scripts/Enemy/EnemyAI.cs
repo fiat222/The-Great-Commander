@@ -465,7 +465,10 @@ public class EnemyAI : MonoBehaviour
         bool isAttacking = currentState == EnemyState.AttackPlayer || 
                            currentState == EnemyState.AttackBase || 
                            currentState == EnemyState.AttackMinion;
-        
+        // ส่งบอก Animator ว่าตอนนี้กำลังโจมตีแบบยืนอยู่กับที่ (เช่น ตีป้อม หรือ Minion ในอนาคต)
+        bool isStationaryAttack = currentState == EnemyState.AttackBase;
+        animator.SetBool("IsStationaryAttack", isStationaryAttack);
+
         // ถ้าเพิ่งเริ่มโจมตี ให้ตั้งคูลดาวน์
         if (isAttacking && Time.time >= nextAttackTime)
         {
@@ -818,7 +821,7 @@ public class EnemyAI : MonoBehaviour
         bool skipFlinch = combatSO != null && combatSO.hasHyperArmor && isAttacking;
         bool flinchOnCooldown = Time.time < nextFlinchTime; // ยังอยู่ในช่วงป้องกัน spam
 
-        if (animator != null && !skipFlinch && !flinchOnCooldown)
+        if (currentHP > 0 && animator != null && !skipFlinch && !flinchOnCooldown)
         {
             animator.SetTrigger("Damage");
             float fCooldown = combatSO.flinchCooldown;
@@ -830,9 +833,6 @@ public class EnemyAI : MonoBehaviour
 
         if (currentHP <= 0)
         {
-            // ตาย → บังคับเล่นท่า Damage ก่อน (ไม่สน Hyper Armor) เพื่อให้ Animator ไปถึง Die ได้
-            if (animator != null && skipFlinch)
-                animator.SetTrigger("Damage");
             Die();
         }
     }

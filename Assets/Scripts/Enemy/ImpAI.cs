@@ -167,11 +167,9 @@ public class ImpAI : MonoBehaviour
         // ถ้าอยู่ในสถานะโจมตี
         if (isAttackingState)
         {
-            // หยุดเดินเฉพาะตอนที่กำลัง "วาดลวดลาย" โจมตีจริงๆ เท่านั้น (กันสไลด์)
-            // ถ้าเป็นช่วงรอคูลดาวน์ ให้ Agent เดินเข้าหา stoppingDistance ได้
-            agent.isStopped = isAnimatorFiring;
-            
-            if (isAnimatorFiring) agent.velocity = Vector3.zero;
+            // ถึงระยะโจมตีแล้ว ยืนปักหลักยิง ไม่ต้องเดินเข้าไปอีก (ป้องกันมันเล่นท่าเดินย่ำเท้าอยู่กับที่)
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
 
             agent.updateRotation = false;
             RotateTowardsTarget();
@@ -322,6 +320,9 @@ public class ImpAI : MonoBehaviour
                            currentState == EnemyState.AttackBase ||
                            currentState == EnemyState.AttackMinion;
         animator.SetBool("IsAttacking", isAttacking);
+
+        bool isStationaryAttack = currentState == EnemyState.AttackBase;
+        animator.SetBool("IsStationaryAttack", isStationaryAttack);
     }
 
     void UpdateDestination()
@@ -335,6 +336,7 @@ public class ImpAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     agent.speed = walkSpeed;
+                    agent.stoppingDistance = Mathf.Max(1f, baseAttackRange - 1f); // ใช้ระยะตีป้อมแทน ไม่งั้นมันจะหยุดไกลเกินไป
                     agent.SetDestination(baseTransform.position);
                 }
                 break;
@@ -344,6 +346,7 @@ public class ImpAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     agent.speed = runSpeed;
+                    agent.stoppingDistance = Mathf.Max(2f, attackRange - 2f); // ระยะยิงผู้เล่น
                     agent.SetDestination(playerTransform.position);
                 }
                 break;
@@ -353,29 +356,17 @@ public class ImpAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     agent.speed = runSpeed;
+                    agent.stoppingDistance = Mathf.Max(2f, attackRange - 2f); // ระยะยิงมินเนียน
                     agent.SetDestination(minionTransform.position);
                 }
                 break;
 
             case EnemyState.AttackPlayer:
-                if (playerTransform != null)
-                {
-                    agent.SetDestination(playerTransform.position);
-                }
-                break;
-
             case EnemyState.AttackMinion:
-                if (minionTransform != null)
-                {
-                    agent.SetDestination(minionTransform.position);
-                }
-                break;
-
             case EnemyState.AttackBase:
-                if (baseTransform != null)
-                {
-                    agent.SetDestination(baseTransform.position);
-                }
+                // ถึงระยะแล้ว ให้หยุดนิ่งๆ โฟกัสกับการโจมตี
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
                 break;
         }
     }
@@ -432,7 +423,7 @@ public class ImpAI : MonoBehaviour
         if (healthBar != null)
             healthBar.value = currentHP;
 
-        if (animator != null)
+        if (currentHP > 0 && animator != null)
             animator.SetTrigger("Damage");
 
         Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;
