@@ -24,7 +24,9 @@ public static class CharacterSelectData
     public static GameObject GetMyPlayerPrefab(int myPlayerIndex)
     {
         var charData = GetCharacter(myPlayerIndex);
-        return charData != null ? charData.playerPrefab : null;
+        if (charData == null) return null;
+        // ใช้ playablePrefab ถ้ามี ไม่งั้น fallback เป็น playerPrefab
+        return charData.playablePrefab != null ? charData.playablePrefab : charData.playerPrefab;
     }
 
     /// <summary>รีเซ็ตข้อมูลทั้งหมด (เรียกตอนกลับ Menu)</summary>
