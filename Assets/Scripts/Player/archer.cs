@@ -109,6 +109,9 @@ public class Archer : MonoBehaviour
     /// <summary>true = SpawnArrow() รอบนี้ใช้ค่า quick shot</summary>
     private bool pendingQuickShot;
 
+    /// <summary>ถ้า false = ห้าม Input ทั้งหมด (ตอน Planning Phase)</summary>
+    private bool inputEnabled = true;
+
     // ==================== Lifecycle ====================
 
     private void Awake()
@@ -171,8 +174,28 @@ public class Archer : MonoBehaviour
                   $"MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
+    private void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+    }
+
+    private void OnPhaseChanged(GamePhase phase)
+    {
+        inputEnabled = (phase == GamePhase.Combat);
+        if (!inputEnabled) StopAiming(); // ยกเลิกเล็งคานถ้ากำลังเล็งอยู่
+    }
+
     private void Start()
     {
+        // เซ็ต inputEnabled ตาม phase ปัจจุบัน ณ ตอน spawn
+        if (GameManager.Instance != null)
+            inputEnabled = (GameManager.Instance.CurrentPhase == GamePhase.Combat);
+
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
@@ -185,6 +208,13 @@ public class Archer : MonoBehaviour
 
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
 
+        if (!inputEnabled)
+        {
+            // Planning phase: ล็อก input ทั้งหมด แต่ยังให้ gravity ทำงาน
+            if (!isDodging) ApplyGravityOnly();
+            return;
+        }
+
         HandleTargetLockInput();
         HandleRollInput();
         HandleAimAndShootInput();
@@ -194,6 +224,15 @@ public class Archer : MonoBehaviour
             Move();
         else
             ApplyGravityDuringDodge();
+    }
+
+    private void ApplyGravityOnly()
+    {
+        if (groundCheck != null)
+            isGrounded = controller.isGrounded;
+        if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
+        else verticalVelocity.y += gravity * Time.deltaTime;
+        controller.Move(verticalVelocity * Time.deltaTime);
     }
 
     private void ApplyGravityDuringDodge()
