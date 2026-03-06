@@ -12092,7 +12092,7 @@ MonoBehaviour:
   healthBar: {fileID: 6188879498003277001}
   currentState: 0
   detectionRange: 20
-  chaseRange: 28
+  chaseRange: 45
   attackRange: 21
   baseAttackRange: 19
   walkSpeed: 3.5
