@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   characterName: Warrior
   portrait: {fileID: 21300000, guid: 7847d39cd110e8e42af7720545cf8fbb, type: 3}
-  icon: {fileID: -501385968, guid: 3a6e41059dbdd5f40abd07aff030f788, type: 3}
-  playerPrefab: {fileID: 5957606178006511347, guid: 889982151d7c7ae41a5c3b863a84f932, type: 3}
+  icon: {fileID: -1141063510, guid: 5f8f58ead8f0a6c45a0cebc7cb7b7cbe, type: 3}
+  playerPrefab: {fileID: 7711133326226633498, guid: 41daf370bf51aa34a9d25040e5666463, type: 3}
+  playablePrefab: {fileID: 7711133326226633498, guid: 26e2778ce1722fc4e8e0193a3079224e, type: 3}
   statsSO: {fileID: 11400000, guid: 0d5f05283bf903d409d8186ce6bc0316, type: 2}
   description: 
-  className: 
+  className: Warrior

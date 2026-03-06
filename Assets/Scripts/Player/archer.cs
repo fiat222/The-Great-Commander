@@ -120,6 +120,16 @@ public class Archer : MonoBehaviour
         else
             dodgeTimer = 0.5f;
 
+        // หา HealthBar จาก Tag ถ้ายังไม่ได้ลากใส่ Inspector
+        if (healthBar == null)
+        {
+            var hpBarObj = GameObject.FindWithTag("HPBar");
+            if (hpBarObj != null)
+                healthBar = hpBarObj.GetComponent<Slider>();
+            else
+                Debug.LogWarning("[PlayerController] ไม่พบ GameObject ที่มี Tag 'HPBar'");
+        }
+
         ApplyStats(isFirstInit: true);
 
         if (crosshair == null)

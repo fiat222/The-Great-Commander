@@ -10,8 +10,6 @@ public class CharacterCardUI : MonoBehaviour
 {
     [Header("Card Elements")]
     public Image characterIcon;
-    public TextMeshProUGUI nameText;
-    public TextMeshProUGUI classText;
     public Button selectButton;
 
     [Header("Highlight Borders")]
@@ -30,12 +28,6 @@ public class CharacterCardUI : MonoBehaviour
         // ใช้ icon ก่อน ถ้าไม่มีค่อยใช้ portrait
         if (characterIcon != null)
             characterIcon.sprite = data.icon != null ? data.icon : data.portrait;
-
-        if (nameText != null)
-            nameText.text = data.characterName;
-
-        if (classText != null)
-            classText.text = data.className;
 
         if (selectButton != null)
             selectButton.onClick.AddListener(OnClick);

@@ -33,9 +33,93 @@ public class CharacterSelectSceneBuilder : Editor
     [MenuItem("Tools/Character Select/1 — Build ALL (Prefab + Canvas)", false, 10)]
     static void BuildAll()
     {
+        BuildStatBarPrefab(); // เพิ่มบรรทัดนี้
         BuildCharacterCardPrefab();
         BuildCanvasUI();
         Debug.Log("<color=lime>[CharSelectBuilder]</color> ✅ สร้างทุกอย่างเสร็จเรียบร้อย!");
+    }
+
+    static void BuildStatBarPrefab()
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/Prefabs/UI"))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
+                AssetDatabase.CreateFolder("Assets", "Prefabs");
+            AssetDatabase.CreateFolder("Assets/Prefabs", "UI");
+        }
+
+        var tempCanvas = new GameObject("__TempCanvas__");
+        var canvas = tempCanvas.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        tempCanvas.AddComponent<CanvasScaler>();
+        tempCanvas.AddComponent<GraphicRaycaster>();
+
+        // Root
+        GameObject root = new GameObject("StatBar", typeof(RectTransform));
+        root.transform.SetParent(tempCanvas.transform, false);
+        var rootRT = root.GetComponent<RectTransform>();
+        rootRT.sizeDelta = new Vector2(300, 24);
+        var hlg = root.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 8;
+        hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.childForceExpandWidth = false;
+        hlg.childForceExpandHeight = true;
+        hlg.childControlWidth = false;
+        hlg.childControlHeight = true;
+
+        // Label
+        GameObject label = CreateTMP(root.transform, "LabelText", "HP",
+            16, TextAlignmentOptions.Left, COL_WHITE, 50, 24);
+        label.AddComponent<LayoutElement>().preferredWidth = 50;
+
+        // BarBG
+        GameObject barBG = CreateImage(root.transform, "BarBG", 180, 18, new Color(0.2f, 0.2f, 0.2f, 0.8f));
+        var barBGLE = barBG.AddComponent<LayoutElement>();
+        barBGLE.preferredWidth = 180;
+        barBGLE.flexibleWidth = 1;
+
+        // BarFill
+        GameObject barFill = CreateImage(barBG.transform, "BarFill", 0, 0, COL_P1_BORDER);
+        var fillRT = barFill.GetComponent<RectTransform>();
+        fillRT.anchorMin = Vector2.zero;
+        fillRT.anchorMax = Vector2.one;
+        fillRT.offsetMin = Vector2.zero;
+        fillRT.offsetMax = Vector2.zero;
+        var fillImg = barFill.GetComponent<Image>();
+        fillImg.type = Image.Type.Filled;
+        fillImg.fillMethod = Image.FillMethod.Horizontal;
+        fillImg.fillOrigin = 0;
+        fillImg.fillAmount = 1f;
+        fillImg.raycastTarget = false;
+
+        // Value
+        GameObject value = CreateTMP(root.transform, "ValueText", "100",
+            16, TextAlignmentOptions.Right, COL_WHITE, 45, 24);
+        value.AddComponent<LayoutElement>().preferredWidth = 45;
+
+        // Link StatBarUI
+        var statBarUI = root.AddComponent<StatBarUI>();
+        statBarUI.labelText = label.GetComponent<TextMeshProUGUI>();
+        statBarUI.fillBar = barFill.GetComponent<Image>();
+        statBarUI.valueText = value.GetComponent<TextMeshProUGUI>();
+
+        // Save Prefab
+        string path = "Assets/Prefabs/UI/StatBar.prefab";
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null)
+            AssetDatabase.DeleteAsset(path);
+        PrefabUtility.SaveAsPrefabAsset(root, path);
+
+        DestroyImmediate(tempCanvas);
+        AssetDatabase.Refresh();
+        Debug.Log($"<color=lime>[CharSelectBuilder]</color> ✅ StatBar Prefab → {path}");
+
+        // P1 = น้ำเงิน
+        fillImg.color = COL_P1_BORDER; // new Color(0f, 0.59f, 1f, 1f)
+        PrefabUtility.SaveAsPrefabAsset(root, "Assets/Prefabs/UI/StatBarP1.prefab");
+
+        // P2 = แดง — Clone แล้วเปลี่ยนสี
+        fillImg.color = COL_P2_BORDER; // new Color(1f, 0.24f, 0.24f, 1f)
+        PrefabUtility.SaveAsPrefabAsset(root, "Assets/Prefabs/UI/StatBarP2.prefab");
     }
 
     // ==================== Menu: สร้าง Prefab อย่างเดียว ====================
@@ -104,8 +188,6 @@ public class CharacterSelectSceneBuilder : Editor
         // ==================== เพิ่ม CharacterCardUI Script + Link Ref ====================
         var cardUI = card.AddComponent<CharacterCardUI>();
         cardUI.characterIcon     = iconGO.GetComponent<Image>();
-        cardUI.nameText          = nameGO.GetComponent<TextMeshProUGUI>();
-        cardUI.classText         = classGO.GetComponent<TextMeshProUGUI>();
         cardUI.selectButton      = btnGO.GetComponent<Button>();
         cardUI.p1HighlightBorder = p1Border;
         cardUI.p2HighlightBorder = p2Border;
@@ -170,14 +252,6 @@ public class CharacterSelectSceneBuilder : Editor
         p1RT.anchorMin = p1RT.anchorMax = new Vector2(0.22f, 0.55f);
         p1RT.anchoredPosition = Vector2.zero;
 
-        // P1 Portrait
-        GameObject p1Portrait = CreateImage(panelP1.transform, "P1Portrait", 250, 250, COL_DIMMED_WHITE);
-        var p1PortRT = p1Portrait.GetComponent<RectTransform>();
-        p1PortRT.anchorMin = p1PortRT.anchorMax = new Vector2(0.5f, 1f);
-        p1PortRT.anchoredPosition = new Vector2(0, -30);
-        p1Portrait.GetComponent<Image>().preserveAspect = true;
-        p1Portrait.GetComponent<Image>().raycastTarget = false;
-
         // P1 Name
         GameObject p1Name = CreateTMP(panelP1.transform, "P1NameText", "Player 1",
             28, TextAlignmentOptions.Center, COL_P1_NAME, 300, 40);
@@ -191,6 +265,22 @@ public class CharacterSelectSceneBuilder : Editor
         var p1ClassRT = p1Class.GetComponent<RectTransform>();
         p1ClassRT.anchorMin = p1ClassRT.anchorMax = new Vector2(0.5f, 0f);
         p1ClassRT.anchoredPosition = new Vector2(0, 48);
+
+        GameObject p1StatContainer = new GameObject("P1StatContainer", typeof(RectTransform));
+        p1StatContainer.transform.SetParent(panelP1.transform, false);
+        var p1StatRT = p1StatContainer.GetComponent<RectTransform>();
+        p1StatRT.anchorMin = new Vector2(0f, 0f);
+        p1StatRT.anchorMax = new Vector2(1f, 0f);
+        p1StatRT.pivot = new Vector2(0.5f, 0f);
+        p1StatRT.anchoredPosition = new Vector2(0, 95);
+        p1StatRT.sizeDelta = new Vector2(-20, 120);
+        var p1VLG = p1StatContainer.AddComponent<VerticalLayoutGroup>();
+        p1VLG.spacing = 6;
+        p1VLG.childAlignment = TextAnchor.LowerLeft;
+        p1VLG.childForceExpandWidth = true;
+        p1VLG.childForceExpandHeight = false;
+        p1VLG.childControlHeight = false;
+        p1StatContainer.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         // P1 Ready Icon
         GameObject p1Ready = CreateImage(panelP1.transform, "P1ReadyIcon", 40, 40, COL_READY_GREEN);
@@ -214,14 +304,6 @@ public class CharacterSelectSceneBuilder : Editor
         p2RT.anchorMin = p2RT.anchorMax = new Vector2(0.78f, 0.55f);
         p2RT.anchoredPosition = Vector2.zero;
 
-        // P2 Portrait
-        GameObject p2Portrait = CreateImage(panelP2.transform, "P2Portrait", 250, 250, COL_DIMMED_WHITE);
-        var p2PortRT = p2Portrait.GetComponent<RectTransform>();
-        p2PortRT.anchorMin = p2PortRT.anchorMax = new Vector2(0.5f, 1f);
-        p2PortRT.anchoredPosition = new Vector2(0, -30);
-        p2Portrait.GetComponent<Image>().preserveAspect = true;
-        p2Portrait.GetComponent<Image>().raycastTarget = false;
-
         // P2 Name
         GameObject p2Name = CreateTMP(panelP2.transform, "P2NameText", "Player 2",
             28, TextAlignmentOptions.Center, COL_P2_NAME, 300, 40);
@@ -235,6 +317,23 @@ public class CharacterSelectSceneBuilder : Editor
         var p2ClassRT = p2Class.GetComponent<RectTransform>();
         p2ClassRT.anchorMin = p2ClassRT.anchorMax = new Vector2(0.5f, 0f);
         p2ClassRT.anchoredPosition = new Vector2(0, 48);
+
+        // เพิ่ม P2StatContainer
+        GameObject p2StatContainer = new GameObject("P2StatContainer", typeof(RectTransform));
+        p2StatContainer.transform.SetParent(panelP2.transform, false);
+        var p2StatRT = p2StatContainer.GetComponent<RectTransform>();
+        p2StatRT.anchorMin = new Vector2(0f, 0f);
+        p2StatRT.anchorMax = new Vector2(1f, 0f);
+        p2StatRT.pivot = new Vector2(0.5f, 0f);
+        p2StatRT.anchoredPosition = new Vector2(0, 95);
+        p2StatRT.sizeDelta = new Vector2(-20, 120);
+        var p2VLG = p2StatContainer.AddComponent<VerticalLayoutGroup>();
+        p2VLG.spacing = 6;
+        p2VLG.childAlignment = TextAnchor.LowerLeft;
+        p2VLG.childForceExpandWidth = true;
+        p2VLG.childForceExpandHeight = false;
+        p2VLG.childControlHeight = false;
+        p2StatContainer.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         // P2 Ready Icon
         GameObject p2Ready = CreateImage(panelP2.transform, "P2ReadyIcon", 40, 40, COL_READY_GREEN);
@@ -286,22 +385,21 @@ public class CharacterSelectSceneBuilder : Editor
         var selectUI = canvasGO.AddComponent<CharacterSelectUI>();
 
         // Link ทุกอย่างอัตโนมัติ
-        selectUI.p1Portrait       = p1Portrait.GetComponent<Image>();
         selectUI.p1NameText       = p1Name.GetComponent<TextMeshProUGUI>();
         selectUI.p1ClassText      = p1Class.GetComponent<TextMeshProUGUI>();
         selectUI.p1ReadyIndicator = p1Ready;
+        selectUI.p1StatContainer = p1StatContainer.transform;
 
-        selectUI.p2Portrait       = p2Portrait.GetComponent<Image>();
         selectUI.p2NameText       = p2Name.GetComponent<TextMeshProUGUI>();
         selectUI.p2ClassText      = p2Class.GetComponent<TextMeshProUGUI>();
         selectUI.p2ReadyIndicator = p2Ready;
+        selectUI.p2StatContainer = p2StatContainer.transform;
 
         selectUI.vsText           = vsGO.GetComponent<TextMeshProUGUI>();
         selectUI.cardContainer    = cardContainer.transform;
         selectUI.readyButton      = readyBtnGO.GetComponent<Button>();
         selectUI.readyButtonText  = readyBtnText.GetComponent<TextMeshProUGUI>();
         selectUI.countdownText    = countdownGO.GetComponent<TextMeshProUGUI>();
-
         // ลิงก์ CharacterCard Prefab จาก Assets
         var cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/CharacterCard.prefab");
         if (cardPrefab != null)
@@ -321,6 +419,11 @@ public class CharacterSelectSceneBuilder : Editor
         Debug.Log("<color=lime>[CharSelectBuilder]</color> ✅ Canvas UI สร้างเสร็จ + Link ทุก Reference แล้ว!");
         EditorGUIUtility.PingObject(canvasGO);
         Selection.activeGameObject = canvasGO;
+
+        var p1Bar = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/StatBarP1.prefab");
+        var p2Bar = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/StatBarP2.prefab");
+        if (p1Bar != null) selectUI.p1StatBarPrefab = p1Bar;
+        if (p2Bar != null) selectUI.p2StatBarPrefab = p2Bar;
     }
 
     // ==================== Utilities ====================
