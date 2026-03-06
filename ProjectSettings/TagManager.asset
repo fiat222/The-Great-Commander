@@ -15,6 +15,7 @@ TagManager:
   - MinimapMinionIcon
   - MinimapEnemyIcon
   - EnemyHead
+  - HPBar
   layers:
   - Default
   - TransparentFX
@@ -26,7 +27,7 @@ TagManager:
   - BuildArea
   - Projectile
   - Tower
-  - 
+  - CharacterPreview
   - 
   - 
   - 

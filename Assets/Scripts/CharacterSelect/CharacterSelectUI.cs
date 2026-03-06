@@ -2,40 +2,39 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// จัดการ UI ของหน้าเลือกตัวละคร
-/// วางบน Canvas ใน CharacterSelectScene
-/// </summary>
 public class CharacterSelectUI : MonoBehaviour
 {
-    [Header("Player 1 (Left Side)")]
-    public Image p1Portrait;
+    [Header("Player 1")]
     public TextMeshProUGUI p1NameText;
     public TextMeshProUGUI p1ClassText;
-    public GameObject p1ReadyIndicator; // เช่น ✅ icon
+    public GameObject p1ReadyIndicator;
+    public Transform p1StatContainer;
 
-    [Header("Player 2 (Right Side)")]
-    public Image p2Portrait;
+    [Header("Player 2")]
     public TextMeshProUGUI p2NameText;
     public TextMeshProUGUI p2ClassText;
     public GameObject p2ReadyIndicator;
+    public Transform p2StatContainer;
 
-    [Header("VS")]
+    [Header("Stat Bar Prefabs")]
+    public GameObject p1StatBarPrefab;  // หลอดสีน้ำเงิน
+    public GameObject p2StatBarPrefab;  // หลอดสีแดง
+
+    [Header("Stat Max Values")]
+    public float maxHP = 1000f;
+    public float maxATK = 100f;
+    public float maxDEF = 50f;
+    public float maxSPD = 20f;
+
+    [Header("VS + Cards")]
     public TextMeshProUGUI vsText;
-
-    [Header("Character Cards")]
-    [Tooltip("Parent ที่จะ Spawn CharacterCard เข้าไป (ควรมี HorizontalLayoutGroup)")]
     public Transform cardContainer;
-    public GameObject characterCardPrefab; // Prefab ของการ์ดเลือก
+    public GameObject characterCardPrefab;
 
     [Header("Bottom UI")]
     public Button readyButton;
     public TextMeshProUGUI readyButtonText;
     public TextMeshProUGUI countdownText;
-
-    [Header("Placeholder Sprites")]
-    [Tooltip("รูปแสดงเมื่อยังไม่เลือกตัวละคร")]
-    public Sprite unknownPortrait;
 
     private CharacterCardUI[] cardInstances;
 
@@ -60,7 +59,6 @@ public class CharacterSelectUI : MonoBehaviour
         if (countdownText != null) countdownText.gameObject.SetActive(false);
     }
 
-    /// <summary>สร้างการ์ด Character จาก Database</summary>
     private void SetupCards()
     {
         if (CharacterSelectManager.Instance == null)
@@ -68,10 +66,8 @@ public class CharacterSelectUI : MonoBehaviour
             Invoke(nameof(SetupCards), 0.5f);
             return;
         }
-
         var characters = CharacterSelectManager.Instance.characters;
         cardInstances = new CharacterCardUI[characters.Length];
-
         for (int i = 0; i < characters.Length; i++)
         {
             var go = Instantiate(characterCardPrefab, cardContainer);
@@ -81,51 +77,67 @@ public class CharacterSelectUI : MonoBehaviour
         }
     }
 
-    /// <summary>อัพเดต Portrait และชื่อทั้ง 2 ฝั่ง</summary>
     private void RefreshUI()
     {
         var mgr = CharacterSelectManager.Instance;
         if (mgr == null) return;
 
-        // ========== Player 1 (Left) ==========
-        var p1Char = mgr.GetSelectedCharacter(0);
-        if (p1Char != null)
-        {
-            p1Portrait.sprite = p1Char.portrait;
-            p1Portrait.color = Color.white;
-            p1NameText.text = p1Char.characterName;
-            if (p1ClassText != null) p1ClassText.text = p1Char.className;
-        }
-        else
-        {
-            if (unknownPortrait != null) p1Portrait.sprite = unknownPortrait;
-            p1Portrait.color = new Color(1, 1, 1, 0.3f);
-            p1NameText.text = "Player 1";
-            if (p1ClassText != null) p1ClassText.text = "เลือกตัวละคร...";
-        }
+        RefreshPlayerUI(
+            mgr.GetSelectedCharacter(0),
+            p1NameText, p1ClassText, p1StatContainer, p1StatBarPrefab
+        );
+        RefreshPlayerUI(
+            mgr.GetSelectedCharacter(1),
+            p2NameText, p2ClassText, p2StatContainer, p2StatBarPrefab
+        );
 
-        // ========== Player 2 (Right) ==========
-        var p2Char = mgr.GetSelectedCharacter(1);
-        if (p2Char != null)
-        {
-            p2Portrait.sprite = p2Char.portrait;
-            p2Portrait.color = Color.white;
-            p2NameText.text = p2Char.characterName;
-            if (p2ClassText != null) p2ClassText.text = p2Char.className;
-        }
-        else
-        {
-            if (unknownPortrait != null) p2Portrait.sprite = unknownPortrait;
-            p2Portrait.color = new Color(1, 1, 1, 0.3f);
-            p2NameText.text = "Player 2";
-            if (p2ClassText != null) p2ClassText.text = "เลือกตัวละคร...";
-        }
-
-        // อัพเดต Highlight บนการ์ด
         UpdateCardHighlights();
+
+        if (CharacterDisplaySpawner.Instance != null)
+            CharacterDisplaySpawner.Instance.RefreshDisplays();
     }
 
-    /// <summary>อัพเดตสถานะ Ready บน UI</summary>
+    private void RefreshPlayerUI(
+        CharacterDataSO charData,
+        TextMeshProUGUI nameText,
+        TextMeshProUGUI classText,
+        Transform statContainer,
+        GameObject statPrefab)
+    {
+        // ลบ StatBar เก่าออก
+        if (statContainer != null)
+            foreach (Transform child in statContainer)
+                Destroy(child.gameObject);
+
+        if (charData != null)
+        {
+            nameText.text = charData.characterName;
+            if (classText != null) classText.text = charData.className;
+
+            // แสดง StatBar เฉพาะตอนเลือกแล้วเท่านั้น
+            if (statContainer != null && statPrefab != null)
+            {
+                CreateStatBar(statContainer, statPrefab, "HP", charData.GetHP(), maxHP);
+                CreateStatBar(statContainer, statPrefab, "ATK", charData.GetATK(), maxATK);
+                CreateStatBar(statContainer, statPrefab, "DEF", charData.GetDEF(), maxDEF);
+                CreateStatBar(statContainer, statPrefab, "SPD", charData.GetSpeed(), maxSPD);
+            }
+        }
+        else
+        {
+            // ยังไม่เลือก — แสดงแค่ชื่อ ไม่มี StatBar
+            nameText.text = "???";
+            if (classText != null) classText.text = "Choose a Charactor...";
+            // ไม่สร้าง StatBar เลย
+        }
+    }
+
+    private void CreateStatBar(Transform container, GameObject prefab, string label, float value, float max)
+    {
+        var go = Instantiate(prefab, container);
+        go.GetComponent<StatBarUI>()?.Setup(label, value, max);
+    }
+
     private void RefreshReadyUI()
     {
         var mgr = CharacterSelectManager.Instance;
@@ -134,26 +146,22 @@ public class CharacterSelectUI : MonoBehaviour
         if (p1ReadyIndicator != null) p1ReadyIndicator.SetActive(mgr.p1Ready.Value);
         if (p2ReadyIndicator != null) p2ReadyIndicator.SetActive(mgr.p2Ready.Value);
 
-        // Ready Button
         bool myReady = mgr.AmIHost ? mgr.p1Ready.Value : mgr.p2Ready.Value;
-        if (readyButtonText != null) readyButtonText.text = myReady ? "❌ ยกเลิก" : "✅ พร้อม!";
+        if (readyButtonText != null)
+            readyButtonText.text = myReady ? "Cancel" : "Ready!";
 
-        // ถ้า Ready แล้วปิดปุ่มการ์ด (ห้ามเปลี่ยน)
         UpdateCardInteractable(!myReady);
     }
 
-    /// <summary>Highlight การ์ดที่แต่ละ Player เลือก</summary>
     private void UpdateCardHighlights()
     {
         var mgr = CharacterSelectManager.Instance;
         if (mgr == null || cardInstances == null) return;
-
         for (int i = 0; i < cardInstances.Length; i++)
-        {
-            bool p1Selected = mgr.p1Selection.Value == i;
-            bool p2Selected = mgr.p2Selection.Value == i;
-            cardInstances[i].SetHighlight(p1Selected, p2Selected);
-        }
+            cardInstances[i].SetHighlight(
+                mgr.p1Selection.Value == i,
+                mgr.p2Selection.Value == i
+            );
     }
 
     private void UpdateCardInteractable(bool interactable)
@@ -168,7 +176,7 @@ public class CharacterSelectUI : MonoBehaviour
         if (countdownText != null)
         {
             countdownText.gameObject.SetActive(true);
-            countdownText.text = "🎮 เริ่มเกมใน 2 วินาที...";
+            countdownText.text = "Game Start In 3...";
         }
     }
 }
