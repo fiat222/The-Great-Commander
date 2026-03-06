@@ -101,12 +101,18 @@ public class PlayerController : MonoBehaviour
         playerAudio = GetComponent<PlayerAudioComponent>();
 
         if (dodgeCurve != null && dodgeCurve.length > 0)
-        {
             dodgeTimer = dodgeCurve[dodgeCurve.length - 1].time;
-        }
         else
+            dodgeTimer = 0.5f;
+
+        // หา HealthBar จาก Tag ถ้ายังไม่ได้ลากใส่ Inspector
+        if (healthBar == null)
         {
-            dodgeTimer = 0.5f; // Fallback
+            var hpBarObj = GameObject.FindWithTag("HPBar");
+            if (hpBarObj != null)
+                healthBar = hpBarObj.GetComponent<Slider>();
+            else
+                Debug.LogWarning("[PlayerController] ไม่พบ GameObject ที่มี Tag 'HPBar'");
         }
 
         ApplyStats(isFirstInit: true);

@@ -9,25 +9,27 @@ public class CharacterDataSO : ScriptableObject
 {
     [Header("Identity")]
     public string characterName;
-
-    [Tooltip("รูปแสดงในหน้า Selection (Portrait ใหญ่)")]
     public Sprite portrait;
-
-    [Tooltip("ไอคอนแสดงในการ์ดเลือกตัวละคร")]
     public Sprite icon;
 
     [Header("Prefab")]
-    [Tooltip("Player Prefab ที่จะ Spawn ในเกม (ต้อง Register ใน NetworkManager)")]
+    [Tooltip("Prefab สำหรับแสดงใน Character Select (3D Preview)")]
     public GameObject playerPrefab;
 
+    [Tooltip("Prefab สำหรับเล่นจริงใน GameScene")]
+    public GameObject playablePrefab;
+
     [Header("Stats Reference")]
-    [Tooltip("ลิงก์ PlayerStatsSO เพื่อโชว์ Stats Preview")]
     public PlayerStatsSO statsSO;
 
     [Header("Display")]
     [TextArea(2, 4)]
     public string description;
-
-    [Tooltip("Class type เช่น Warrior, Archer, Mage")]
     public string className;
+
+    // ดึงค่า Stats จาก statsSO โดยตรง
+    public int GetHP() => statsSO != null ? statsSO.GetHP() : 0;
+    public float GetATK() => statsSO != null ? statsSO.GetDamage() : 0;
+    public float GetDEF() => statsSO != null ? statsSO.GetDefense() : 0;
+    public float GetSpeed() => statsSO != null ? statsSO.GetSpeed() : 0;
 }
