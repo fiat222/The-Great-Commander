@@ -786,7 +786,7 @@ public class EnemyAI : MonoBehaviour
 
     // ==================== DAMAGE ====================
 
-    public void TakeDamage(float dmg)
+    public void TakeDamage(float dmg, bool playHitAnimation = true)
     {
         if (isDead) return;
 
@@ -806,7 +806,7 @@ public class EnemyAI : MonoBehaviour
         bool skipFlinch = combatSO != null && combatSO.hasHyperArmor && isAttacking;
         bool flinchOnCooldown = Time.time < nextFlinchTime; // ยังอยู่ในช่วงป้องกัน spam
 
-        if (currentHP > 0 && animator != null && !skipFlinch && !flinchOnCooldown)
+        if (currentHP > 0 && animator != null && !skipFlinch && !flinchOnCooldown && playHitAnimation)
         {
             animator.SetTrigger("Damage");
             float fCooldown = combatSO.flinchCooldown;
