@@ -1,35 +1,144 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Planning Phase Camera — RTS mode + Free Fly mode (กด F สลับ)
+/// 
+/// Setup:
+///   1. ลาก Script นี้ใส่ GameObject ที่มี CinemachineCamera ของ Planning
+///   2. สร้าง Canvas (Screen Space Overlay) → ลาก RtsCameraHintsUI ที่สร้างด้วย CreateHintsUI() มาใส่
+///      หรือสร้าง GameObject ตาม Hierarchy ด้านล่างแล้วลากใส่ช่องใน Inspector
+/// 
+/// Hierarchy ของ UI:
+///   Canvas
+///   └─ CameraHintsPanel          (anchored bottom-left)
+///      ├─ RtsModePanel           (แสดงตอน RTS)
+///      │   ├─ KeyHint_ScrollUp
+///      │   ├─ KeyHint_ScrollDown
+///      │   ├─ KeyHint_Pan
+///      │   ├─ KeyHint_Q
+///      │   ├─ KeyHint_E
+///      │   └─ KeyHint_F
+///      └─ FreeFlyModePanel       (แสดงตอน FreeFly)
+///          ├─ KeyHint_WASD
+///          ├─ KeyHint_Space
+///          ├─ KeyHint_Shift
+///          └─ KeyHint_F
+/// </summary>
 public class TopDownCameraController : MonoBehaviour
 {
-    public float moveSpeed = 500f;
-    public float zoomSpeed = 10000f;
+    // ==================== Movement ====================
+    [Header("RTS Movement")]
+    public float moveSpeed   = 500f;
+    public float zoomSpeed   = 10000f;
     public float rotateSpeed = 100f;
-    public float minY = 10f;
-    public float maxY = 60f;
+    public float minY        = 10f;
+    public float maxY        = 60f;
     public Vector2 minBounds;
     public Vector2 maxBounds;
 
-    void Update()
+    [Header("Default Planning Position & Rotation")]
+    public Vector3    defaultPosition = new Vector3(18f, 86.4f, -8.3f);
+    public Vector3    defaultRotation = new Vector3(90f, -180f, 0f);
+
+    // ==================== Free Fly ====================
+    [Header("Free Fly Settings")]
+    public float flyNormalSpeed   = 10f;
+    public float flyFastSpeed     = 25f;
+    public float flyVerticalSpeed = 8f;
+    public float flySmoothTime    = 0.08f;
+    public float mouseSensitivity = 0.15f;
+    // ==================== Runtime ====================
+    public bool IsFreeFly => isFreeFly;   // ⭐ CameraHintsUI อ่านค่านี้
+    private bool    isFreeFly   = false;
+    private Vector3 flyVelocity = Vector3.zero;
+    private float   flyYaw;
+    private float   flyPitch;
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void Start()
+    {
+        // วาง Camera ที่ตำแหน่งเริ่มต้น
+        transform.position = defaultPosition;
+        transform.rotation = Quaternion.Euler(defaultRotation);
+
+        SetMode(false);
+    }
+
+    private void Update()
+    {
+        HandleModeToggle();
+
+        if (isFreeFly)
+            UpdateFreeFly();
+        else
+            UpdateRTS();
+
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Mode Toggle
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void HandleModeToggle()
+    {
+        if (Keyboard.current.fKey.wasPressedThisFrame)
+        {
+            if (isFreeFly)
+            {
+                // กลับ RTS → คืน position/rotation เดิม
+                transform.position = defaultPosition;
+                transform.rotation = Quaternion.Euler(defaultRotation);
+                SetMode(false);
+            }
+            else
+            {
+                // เข้า Free Fly → เริ่มจากตำแหน่ง+ทิศปัจจุบัน
+                flyYaw   = transform.eulerAngles.y;
+                flyPitch = transform.eulerAngles.x;
+                flyVelocity = Vector3.zero;
+                SetMode(true);
+            }
+        }
+    }
+
+    private void SetMode(bool freeFly)
+    {
+        isFreeFly = freeFly;
+
+        // สลับ Cursor
+        if (freeFly)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible   = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible   = true;
+        }
+
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  RTS Mode
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void UpdateRTS()
     {
         // ---------- PAN (Middle Mouse Drag) ----------
         if (Mouse.current.middleButton.isPressed)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-
-            // �֧੾�� yaw (��ع�ͺ᡹ Y) ���ͤӹǳ��ȷ�������
             float yaw = transform.eulerAngles.y;
             Quaternion flatRotation = Quaternion.Euler(0f, yaw, 0f);
 
-            Vector3 right = flatRotation * Vector3.right;
+            Vector3 right   = flatRotation * Vector3.right;
             Vector3 forward = flatRotation * Vector3.forward;
 
-            Vector3 move =
-                (-right * mouseDelta.x +
-                 -forward * mouseDelta.y)
-                * moveSpeed * 0.02f * Time.deltaTime;
-
+            Vector3 move = (-right * mouseDelta.x + -forward * mouseDelta.y)
+                           * moveSpeed * 0.02f * Time.deltaTime;
             transform.position += move;
         }
 
@@ -44,12 +153,61 @@ public class TopDownCameraController : MonoBehaviour
         if (Keyboard.current.qKey.isPressed)
             transform.Rotate(Vector3.up, -rotateSpeed * Time.deltaTime, Space.World);
         if (Keyboard.current.eKey.isPressed)
-            transform.Rotate(Vector3.up, rotateSpeed * Time.deltaTime, Space.World);
+            transform.Rotate(Vector3.up,  rotateSpeed * Time.deltaTime, Space.World);
 
         // ---------- LIMIT AREA ----------
         pos = transform.position;
         pos.x = Mathf.Clamp(pos.x, minBounds.x, maxBounds.x);
         pos.z = Mathf.Clamp(pos.z, minBounds.y, maxBounds.y);
         transform.position = pos;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Free Fly Mode (เหมือน SpectatorController)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void UpdateFreeFly()
+    {
+        // ---------- Ctrl: กลับจุดเริ่มต้น ----------
+        if (Keyboard.current.leftCtrlKey.wasPressedThisFrame)
+        {
+            transform.position = defaultPosition;
+            transform.rotation = Quaternion.Euler(defaultRotation);
+            flyYaw   = defaultRotation.y;
+            flyPitch = defaultRotation.x;
+            flyVelocity = Vector3.zero;
+            return;
+        }
+
+        // Mouse Look
+        float mouseX = Mouse.current.delta.ReadValue().x * mouseSensitivity;
+        float mouseY = Mouse.current.delta.ReadValue().y * mouseSensitivity;
+        flyYaw   += mouseX;
+        flyPitch -= mouseY;
+        flyPitch  = Mathf.Clamp(flyPitch, -89f, 89f);
+        transform.rotation = Quaternion.Euler(flyPitch, flyYaw, 0f);
+
+        // Movement
+        bool  shift = Keyboard.current.leftShiftKey.isPressed;
+        float speed = shift ? flyFastSpeed : flyNormalSpeed;
+
+        float h = (Keyboard.current.dKey.isPressed ? 1f : 0f)
+                - (Keyboard.current.aKey.isPressed ? 1f : 0f);
+        float v = (Keyboard.current.wKey.isPressed ? 1f : 0f)
+                - (Keyboard.current.sKey.isPressed ? 1f : 0f);
+
+        float upDown = 0f;
+        if (Keyboard.current.spaceKey.isPressed)                       upDown =  1f;
+        else if (shift && !Keyboard.current.spaceKey.isPressed)        upDown = -1f;
+
+        Vector3 forward = transform.forward; forward.y = 0f; forward.Normalize();
+        Vector3 right   = transform.right;   right.y   = 0f; right.Normalize();
+
+        Vector3 targetVel = (forward * v + right * h) * speed
+                          + Vector3.up * upDown * flyVerticalSpeed;
+
+        flyVelocity = Vector3.Lerp(flyVelocity, targetVel,
+                                   1f - Mathf.Exp(-Time.deltaTime / flySmoothTime));
+        transform.position += flyVelocity * Time.deltaTime;
     }
 }
