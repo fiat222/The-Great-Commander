@@ -17,6 +17,17 @@
 [CreateAssetMenu(fileName = "PlayerStats", menuName = "Game/Player Stats SO")]
 public class PlayerStatsSO : ScriptableObject
 {
+    [Header("Character Info")]
+    public string characterName = "Character";
+
+    [Header("Skill Icons")]
+    [Tooltip("Icon สำหรับ Skill — ใช้กับ Image ที่ Tag 'SkillIcon'")]
+    public Sprite skillIcon;
+    [Tooltip("Icon สำหรับ Normal Attack — ใช้กับ Image ที่ Tag 'SkillNormal'")]
+    public Sprite normalAttackIcon;
+    [Tooltip("Icon สำหรับ Special Attack — ใช้กับ Image ที่ Tag 'SkillSpecial'")]
+    public Sprite specialAttackIcon;
+
     [Header("Base Stats (Level 0)")]
     public int baseHP = 100;
     public float baseSpeed = 5f;

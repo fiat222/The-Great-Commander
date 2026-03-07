@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cd70768fa7ac14f9f544d816e83fd8, type: 3}
   m_Name: Archer
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
+  characterName: Character
+  skillIcon: {fileID: -825539773, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
+  normalAttackIcon: {fileID: 1444648616, guid: 717d538e938f4c549880cb4cc330d297, type: 3}
+  specialAttackIcon: {fileID: 835384738, guid: 2b4486c6eba18e749b45d51843916c5f, type: 3}
   baseHP: 80
   baseSpeed: 10
   baseDefense: 2

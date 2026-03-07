@@ -16,6 +16,14 @@ TagManager:
   - MinimapEnemyIcon
   - EnemyHead
   - HPBar
+  - SkillNormal
+  - SkillSpecial
+  - SkillCooldownFill
+  - SkillStatusText
+  - SkillActiveOverlay
+  - SkillSpecialOverlay
+  - SkillIcon
+  - Indicator
   layers:
   - Default
   - TransparentFX
