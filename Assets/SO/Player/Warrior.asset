@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cd70768fa7ac14f9f544d816e83fd8, type: 3}
   m_Name: Warrior
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
+  characterName: Character
+  skillIcon: {fileID: 1409485720, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
+  normalAttackIcon: {fileID: -859518793, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
+  specialAttackIcon: {fileID: -357228385, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
   baseHP: 120
   baseSpeed: 8
   baseDefense: 5

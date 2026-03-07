@@ -2723,6 +2723,12 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  skillIconTag: SkillIcon
+  cooldownFillTag: SkillCooldownFill
+  statusTextTag: SkillStatusText
+  colorReady: {r: 1, g: 1, b: 1, a: 1}
+  colorActive: {r: 0.7058824, g: 0.6901961, b: 0.6745098, a: 1}
+  colorCooldown: {r: 0.35, g: 0.35, b: 0.35, a: 1}
 --- !u!114 &8222893807471953391
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2859,7 +2865,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 0
+  GlobalObjectIdHash: 1053498268
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

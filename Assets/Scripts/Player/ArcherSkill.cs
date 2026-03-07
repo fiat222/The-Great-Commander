@@ -12,14 +12,6 @@ using PlayerAudio;
 ///   เลื่อนเมาส์  → วงเคลื่อนตาม cursor (Raycast พื้น)
 ///   กด Mouse0    → ยิงฝนธนูลงในวง → วงหาย → Cooldown
 ///   กด R อีกรอบ → Cancel
-///
-/// Setup:
-///   1. [Skill Config] ใส่ค่าต่างๆ
-///   2. [AoE Indicator] ลาก Prefab วงกลม (Plane + Material วงกลม)
-///      — Scale ตาม aoeRadius อัตโนมัติ
-///   3. [Skill UI] ลาก skillIconBg, cooldownFillImage, statusText
-///   4. [Hint UI] ลาก SkillIndicatorUI component
-///   5. [Arrow] ลาก rainArrowPrefab (ใส่ RainArrowProjectile)
 /// </summary>
 [RequireComponent(typeof(Archer))]
 public class ArcherSkill : MonoBehaviour
@@ -27,36 +19,61 @@ public class ArcherSkill : MonoBehaviour
     // ==================== Skill Config ====================
     [Header("Skill Config")]
     public float cooldown = 10f;
-    public float damageMultiplier = 1.5f;  // คูณจาก maxDamage ของ Archer
-    public int arrowCount = 20;     // จำนวนธนูที่ยิง
-    public float aoeRadius = 6f;     // รัศมีวง AoE
+    public float damageMultiplier = 1.5f;
+    public int arrowCount = 20;
+    public float aoeRadius = 6f;
     public float arrowSpeed = 25f;
-    public float spawnHeight = 18f;    // ความสูงที่ spawn ธนู (จากจุดเป้าหมาย)
-    public float fireInterval = 0.05f;  // ระยะห่างระหว่างธนูแต่ละลูก
+    public float spawnHeight = 18f;
+    public float fireInterval = 0.05f;
 
     [Header("Arrow")]
     [Tooltip("Prefab ที่มี RainArrowProjectile — ยิงลงมาเฉียงตามกล้อง")]
     public GameObject rainArrowPrefab;
 
-    [Header("AoE Indicator")]
-    [Tooltip("Prefab วงกลมบนพื้น เช่น Plane + Circle Material (Scale จะถูกตั้งอัตโนมัติ)")]
-    public GameObject aoeIndicatorPrefab;
+    [Header("Burning Zone")]
+    [Tooltip("Prefab พื้นไฟ — ควรมี Particle System ไฟ + BurningZone script")]
+    public GameObject burningZonePrefab;
+    [Tooltip("หน่วงกี่วินาทีหลังกดสกิลก่อนไฟจะเริ่ม")]
+    public float burnDelay = 1f;
+    [Tooltip("ดาเมจต่อวินาที")]
+    public int burnDamagePerSecond = 10;
+    [Tooltip("ระยะเวลาไฟลุก (วินาที)")]
+    public float burnDuration = 5f;
 
+    [Header("AoE Indicator")]
+    [Tooltip("Prefab วงกลมบนพื้น เช่น Plane + Circle Material")]
+    public GameObject aoeIndicatorPrefab;
     [Tooltip("Layer ของพื้น สำหรับ Raycast วาง indicator")]
     public LayerMask groundLayer;
 
-    // ==================== Skill UI (Icon + Cooldown) ====================
-    [Header("Skill UI")]
-    public Image skillIconBg;
-    public Image cooldownFillImage;
-    public TextMeshProUGUI statusText;
+    // ==================== Skill UI Tags ====================
+    [Header("Skill UI Tags")]
+    [Tooltip("Tag ของ Image icon สกิล")]
+    public string skillIconTag       = "SkillIcon";
+    [Tooltip("Tag ของ Image Filled สำหรับ Cooldown")]
+    public string cooldownFillTag    = "SkillCooldownFill";
+    [Tooltip("Tag ของ TextMeshProUGUI แสดงเวลา")]
+    public string statusTextTag      = "SkillStatusText";
+    [Tooltip("Tag ของ Image overlay ทับ Skill icon (แสดงตอน Active)")]
+    public string skillOverlayTag    = "SkillActiveOverlay";
+    [Tooltip("Tag ของ Image overlay ทับ SpecialAtk icon (แสดงตอน Charge Mode)")]
+    public string specialOverlayTag  = "SkillSpecialOverlay";
 
     [Header("Skill UI Colors")]
-    public Color colorReady = Color.white;
-    public Color colorActive = new Color(0.3f, 1f, 0.4f, 1f);
+    public Color colorReady    = Color.white;
+    public Color colorActive   = new Color(0.3f, 1f, 0.4f, 1f);
     public Color colorCooldown = new Color(0.35f, 0.35f, 0.35f, 1f);
+    public Color colorOverlay  = new Color(1f, 1f, 1f, 0.35f);
 
-    // ==================== Hint UI (ซ้าย Use / ขวา Cancel) ====================
+    // ── UI refs (หาจาก Tag อัตโนมัติ) ──
+    private Image skillIconBg;
+    private Image cooldownFillImage;
+    private TextMeshProUGUI statusText;
+    private Image skillOverlay;
+    private Image specialOverlay;
+    private bool uiResolved;
+
+    // ==================== Hint UI ====================
     [Header("Hint UI")]
     [Tooltip("SkillIndicatorUI component ที่อยู่บน Canvas")]
     public SkillIndicatorUI hintUI;
@@ -64,12 +81,12 @@ public class ArcherSkill : MonoBehaviour
     // ==================== Runtime ====================
     private Archer archer;
     private PlayerAudioComponent playerAudio;
-    private bool isSkillActive = false;
-    private bool isOnCooldown = false;
-    private float cooldownTimer = 0f;
+    private bool isSkillActive;
+    private bool isOnCooldown;
+    private float cooldownTimer;
 
-    private GameObject currentIndicator; // instance ของ AoE วงกลม
-    private Vector3 aoeTargetPos;     // ตำแหน่งที่เลือก
+    private GameObject currentIndicator;
+    private Vector3 aoeTargetPos;
 
     // ==================== Lifecycle ====================
 
@@ -77,15 +94,22 @@ public class ArcherSkill : MonoBehaviour
     {
         archer = GetComponent<Archer>();
         playerAudio = GetComponent<PlayerAudioComponent>();
+
+        if (hintUI == null)
+        {
+            var obj = GameObject.FindWithTag("Indicator");
+            if (obj != null) hintUI = obj.GetComponent<SkillIndicatorUI>();
+        }
     }
 
     private void Start()
     {
-        RefreshUI();
+        TryResolveUI();
     }
 
     private void Update()
     {
+        if (!uiResolved) TryResolveUI();
         if (archer.IsDead) return;
 
         HandleCooldownTick();
@@ -95,6 +119,45 @@ public class ArcherSkill : MonoBehaviour
             UpdateIndicatorPosition();
 
         RefreshUI();
+    }
+
+    // ==================== UI Resolution ====================
+
+    private void TryResolveUI()
+    {
+        var iconObj = GameObject.FindWithTag(skillIconTag);
+        if (iconObj != null) skillIconBg = iconObj.GetComponent<Image>();
+
+        var fillObj = GameObject.FindWithTag(cooldownFillTag);
+        if (fillObj != null) cooldownFillImage = fillObj.GetComponent<Image>();
+
+        var textObj = GameObject.FindWithTag(statusTextTag);
+        if (textObj != null) statusText = textObj.GetComponent<TextMeshProUGUI>();
+
+        var overlayObj = GameObject.FindWithTag(skillOverlayTag);
+        if (overlayObj != null) skillOverlay = overlayObj.GetComponent<Image>();
+
+        var specialObj = GameObject.FindWithTag(specialOverlayTag);
+        if (specialObj != null) specialOverlay = specialObj.GetComponent<Image>();
+
+        if (skillIconBg != null && cooldownFillImage != null && statusText != null)
+        {
+            uiResolved = true;
+            ApplySkillIconFromSO();
+            RefreshUI();
+        }
+    }
+
+    /// <summary>ดึง Sprite จาก SO ใส่ icon — เรียกซ้ำได้เมื่อ character เปลี่ยน</summary>
+    public void ApplySkillIconFromSO()
+    {
+        if (archer == null || archer.stats == null) return;
+        if (!uiResolved) TryResolveUI();
+        if (skillIconBg == null) return;
+
+        // ArcherSkill ใช้ specialAttackIcon (slot R)
+        if (archer.stats.skillIcon != null)
+            skillIconBg.sprite = archer.stats.skillIcon;
     }
 
     // ==================== Input ====================
@@ -124,17 +187,14 @@ public class ArcherSkill : MonoBehaviour
     {
         isSkillActive = true;
 
-        // Spawn indicator ที่ตำแหน่งปัจจุบัน
         if (aoeIndicatorPrefab != null)
         {
             currentIndicator = Instantiate(aoeIndicatorPrefab, GetGroundPoint(), Quaternion.identity);
-            // Scale plane ให้ตรงกับ aoeRadius (Plane default = 10 units → หาร 10 แล้วคูณ 2 เพราะ radius)
             float s = (aoeRadius * 2f) / 10f;
             currentIndicator.transform.localScale = new Vector3(s, 1f, s);
         }
 
         if (hintUI != null) hintUI.ShowHint();
-
         Debug.Log("<color=lime>[ArcherSkill]</color> เลือกตำแหน่ง AoE — Mouse0: ยิง, R: ยกเลิก");
     }
 
@@ -151,6 +211,7 @@ public class ArcherSkill : MonoBehaviour
         isSkillActive = false;
         DestroyIndicator();
         if (hintUI != null) hintUI.HideHint();
+        StartCoroutine(SpawnBurningZoneDelayed(aoeTargetPos));
         if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Skill1);
 
         if (rainArrowPrefab == null)
@@ -161,16 +222,13 @@ public class ArcherSkill : MonoBehaviour
         }
 
         int dmg = Mathf.RoundToInt(archer.maxDamage * damageMultiplier);
-        // ทิศเฉียงตามกล้อง — ลงมาในมุม 70° จากแนวนอน
         Vector3 camForwardFlat = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
-        Vector3 arrowDir = (camForwardFlat * 0.35f + Vector3.down).normalized; // เฉียง ~70°
+        Vector3 arrowDir = (camForwardFlat * 0.35f + Vector3.down).normalized;
 
         for (int i = 0; i < arrowCount; i++)
         {
-            // Random จุด spawn ภายในวง (uniform disk distribution)
             Vector2 disk = Random.insideUnitCircle * aoeRadius;
             Vector3 groundPos = aoeTargetPos + new Vector3(disk.x, 0f, disk.y);
-            // spawn สูงขึ้นไปตาม arrowDir ย้อนกลับ
             Vector3 spawnPos = groundPos - arrowDir * spawnHeight;
 
             var arrow = Instantiate(rainArrowPrefab, spawnPos, Quaternion.identity);
@@ -183,11 +241,36 @@ public class ArcherSkill : MonoBehaviour
         Debug.Log($"<color=cyan>[ArcherSkill]</color> ยิงฝนธนู {arrowCount} ลูก! Dmg/ลูก: {dmg}");
     }
 
+    // ==================== Burning Zone ====================
+
+    private System.Collections.IEnumerator SpawnBurningZoneDelayed(Vector3 pos)
+    {
+        yield return new WaitForSeconds(burnDelay);
+
+        if (burningZonePrefab == null)
+        {
+            Debug.LogWarning("[ArcherSkill] ไม่มี burningZonePrefab!");
+            yield break;
+        }
+
+        var zone = Instantiate(burningZonePrefab, pos, Quaternion.identity);
+
+        // ตั้งค่าให้ BurningZone (ถ้ามี script ติดมากับ prefab)
+        var burning = zone.GetComponent<BurningZone>();
+        if (burning != null)
+        {
+            burning.radius          = aoeRadius;
+            burning.damagePerSecond = burnDamagePerSecond;
+            burning.duration        = burnDuration;
+        }
+
+        // destroy prefab ตาม duration เผื่อ BurningZone script ไม่ได้ติดมา
+        Destroy(zone, burnDuration + 0.5f);
+        Debug.Log($"<color=orange>[ArcherSkill]</color> พื้นไฟเริ่มลุก! {burnDuration}s {burnDamagePerSecond}dmg/s");
+    }
+
     // ==================== AoE Indicator ====================
 
-    /// <summary>
-    /// ย้าย indicator ตาม cursor Raycast บนพื้น
-    /// </summary>
     private void UpdateIndicatorPosition()
     {
         aoeTargetPos = GetGroundPoint();
@@ -195,16 +278,11 @@ public class ArcherSkill : MonoBehaviour
             currentIndicator.transform.position = aoeTargetPos;
     }
 
-    /// <summary>
-    /// Raycast จากเมาส์ไปยังพื้น — fallback คือหน้า player 5m
-    /// </summary>
     private Vector3 GetGroundPoint()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, groundLayer))
             return hit.point;
-
-        // fallback: จุดหน้า player บนพื้น
         return transform.position + transform.forward * 5f;
     }
 
@@ -242,12 +320,12 @@ public class ArcherSkill : MonoBehaviour
     private void RefreshUI()
     {
         if (skillIconBg != null)
-            skillIconBg.color = isOnCooldown ? colorCooldown
+            skillIconBg.color = isOnCooldown  ? colorCooldown
                               : isSkillActive ? colorActive
                               : colorReady;
 
         if (cooldownFillImage != null)
-            cooldownFillImage.fillAmount = isOnCooldown ? (cooldownTimer / cooldown) : 0f;
+            cooldownFillImage.fillAmount = isOnCooldown ? (1f - cooldownTimer / cooldown) : 0f;
 
         if (statusText != null)
         {
@@ -258,11 +336,23 @@ public class ArcherSkill : MonoBehaviour
             else
                 statusText.text = "";
         }
+
+        // Skill slot overlay — แสดงตอน Active
+        if (skillOverlay != null)
+            skillOverlay.color = isSkillActive
+                ? colorOverlay
+                : Color.clear;
+
+        // SpecialAtk slot overlay — แสดงตอน Charge Mode
+        if (specialOverlay != null)
+            specialOverlay.color = archer.IsChargeModeActive
+                ? colorOverlay
+                : Color.clear;
     }
 
     // ==================== Public ====================
 
     public bool IsSkillActive => isSkillActive;
-    public bool IsOnCooldown => isOnCooldown;
+    public bool IsOnCooldown  => isOnCooldown;
     public float CooldownRatio => isOnCooldown ? (cooldownTimer / cooldown) : 0f;
 }
