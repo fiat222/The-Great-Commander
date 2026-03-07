@@ -28,7 +28,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 77279710008274133}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.1392584, y: -0.014209786, z: 0.001998513, w: 0.9901521}
+  m_LocalRotation: {x: 0.13925838, y: -0.0142097855, z: 0.001998513, w: 0.9901521}
   m_LocalPosition: {x: 0.120000005, y: 2.4545999, z: -4.1799994}
   m_LocalScale: {x: 0.39999998, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
@@ -360,16 +360,23 @@ MonoBehaviour:
   spawnHeight: 30
   fireInterval: 0.05
   rainArrowPrefab: {fileID: 4812697048415514114, guid: 0653c15a752909646a96efcaf31e8aa3, type: 3}
+  burningZonePrefab: {fileID: 5879912481012635610, guid: a87273a577bf3db4b9333ac969379a25, type: 3}
+  burnDelay: 1
+  burnDamagePerSecond: 10
+  burnDuration: 5
   aoeIndicatorPrefab: {fileID: 5879912481012635610, guid: e4c80b9c07fd4a1499f7787af6688a03, type: 3}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  skillIconBg: {fileID: 0}
-  cooldownFillImage: {fileID: 0}
-  statusText: {fileID: 0}
+  skillIconTag: SkillIcon
+  cooldownFillTag: SkillCooldownFill
+  statusTextTag: SkillStatusText
+  skillOverlayTag: SkillActiveOverlay
+  specialOverlayTag: SkillSpecialOverlay
   colorReady: {r: 1, g: 1, b: 1, a: 1}
   colorActive: {r: 0.7056604, g: 0.6912278, b: 0.6750374, a: 0.77254903}
   colorCooldown: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  colorOverlay: {r: 1, g: 1, b: 1, a: 0.35}
   hintUI: {fileID: 0}
 --- !u!114 &4236291882602653678
 MonoBehaviour:
@@ -493,7 +500,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 0
+  GlobalObjectIdHash: 3811231902
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1397,8 +1404,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3813345238951539526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.06807249, y: 0.09100568, z: -0.006235506, w: 0.9935015}
-  m_LocalPosition: {x: 0, y: 1.9835926, z: -3.4887183}
+  m_LocalRotation: {x: -0.0043539996, y: 0.9618605, z: 0.27307573, w: 0.015336192}
+  m_LocalPosition: {x: -0.44548768, y: 0.15459995, z: 2.0440168}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1481,7 +1488,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 0
+    Value: 167.70552
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -1491,7 +1498,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 18.9
+    Value: -10
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -1578,7 +1585,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0.2
         DecelTime: 0.2
@@ -1591,7 +1598,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0
         DecelTime: 0
