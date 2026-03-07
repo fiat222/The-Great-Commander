@@ -134,6 +134,8 @@ public class GameManager : NetworkBehaviour
                 if (enemyStatsSOs != null)
                     foreach (var so in enemyStatsSOs)
                         if (so != null) so.SetWave(currentWave.Value);
+
+                GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
             }
             CleanupEnemies();
         }
@@ -346,10 +348,7 @@ public class GameManager : NetworkBehaviour
             for (int i = 0; i < p0SentCounts.Count; i++) p0SentCounts[i] = 0;
             for (int i = 0; i < p1SentCounts.Count; i++) p1SentCounts[i] = 0;
             
-            // --- 🌊 ขึ้นเวฟใหม่เมื่อกลับสู่ช่วงวางแผน ---
-            currentWave.Value++;
-            GenerateSystemWave(); // สุ่มเวฟถัดไปทันที
-            
+            // ⚠️ ไม่ต้อง currentWave++ ตรงนี้ เพราะ OnPhaseChanged จะทำให้อยู่แล้วครับ
             currentPhase.Value = GamePhase.Planning;
         }
     }
