@@ -403,7 +403,7 @@ public class ImpAI : MonoBehaviour
 
     // ==================== DAMAGE ====================
 
-    public void TakeDamage(int dmg)
+    public void TakeDamage(int dmg, bool playHitAnimation = true)
     {
         if (isDead) return;
 
@@ -415,7 +415,7 @@ public class ImpAI : MonoBehaviour
         if (healthBar != null)
             healthBar.value = currentHP;
 
-        if (currentHP > 0 && animator != null)
+        if (currentHP > 0 && animator != null && playHitAnimation)
             animator.SetTrigger("Damage");
 
         Vector3 vfxPos = hitVFXPoint != null ? hitVFXPoint.position : transform.position;

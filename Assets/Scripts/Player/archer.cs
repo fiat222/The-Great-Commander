@@ -2,6 +2,7 @@
 using Unity.Cinemachine;
 using UnityEngine.UI;
 using PlayerAudio;
+using Unity.Netcode;
 
 public class Archer : MonoBehaviour
 {
@@ -711,7 +712,7 @@ public class Archer : MonoBehaviour
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
 
-        Debug.Log($"<color=red>[Archer]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}/{maxHP}");
+        Debug.Log($"<color=orange>[Archer]</color> {gameObject.name} took {actual} damage. HP: {currentHP}/{maxHP}");
         if (currentHP <= 0) Die();
     }
 
@@ -727,10 +728,22 @@ public class Archer : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
-        Debug.Log("<color=red>[Archer]</color> ตายแล้ว!");
+        Debug.Log($"<color=red>[Archer]</color> {gameObject.name} Die() called! IsOwner={GetComponent<NetworkObject>()?.IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
         if (animator != null) animator.SetTrigger("Die");
 
         SpectatorController.Instance?.EnterSpectate(transform);
+
+        // แจ้งการตายไปยังส่วนกลาง (GameManager)
+        if (GameManager.Instance != null && NetworkManager.Singleton != null)
+        {
+            ulong myId = NetworkManager.Singleton.LocalClientId;
+            Debug.Log($"<color=red>[Archer]</color> {gameObject.name} sending death notification for LocalClientId: {myId}");
+            GameManager.Instance.NotifyPlayerDiedServerRpc(myId);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=red>[Archer]</color> {gameObject.name} Failed to sync death: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
+        }
     }
 
     private void OnDrawGizmos()

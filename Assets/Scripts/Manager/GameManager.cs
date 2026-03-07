@@ -23,6 +23,15 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<GamePhase> currentPhase = new NetworkVariable<GamePhase>(GamePhase.Planning);
     public GamePhase CurrentPhase => currentPhase.Value;
 
+    [Header("Debug Player Death State")]
+    [Tooltip("แสดงสถานะการตายของ Host (P0) และ Client (P1)")]
+    public bool debugP0Dead = false;
+    public bool debugP1Dead = false;
+
+    // เก็บสถานะว่าตอนเล่นรอบนั้นใครตายไปแล้วบ้าง
+    public NetworkVariable<bool> p0Dead = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> p1Dead = new NetworkVariable<bool>(false);
+
     [Header("Debug")]
     [Tooltip("แสดงเฉพาะไว้ดูใน Inspector")]
     [SerializeField] private GamePhase displayPhase;
@@ -135,6 +144,9 @@ public class GameManager : NetworkBehaviour
                     foreach (var so in enemyStatsSOs)
                         if (so != null) so.SetWave(currentWave.Value);
 
+                p0Dead.Value = false;
+                p1Dead.Value = false;
+
                 GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
             }
             CleanupEnemies();
@@ -169,6 +181,10 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
     {
+        // อัปเดตตัวแปร Debug ให้เห็นใน Inspector เรียลไทม์
+        debugP0Dead = p0Dead.Value;
+        debugP1Dead = p1Dead.Value;
+
         // ถ้าอยู่ในเฟส Combat และกด Esc ให้ปลดล็อกเมาส์มาชั่วคราวเพื่อกดปุ่มได้
         if (currentPhase.Value == GamePhase.Combat && Input.GetKeyDown(KeyCode.Escape))
         {
@@ -351,5 +367,15 @@ public class GameManager : NetworkBehaviour
             // ⚠️ ไม่ต้อง currentWave++ ตรงนี้ เพราะ OnPhaseChanged จะทำให้อยู่แล้วครับ
             currentPhase.Value = GamePhase.Planning;
         }
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    public void NotifyPlayerDiedServerRpc(ulong clientId)
+    {
+        Debug.Log($"<color=cyan>[GameManager]</color> NotifyPlayerDiedServerRpc called for ClientID: {clientId}");
+        if (clientId == 0) p0Dead.Value = true;
+        else p1Dead.Value = true;
+        
+        Debug.Log($"<color=cyan>[GameManager]</color> p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
     }
 }

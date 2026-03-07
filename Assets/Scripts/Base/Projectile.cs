@@ -84,12 +84,12 @@ public class Projectile : MonoBehaviour
                 EnemyAI enemyAI = target.GetComponent<EnemyAI>();
                 if (enemyAI != null)
                 {
-                    enemyAI.TakeDamage(damage);
+                    enemyAI.TakeDamage(damage, false);
                 }
                 else
                 {
                     ImpAI impAI = target.GetComponent<ImpAI>();
-                    if (impAI != null) impAI.TakeDamage(damage);
+                    if (impAI != null) impAI.TakeDamage(damage, false);
                 }
             }
 
