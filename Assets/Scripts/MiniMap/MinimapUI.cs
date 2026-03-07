@@ -61,6 +61,12 @@ public class MinimapUI : MonoBehaviour
         _ => redDot
     };
 
+    public void SetVisible(bool visible)
+    {
+        if (minimapPanel != null)
+            minimapPanel.gameObject.SetActive(visible);
+    }
+
     private void ClearIcons()
     {
         foreach (var icon in activeIcons)

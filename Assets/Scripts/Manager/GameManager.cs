@@ -17,11 +17,20 @@ public class GameManager : NetworkBehaviour
     public static System.Action<int> OnSystemEnemyDied; // สำหรับแจ้ง UI เมื่อมอนสเตอร์รายทางตายครับ
     public static System.Action<GamePhase> OnPhaseChangedGlobal; // ⭐ สำหรับแจ้ง UI เมื่อเปลี่ยนเฟส
 
-    public TextMeshProUGUI phaseStatusText;
+    public TextMeshProUGUI countdownText;
 
     // เก็บสถานะ Phase ปัจจุบัน : Server เขียนได้, ทุกคนอ่านได้
     private NetworkVariable<GamePhase> currentPhase = new NetworkVariable<GamePhase>(GamePhase.Planning);
     public GamePhase CurrentPhase => currentPhase.Value;
+
+    [Header("Debug Player Death State")]
+    [Tooltip("แสดงสถานะการตายของ Host (P0) และ Client (P1)")]
+    public bool debugP0Dead = false;
+    public bool debugP1Dead = false;
+
+    // เก็บสถานะว่าตอนเล่นรอบนั้นใครตายไปแล้วบ้าง
+    public NetworkVariable<bool> p0Dead = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> p1Dead = new NetworkVariable<bool>(false);
 
     [Header("Debug")]
     [Tooltip("แสดงเฉพาะไว้ดูใน Inspector")]
@@ -30,6 +39,13 @@ public class GameManager : NetworkBehaviour
     [Header("Wave System")]
     public TextMeshProUGUI waveText;
     private NetworkVariable<int> currentWave = new NetworkVariable<int>(1);
+
+    [Header("Planning Phase Timer & Readiness")]
+    public float planningDuration = 30f;
+    public NetworkVariable<float> planningTimer = new NetworkVariable<float>(30f);
+    public NetworkVariable<bool> p0Ready = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> p1Ready = new NetworkVariable<bool>(false);
+    public TextMeshProUGUI nextPhaseButtonText; // ลาก Text ในปุ่ม Next Phase มาใส่ครับ
 
     [Header("PvE System Wave")]
     public MinionData[] systemEnemyPool; // สุ่มจาก List นี้ครับ
@@ -107,6 +123,13 @@ public class GameManager : NetworkBehaviour
                 ShopManager.Instance.CloseShop();
         }
 
+        // --- 🗺️ เซ็ตค่า UI เริ่มต้น (Minimap/Wave) ---
+        if (MinimapUI.Instance != null)
+            MinimapUI.Instance.SetVisible(currentPhase.Value == GamePhase.Combat);
+        
+        if (waveText != null)
+            waveText.gameObject.SetActive(currentPhase.Value == GamePhase.Planning);
+
         // --- 🌊 เซ็ตค่าเวฟต้นเกมสำหรับ Server ---
         if (IsServer && currentWave.Value == 1)
         {
@@ -124,34 +147,54 @@ public class GameManager : NetworkBehaviour
         UpdateCursorState(newValue);
 
         if (newValue == GamePhase.Planning)
+    {
+        EnemyTracker.Instance?.ResetForNewWaveServerRpc();
+        if (IsServer)
         {
-            EnemyTracker.Instance?.ResetForNewWaveServerRpc();
-            if (IsServer)
-            {
-                currentWave.Value++;
+            currentWave.Value++;
 
-                // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
-                if (enemyStatsSOs != null)
-                    foreach (var so in enemyStatsSOs)
-                        if (so != null) so.SetWave(currentWave.Value);
+            // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
+            if (enemyStatsSOs != null)
+                foreach (var so in enemyStatsSOs)
+                    if (so != null) so.SetWave(currentWave.Value);
 
-                GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
-            }
-            CleanupEnemies();
+            p0Dead.Value = false;
+            p1Dead.Value = false;
+
+            // Reset Timer and Readiness
+            planningTimer.Value = planningDuration;
+            p0Ready.Value = false;
+            p1Ready.Value = false;
+
+            GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
         }
-
-        // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
-        if (ShopManager.Instance != null)
-        {
-            if (newValue == GamePhase.Planning)
-                ShopManager.Instance.OpenShop();
-            else
-                ShopManager.Instance.CloseShop();
-        }
-
-        OnPhaseChangedGlobal?.Invoke(newValue);
+        CleanupEnemies();
     }
 
+    // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
+    if (ShopManager.Instance != null)
+    {
+        if (newValue == GamePhase.Planning)
+            ShopManager.Instance.OpenShop();
+        else
+            ShopManager.Instance.CloseShop();
+    }
+
+    // --- 🗺️ จัดการเปิด/ปิด Minimap และ Wave UI ตามเฟส ---
+    if (MinimapUI.Instance != null)
+    {
+        // Minimap: เปิดเฉพาะ Combat
+        MinimapUI.Instance.SetVisible(newValue == GamePhase.Combat);
+    }
+
+    if (waveText != null)
+    {
+        // Wave Text: เปิดเฉพาะ Planning (หรือปิดตอน Combat)
+        waveText.gameObject.SetActive(newValue == GamePhase.Planning);
+    }
+
+    OnPhaseChangedGlobal?.Invoke(newValue);
+}
     private void CleanupEnemies()
     {
         if (!IsServer) return; // เฉพาะ Server เท่านั้นที่ Despawn ได้
@@ -168,23 +211,59 @@ public class GameManager : NetworkBehaviour
     }
 
     private void Update()
+{
+    // อัปเดตตัวแปร Debug ให้เห็นใน Inspector เรียลไทม์
+    debugP0Dead = p0Dead.Value;
+    debugP1Dead = p1Dead.Value;
+
+    // --- ⏱️ ระบบนับเวลาถอยหลัง (เฉพาะ Server) ---
+    if (IsServer && currentPhase.Value == GamePhase.Planning)
     {
-        // ถ้าอยู่ในเฟส Combat และกด Esc ให้ปลดล็อกเมาส์มาชั่วคราวเพื่อกดปุ่มได้
-        if (currentPhase.Value == GamePhase.Combat && Input.GetKeyDown(KeyCode.Escape))
+        if (planningTimer.Value > 0)
         {
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
+            planningTimer.Value -= Time.deltaTime;
+        }
+
+        // เงื่อนไขข้ามเฟส: เวลาหมด หรือ พร้อมทั้งคู่
+        if (planningTimer.Value <= 0 || (p0Ready.Value && p1Ready.Value))
+        {
+            ChangePhaseServerRpc(); // เปลี่ยนเป็น Combat
         }
     }
 
+    // ทุกคนอัปเดต UI เวลาถ้าอยู่ในเฟสวางแผน
+    if (currentPhase.Value == GamePhase.Planning)
+    {
+        UpdatePhaseUI(currentPhase.Value);
+
+        // --- 🔘 อัปเดตข้อความปุ่ม Next Phase ของตัวเอง ---
+        if (nextPhaseButtonText != null)
+        {
+            bool amIReady = (NetworkManager.Singleton.LocalClientId == 0) ? p0Ready.Value : p1Ready.Value;
+            nextPhaseButtonText.text = amIReady ? "Cancel" : "Next Phase";
+        }
+    }
+    else
+    {
+        // เฟส Combat: รีเซ็ตปุ่มเป็น Next Phase เผื่อไว้
+        if (nextPhaseButtonText != null) nextPhaseButtonText.text = "Next Phase";
+    }
+
+    // ถ้าอยู่ในเฟส Combat และกด Esc ให้ปลดล็อกเมาส์มาชั่วคราวเพื่อกดปุ่มได้
+    if (currentPhase.Value == GamePhase.Combat && Input.GetKeyDown(KeyCode.Escape))
+    {
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+}
     private void UpdateCursorState(GamePhase phase)
     {
         if (phase == GamePhase.Planning)
@@ -215,19 +294,19 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // SwitchCamera logic moved to CameraManager
-    private void UpdatePhaseUI(GamePhase phase)
+private void UpdatePhaseUI(GamePhase phase)
+{
+    string status = "";
+    
+    if (phase == GamePhase.Planning)
     {
-        string status = phase.ToString() + " Phase\n";
-        
-        // แสดงข้อมูลสรุปสั้นๆ (ถ้าพี่อยากโชว์ทั้งหมดต้องวนลูปครับ)
-        int hostTotal = 0; foreach(int c in p0SentCounts) hostTotal += c;
-        int clientTotal = 0; foreach(int c in p1SentCounts) clientTotal += c;
-        
-        status += $"Host Total Sent: {hostTotal} | Client Total Sent: {clientTotal}";
-        phaseStatusText.text = status;
+        int seconds = Mathf.CeilToInt(planningTimer.Value);
+        status = $"{seconds} S";
     }
-
+    // Combat phase: status = "" (ไม่ต้องโชว์อะไรเลย)
+    
+    if (countdownText != null) countdownText.text = status;
+}
     private void UpdateWaveUI(int wave)
     {
         if (waveText != null)
@@ -314,9 +393,27 @@ public class GameManager : NetworkBehaviour
 
     public void RequestNextPhase()
     {
-        ChangePhaseServerRpc();
+        if (currentPhase.Value == GamePhase.Planning)
+        {
+            // Toggle Readiness
+            bool currentReady = (NetworkManager.Singleton.LocalClientId == 0) ? p0Ready.Value : p1Ready.Value;
+            SetPlayerReadyServerRpc(!currentReady);
+        }
+        else
+        {
+            ChangePhaseServerRpc();
+        }
     }
 
+[Rpc(SendTo.Server, RequireOwnership = false)]
+public void SetPlayerReadyServerRpc(bool ready, RpcParams rpcParams = default)
+{
+    ulong clientId = rpcParams.Receive.SenderClientId;
+    if (clientId == 0) p0Ready.Value = ready;
+    else p1Ready.Value = ready;
+
+    Debug.Log($"<color=yellow>[GameManager]</color> Client {clientId} is {(ready ? "READY" : "NOT READY")}");
+}
     [Rpc(SendTo.Server)]
     void ChangePhaseServerRpc()
     {
@@ -351,5 +448,15 @@ public class GameManager : NetworkBehaviour
             // ⚠️ ไม่ต้อง currentWave++ ตรงนี้ เพราะ OnPhaseChanged จะทำให้อยู่แล้วครับ
             currentPhase.Value = GamePhase.Planning;
         }
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    public void NotifyPlayerDiedServerRpc(ulong clientId)
+    {
+        Debug.Log($"<color=cyan>[GameManager]</color> NotifyPlayerDiedServerRpc called for ClientID: {clientId}");
+        if (clientId == 0) p0Dead.Value = true;
+        else p1Dead.Value = true;
+        
+        Debug.Log($"<color=cyan>[GameManager]</color> p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
     }
 }
