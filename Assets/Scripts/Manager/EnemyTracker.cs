@@ -84,10 +84,25 @@ public class EnemyTracker : NetworkBehaviour
         GameManager.OnSystemEnemyDied += HandleLocalEnemyDied;
     }
 
+    public void Start()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.p0Dead.OnValueChanged += (_, __) => EvaluatePlayerDeathUI();
+            GameManager.Instance.p1Dead.OnValueChanged += (_, __) => EvaluatePlayerDeathUI();
+        }
+    }
+
     public override void OnNetworkDespawn()
     {
         GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
         GameManager.OnSystemEnemyDied -= HandleLocalEnemyDied;
+        
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.p0Dead.OnValueChanged -= (_, __) => EvaluatePlayerDeathUI();
+            GameManager.Instance.p1Dead.OnValueChanged -= (_, __) => EvaluatePlayerDeathUI();
+        }
     }
 
     // ────────────────────────────────────────────────────────────
@@ -218,13 +233,43 @@ public class EnemyTracker : NetworkBehaviour
     //  KILL OPPONENT BUTTON
     // ────────────────────────────────────────────────────────────
 
+    private void EvaluatePlayerDeathUI()
+    {
+        ulong myId = NetworkManager.Singleton.LocalClientId;
+        
+        if (GameManager.Instance == null) return;
+        
+        bool opponentDead = (myId == 0) ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
+        
+        // ถ้าฝั่งตรงข้ามตายแล้ว ให้ซ่อนปุ่มของฝั่งเราทันที
+        if (opponentDead && killOpponentButton != null)
+        {
+            SetUI(killOpponentButton, false);
+            Debug.Log("<color=cyan>[EnemyTracker]</color> Opponent is dead. Hiding Kill Opponent button.");
+        }
+    }
+
     /// <summary>โชว์ปุ่ม Kill Opponent เฉพาะคนที่คลีย์ Enemy ก่อน</summary>
     [ClientRpc]
     private void ShowKillOpponentButtonClientRpc(bool winnerIsP0)
     {
         ulong myId = NetworkManager.Singleton.LocalClientId;
         bool iAmWinner = (winnerIsP0 && myId == 0) || (!winnerIsP0 && myId != 0);
-        SetUI(killOpponentButton, iAmWinner);
+        
+        if (iAmWinner)
+        {
+            if (GameManager.Instance != null)
+            {
+                bool opponentDead = (myId == 0) ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
+                if (opponentDead) return; // ฝั่งตรงข้ามตายแล้วไม่ต้องโชว์
+            }
+            
+            SetUI(killOpponentButton, true);
+        }
+        else
+        {
+            SetUI(killOpponentButton, false);
+        }
     }
 
     /// <summary>ซ่อนปุ่มทุก Client</summary>
@@ -241,7 +286,7 @@ public class EnemyTracker : NetworkBehaviour
         RequestKillOpponentServerRpc(NetworkManager.Singleton.LocalClientId);
     }
 
-    [Rpc(SendTo.Server)]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     private void RequestKillOpponentServerRpc(ulong senderClientId)
     {
         // ต้องอยู่ใน Combat เท่านั้น + ต้องมีฝั่งใดฝั่งหนึ่งคลีย์จริงๆ
@@ -331,7 +376,7 @@ public class EnemyTracker : NetworkBehaviour
     // ────────────────────────────────────────────────────────────
     //  RESET (เรียกจาก GameManager ตอนเปลี่ยนเป็น Planning)
     // ────────────────────────────────────────────────────────────
-    [Rpc(SendTo.Server)]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     public void ResetForNewWaveServerRpc()
     {
         p0EnemyCount.Value = 999;
