@@ -272,6 +272,7 @@ Transform:
   - {fileID: 1174553110}
   - {fileID: 264409007}
   - {fileID: 1068617442}
+  - {fileID: 947743760}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &63309293
@@ -7977,6 +7978,55 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 495976, guid: 0675a8379cc5cbd4089ec396b882fade, type: 3}
   m_PrefabInstance: {fileID: 945700125}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &947743759
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 947743760}
+  - component: {fileID: 947743761}
+  m_Layer: 0
+  m_Name: CursorUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &947743760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 947743759}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1155.6228, y: -526.83527, z: -43.39729}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 48427683}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &947743761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 947743759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96f3078b73b0ab742bb9760d626ebb40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorUI
+  customCursor: {fileID: 2800000, guid: a007422f9096adc4086e9e13ac066bbe, type: 3}
+  hotSpot: {x: 0, y: 0}
+  cursorMode: 0
+  clickVFXPrefab: {fileID: 8974203713140315807, guid: 709b0bd6b0b625249a98409dd7a87343, type: 3}
+  vfxParent: {fileID: 0}
 --- !u!1 &955796826
 GameObject:
   m_ObjectHideFlags: 0
@@ -21167,6 +21217,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1392672947}
   - {fileID: 9037272491140040889}
   - {fileID: 5761125720375452856}
   - {fileID: 6956706032465905409}
@@ -21186,7 +21237,6 @@ RectTransform:
   - {fileID: 3571184048215354797}
   - {fileID: 3430681472393765989}
   - {fileID: 569381255765398738}
-  - {fileID: 1392672947}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

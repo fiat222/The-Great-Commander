@@ -2078,6 +2078,8 @@ MonoBehaviour:
   customCursor: {fileID: 2800000, guid: a007422f9096adc4086e9e13ac066bbe, type: 3}
   hotSpot: {x: 0, y: 0}
   cursorMode: 0
+  clickVFXPrefab: {fileID: 8974203713140315807, guid: 709b0bd6b0b625249a98409dd7a87343, type: 3}
+  vfxParent: {fileID: 0}
 --- !u!4 &302444035
 Transform:
   m_ObjectHideFlags: 0
