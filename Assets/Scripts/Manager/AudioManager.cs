@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// จัดการ BGM ของทั้งเกม (Planning ↔ Combat) ด้วย Crossfade
@@ -22,7 +23,6 @@ public class AudioManager : MonoBehaviour
     [Header("BGM Settings")]
     [Range(0f, 1f)] public float bgmVolume = 0.8f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
-    [Min(0.1f)]     public float crossfadeDuration = 1.5f;
 
     // Properties สำหรับ AudioSettingsUI อ่านค่าตั้งต้น
     public float BgmVolume => bgmVolume;
@@ -53,11 +53,9 @@ public class AudioManager : MonoBehaviour
     //  Private
     // ─────────────────────────────────────────
 
-    [SerializeField] private AudioSource bgmSourceA;
-    [SerializeField] private AudioSource bgmSourceB;
-
-    private AudioSource activeBGMSource;   // ตัวที่กำลังเล่นอยู่
-    private Coroutine   crossfadeCoroutine;
+    [Header("BGM Source")]
+    [Tooltip("ใส่ AudioSource ที่ใช้เล่น BGM (ตัวเดียวพอ)")]
+    [SerializeField] private AudioSource bgmSource;
 
     // ─────────────────────────────────────────
     //  Unity Lifecycle
@@ -73,11 +71,8 @@ public class AudioManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject); // BGM ไม่ขาดเมื่อ load scene
 
-        // ตั้งค่า BGM Sources
-        SetupBGMSource(bgmSourceA);
-        SetupBGMSource(bgmSourceB);
-
-        activeBGMSource = bgmSourceA;
+        // ตั้งค่า BGM Source
+        SetupBGMSource(bgmSource);
 
         // โหลด Library ลงมาพักไว้ให้ระบบดึงง่ายๆ
         foreach (var entry in sfxLibrary)
@@ -99,82 +94,76 @@ public class AudioManager : MonoBehaviour
     void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     void Start()
     {
-        // เล่น BGM เริ่มต้น (Planning Phase)
-        PlayBGMImmediate(planningBGM);
+        // จัดการเปิดเพลงสำหรับ Scene แรกสุดตอนเริ่มเกม
+        string startScene = SceneManager.GetActiveScene().name;
+        Debug.Log($"[AudioManager] กำลังเริ่มเกมที่ Scene: {startScene} | BGM Source Assigned: {bgmSource != null}");
+
+        if (startScene == "MenuSceneTest" || startScene == "CharacterSelectScene")
+            PlayBGM(combatBGM);
+        else if (startScene == "GameScene")
+            PlayBGM(planningBGM); // เริ่ม GameScene โหมด Planning
+        else
+            Debug.Log($"[AudioManager] ข้ามการเล่นเพลง เพราะชื่อ Scene '{startScene}' ไม่ตรงเงื่อนไข");
     }
 
     // ─────────────────────────────────────────
-    //  Phase Handling
+    //  Scene & Phase Handling
     // ─────────────────────────────────────────
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[AudioManager] โหลด Scene ใหม่: {scene.name}");
+        if (scene.name == "MenuSceneTest" || scene.name == "CharacterSelectScene")
+        {
+            PlayBGM(combatBGM);
+        }
+        else if (scene.name == "GameScene")
+        {
+            PlayBGM(planningBGM); // GameScene เริ่มต้นที่ดาวน์/Planning
+        }
+    }
 
     private void HandlePhaseChanged(GamePhase phase)
     {
         AudioClip nextClip = phase == GamePhase.Planning ? planningBGM : combatBGM;
-        CrossfadeTo(nextClip);
+        PlayBGM(nextClip);
     }
 
     // ─────────────────────────────────────────
     //  BGM Control
     // ─────────────────────────────────────────
 
-    /// <summary>เปลี่ยน BGM แบบ Crossfade (วิธีหลัก)</summary>
-    public void CrossfadeTo(AudioClip newClip)
+    /// <summary>เล่น BGM ทันที</summary>
+    public void PlayBGM(AudioClip clip)
     {
-        if (newClip == null) return;
-        if (activeBGMSource.clip == newClip && activeBGMSource.isPlaying) return; // ไม่เล่นซ้ำ
-
-        if (crossfadeCoroutine != null)
-            StopCoroutine(crossfadeCoroutine);
-
-        crossfadeCoroutine = StartCoroutine(DoCrossfade(newClip));
-    }
-
-    /// <summary>เล่น BGM ทันทีโดยไม่ Fade (ใช้ตอน Start)</summary>
-    private void PlayBGMImmediate(AudioClip clip)
-    {
-        if (clip == null) return;
-        activeBGMSource.clip   = clip;
-        activeBGMSource.volume = bgmVolume;
-        activeBGMSource.Play();
-    }
-
-    private IEnumerator DoCrossfade(AudioClip newClip)
-    {
-        // เลือก Source ที่ไม่ Active มาเป็นตัวใหม่
-        AudioSource incoming = activeBGMSource == bgmSourceA ? bgmSourceB : bgmSourceA;
-
-        incoming.clip   = newClip;
-        incoming.volume = 0f;
-        incoming.Play();
-
-        float elapsed = 0f;
-        float startVolume = activeBGMSource.volume;
-
-        while (elapsed < crossfadeDuration)
+        if (clip == null)
         {
-            elapsed += Time.deltaTime;
-            float t  = elapsed / crossfadeDuration;
-
-            activeBGMSource.volume = Mathf.Lerp(startVolume, 0f,         t);
-            incoming.volume        = Mathf.Lerp(0f,          bgmVolume,  t);
-
-            yield return null;
+            Debug.LogWarning("[AudioManager] เพลงที่จะเล่น (clip) เป็น null! ลืมใส่ใน Inspector หรือเปล่า?");
+            return;
+        }
+        if (bgmSource == null)
+        {
+            Debug.LogWarning("[AudioManager] bgmSource เป็น null! ลืมลาก AudioSource ใส่ช่อง bgmSource หรือเปล่า?");
+            return;
         }
 
-        activeBGMSource.Stop();
-        activeBGMSource.volume = bgmVolume;
+        if (bgmSource.clip == clip && bgmSource.isPlaying) return; // ถ้าเล่นเพลงเดิมอยู่แล้ว ไม่ต้องเริ่มใหม่
 
-        activeBGMSource = incoming;
-        crossfadeCoroutine = null;
+        Debug.Log($"[AudioManager] เล่นเพลง: {clip.name} Volume={bgmVolume} Mute={bgmSource.mute}");
+        bgmSource.clip   = clip;
+        bgmSource.volume = bgmVolume;
+        bgmSource.Play();
     }
 
     // ─────────────────────────────────────────
@@ -209,7 +198,7 @@ public class AudioManager : MonoBehaviour
     public void SetBGMVolume(float v)
     {
         bgmVolume = v;
-        if (activeBGMSource != null) activeBGMSource.volume = v;
+        if (bgmSource != null) bgmSource.volume = v;
     }
 
     /// <summary>ปรับ Volume ของ SFX Source ทันที</summary>
