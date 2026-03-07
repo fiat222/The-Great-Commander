@@ -44,6 +44,8 @@ public class EnemyAI : MonoBehaviour
     public Transform removalVFXPoint;
 
     private float baseSpeed;
+    private float playerDeadSpeedMult => IsPlayerDead() ? 2f : 1f;
+    private Vector3 lastDestination; // cache เพื่อไม่ต้อง SetDestination ทุกเฟรม
     private float attackRange;
     private float currentHP;
     private float currentDamage;
@@ -109,7 +111,8 @@ public class EnemyAI : MonoBehaviour
         HealthSystem hs = GetComponent<HealthSystem>();
         if (hs != null) hs.OnDie.AddListener(Die);
 
-        InvokeRepeating(nameof(UpdateDestination), 0f, updateRate);
+        // UpdateDestination ถูกเรียกจาก Update() ด้วย timer แทน InvokeRepeating
+        // เพื่อให้ทำงานในจังหวะเดียวกัน ไม่กระตุก
     }
 
     // ==================== APPLY STATS ====================
@@ -182,9 +185,10 @@ public class EnemyAI : MonoBehaviour
     {
         if (isDead) return;
 
-        CheckAttackStasis();
         UpdateTargetsAndDistances();
         HandleStateTransitions();
+        UpdateDestination();   // ⭐ จุดหลักสั่ง agent (speed, destination, rotation)
+        CheckAttackStasis();   // ล็อค agent เฉพาะตอน Animator เล่นท่าตี/โดนตีจริง
         UpdateAnimations();
         UpdateWeaponEffect();
     }
@@ -202,68 +206,32 @@ public class EnemyAI : MonoBehaviour
             weaponEffect.SetActive(inAttack);
     }
 
+    // ⭐ Override agent เฉพาะเมื่อ Animator กำลังเล่นท่าตี/โดนตีจริงๆ (ไม่ยุ่งตอนไม่ได้เล่นท่า)
     private void CheckAttackStasis()
     {
         if (animator == null || agent == null || !agent.enabled) return;
 
         bool isAnimatorAttacking = animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack");
-
-        // ถ้ารับดาเมจอยู่ ให้ชะงัก (Hit Stun)
         bool isAnimatorHit = animator.GetCurrentAnimatorStateInfo(0).IsTag("Hit");
 
-        bool isAttackState = currentState == EnemyState.AttackPlayer || 
-                             currentState == EnemyState.AttackBase || 
-                             currentState == EnemyState.AttackMinion;
-
+        // ถ้า Animator กำลังเล่นท่าตี/โดนตีอยู่จริงๆ → ล็อค agent ไม่ให้ขยับ
         if (isAnimatorAttacking || isAnimatorHit)
         {
+            agent.isStopped = true;
             agent.updateRotation = false;
 
+            // ถ้ากำลังไกวอาวุธ + เปิด Tracking → หมุนหาเพลเยอร์ไปเรื่อยๆ
             if (isAnimatorAttacking && attackTracking)
-            {
-                // กำลังไกวอาวุธอยู่ → หมุนหาเพลเยอร์ไปเรื่อยๆ (สำหรับ Combo Tracking)
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
                 RotateTowardsTarget();
-            }
-            else
-            {
-                // กำลังฟัน หรือกำลังโดนตีชะงักอยู่ → ล็อคทุกอย่างให้อยู่กับที่
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
-            }
         }
-        else
+        // ถ้าไม่ได้เล่นท่า → ไม่ทำอะไร ปล่อยให้ UpdateDestination จัดการ
+
+        // --- ค่อยๆ ไหล StrafeX/Y ไปหาเป้าหมาย (ป้องกันกระตุก) ---
+        if (animator != null)
         {
-            agent.isStopped = false; // ปลดเบรก ให้เดินได้
-
-            if (isAttackState)
-            {
-                // อยู่ในสถานะโจมตีแต่ยังไม่เล่นท่า → ปิด NavMesh หมุน ใช้ของเราเอง
-                agent.updateRotation = false;
-                RotateTowardsTarget();
-            }
-            else if (isStrafing)
-            {
-                // กำลัง Strafe → หันหน้าหาเพลเยอร์ทุกเฟรม
-                agent.updateRotation = false;
-                RotateTowardsTarget();
-            }
-            else
-            {
-                // เดิน/วิ่งปกติ → ให้ NavMesh จัดการหมุนตามเส้นทาง
-                agent.updateRotation = true;
-                targetStrafeX = 0f;
-                targetStrafeY = 0f;
-            }
-
-            // --- ค่อยๆ ไหล StrafeX/Y ไปหาเป้าหมาย (ป้องกันกระตุก) ---
-            if (animator != null)
-            {
-                float dampTime = 0.15f;
-                animator.SetFloat("StrafeX", targetStrafeX, dampTime, Time.deltaTime);
-                animator.SetFloat("StrafeY", targetStrafeY, dampTime, Time.deltaTime);
-            }
+            float dampTime = 0.15f;
+            animator.SetFloat("StrafeX", targetStrafeX, dampTime, Time.deltaTime);
+            animator.SetFloat("StrafeY", targetStrafeY, dampTime, Time.deltaTime);
         }
     }
 
@@ -457,10 +425,13 @@ public class EnemyAI : MonoBehaviour
     {
         if (animator == null) return;
 
-        float currentSpeed = agent != null ? agent.velocity.magnitude : 0f;
-        float normalizedSpeed = baseSpeed > 0 ? currentSpeed / baseSpeed : 0f;
+        // ใช้ agent.speed (ค่าที่เราเซ็ตเอง) แทน velocity.magnitude (ค่าจาก physics ที่กระตุก)
+        bool isMoving = currentState == EnemyState.MoveToBase ||
+                        currentState == EnemyState.ChasePlayer ||
+                        currentState == EnemyState.ChaseMinion;
+        float normalizedSpeed = (isMoving && agent != null) ? agent.speed / baseSpeed : 0f;
 
-        animator.SetFloat("Speed", normalizedSpeed);
+        animator.SetFloat("Speed", normalizedSpeed, 0.1f, Time.deltaTime);
 
         bool isAttacking = currentState == EnemyState.AttackPlayer || 
                            currentState == EnemyState.AttackBase || 
@@ -532,8 +503,10 @@ public class EnemyAI : MonoBehaviour
                 {
                     agent.isStopped = false;
                     agent.updateRotation = true;
-                    agent.speed = baseSpeed;
-                    agent.SetDestination(baseTransform.position);
+                    agent.speed = baseSpeed * playerDeadSpeedMult;
+                    // ลบ 2f เพื่อให้ตัวมันพยายามเดินทะลุเข้าไประยะตีป้อม การันตีว่าข้าม threshold ของสถานะ AttackBase ได้
+                    agent.stoppingDistance = Mathf.Max(1f, baseAttackRange - 2f);
+                    SetDestinationIfChanged(baseTransform.position);
 
                     // รีเซ็ตสถานะ strafe ที่ค้างจากการต่อสู้
                     isStrafing = false;
@@ -581,7 +554,7 @@ public class EnemyAI : MonoBehaviour
                             Vector3 retreatPos = transform.position + awayFromTarget * 3f;
 
                             agent.speed = combatSO.strafeSpeed;
-                            agent.SetDestination(retreatPos);
+                            SetDestinationIfChanged(retreatPos);
 
                             // ส่งค่า Animator (ใช้ StrafeX = 0 สำหรับถอย ถ้ามีท่า)
                             if (animator != null)
@@ -624,7 +597,7 @@ public class EnemyAI : MonoBehaviour
                             Vector3 targetPos = playerTransform.position + toTarget * -sRange + strafeDir * 3f;
 
                             agent.speed = combatSO.strafeSpeed;
-                            agent.SetDestination(targetPos);
+                            SetDestinationIfChanged(targetPos);
 
                             if (animator != null)
                             {
@@ -669,8 +642,8 @@ public class EnemyAI : MonoBehaviour
                         }
                     }
                     agent.updateRotation = true;
-                    agent.speed = baseSpeed * 2.5f;
-                    agent.SetDestination(playerTransform.position);
+                    agent.speed = baseSpeed * 2.5f * playerDeadSpeedMult;
+                    SetDestinationIfChanged(playerTransform.position);
                 }
                 break;
 
@@ -706,7 +679,7 @@ public class EnemyAI : MonoBehaviour
                             RotateTowardsTarget();
                             Vector3 awayFromTarget = (transform.position - minionTransform.position).normalized;
                             agent.speed = combatSO.strafeSpeed;
-                            agent.SetDestination(transform.position + awayFromTarget * 3f);
+                            SetDestinationIfChanged(transform.position + awayFromTarget * 3f);
                             if (animator != null)
                             {
                                 animator.SetBool("IsStrafing", true);
@@ -742,7 +715,7 @@ public class EnemyAI : MonoBehaviour
                             Vector3 strafeDir = Vector3.Cross(toTarget, Vector3.up) * strafeDirection;
                             Vector3 targetPos = minionTransform.position + toTarget * -sRangeM + strafeDir * 3f;
                             agent.speed = combatSO.strafeSpeed;
-                            agent.SetDestination(targetPos);
+                            SetDestinationIfChanged(targetPos);
                             if (animator != null)
                             {
                                 animator.SetBool("IsStrafing", true);
@@ -785,17 +758,29 @@ public class EnemyAI : MonoBehaviour
                         }
                     }
                     agent.updateRotation = true;
-                    agent.speed = baseSpeed * 2.5f;
-                    agent.SetDestination(minionTransform.position);
+                    agent.speed = baseSpeed * 2.5f * playerDeadSpeedMult;
+                    SetDestinationIfChanged(minionTransform.position);
                 }
                 break;
 
             case EnemyState.AttackPlayer:
             case EnemyState.AttackBase:
             case EnemyState.AttackMinion:
+                // หยุดนิ่ง + หมุนหน้าหาเป้าหมายเอง
                 agent.isStopped = true;
-                agent.velocity = Vector3.zero; // ป้องกันการสไลด์
+                agent.updateRotation = false;
+                RotateTowardsTarget();
                 break;
+        }
+    }
+
+    // เรียก SetDestination เฉพาะเมื่อเป้าหมายขยับไปไกลพอ (ป้องกัน path recalc ทุกเฟรม)
+    private void SetDestinationIfChanged(Vector3 target)
+    {
+        if (Vector3.SqrMagnitude(target - lastDestination) > 1f)
+        {
+            lastDestination = target;
+            agent.SetDestination(target);
         }
     }
 
@@ -922,8 +907,15 @@ public class EnemyAI : MonoBehaviour
             agent.isStopped = false;
         }
 
-        // รีเซ็ต state
+        // รีเซ็ต state และ cache ต่างๆ ที่อาจค้างตอนตาย
         currentState = EnemyState.ChasePlayer;
+        lastDestination = Vector3.positiveInfinity; // บังคับให้หาพาทใหม่ทันที
+        isStrafing = false;
+        hasRetreated = false;
+        targetStrafeX = 0f;
+        targetStrafeY = 0f;
+        if (animator != null) animator.SetBool("IsStrafing", false);
+        
         nextAttackTime = Time.time + 1f;
 
         Debug.Log($"[Combat] 🔄✅ ลุกเสร็จ! พร้อมสู้แล้ว");
