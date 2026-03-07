@@ -79,6 +79,12 @@ public class UpgradeManager : MonoBehaviour
         foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
             ac.ApplyStats();
 
+        // เล่นเสียงอัปเกรด
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+        }
+
         Debug.Log($"[UpgradeManager] Player Upgraded! Warrior Lv{warriorStats?.CurrentLevel} / Archer Lv{archerStats?.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
@@ -109,6 +115,12 @@ public class UpgradeManager : MonoBehaviour
 
         SpendMoney(cost);
         data.Upgrade(); // → fire OnMinionUpgraded → MinionAI refresh
+
+        // เล่นเสียงอัปเกรด มินเนี่ยน
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+        }
 
         Debug.Log($"[UpgradeManager] {data.minionName} Upgraded! Lv{data.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }

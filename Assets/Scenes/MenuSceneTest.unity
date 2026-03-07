@@ -2075,7 +2075,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96f3078b73b0ab742bb9760d626ebb40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CursorUI
-  customCursor: {fileID: 2800000, guid: 51cb6ee928f89b64691ef4dfd57c03e9, type: 3}
+  customCursor: {fileID: 2800000, guid: a007422f9096adc4086e9e13ac066bbe, type: 3}
   hotSpot: {x: 0, y: 0}
   cursorMode: 0
 --- !u!4 &302444035
@@ -2885,7 +2885,7 @@ RectTransform:
   m_Father: {fileID: 1049615219}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -3152,7 +3152,7 @@ RectTransform:
   m_Father: {fileID: 299504572}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7030,7 +7030,7 @@ RectTransform:
   m_Father: {fileID: 1759032690}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -12883,7 +12883,7 @@ RectTransform:
   m_Father: {fileID: 1215763527}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -13922,6 +13922,42 @@ PrefabInstance:
     - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
       propertyPath: bgmVolume
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[0].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: f03ee688941f5be4b8086750d02cf8c7, type: 3}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[1].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: d98e57a73c4476441a9b766eac3369fb, type: 3}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[2].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: e268cd1c3242fd44ba5d7b2f0e2ecfae, type: 3}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[3].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 77c366d4686b95e4e9d21cd656eb4bde, type: 3}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[0].soundType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[1].soundType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[2].soundType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxLibrary.Array.data[3].soundType
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4822172691947115199, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
       propertyPath: m_Name
@@ -19005,7 +19041,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2071976403
 RectTransform:
   m_ObjectHideFlags: 0

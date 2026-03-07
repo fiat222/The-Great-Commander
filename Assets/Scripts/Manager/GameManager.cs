@@ -370,6 +370,12 @@ private void UpdatePhaseUI(GamePhase phase)
 
                 ulong myId = NetworkManager.Singleton.LocalClientId;
                 BuyEnemyServerRpc(myId, typeIndex);
+
+                // เล่นเสียงเมื่อส่งศัตรูสำเร็จ
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySound(AudioManager.SoundType.Buy);
+                }
             }
             else
             {

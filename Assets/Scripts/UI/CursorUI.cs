@@ -16,6 +16,18 @@ public class CursorUI : MonoBehaviour
         ApplyCustomCursor();
     }
 
+    void Update()
+    {
+        // เล่นเสียงเมื่อคลิกซ้าย
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySound(AudioManager.SoundType.Click);
+            }
+        }
+    }
+
     public void ApplyCustomCursor()
     {
         if (customCursor != null)
