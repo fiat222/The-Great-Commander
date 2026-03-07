@@ -2,6 +2,7 @@ using UnityEngine;
 using PlayerAudio;
 using Unity.Cinemachine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public class PlayerController : MonoBehaviour
 {
@@ -709,7 +710,7 @@ public class PlayerController : MonoBehaviour
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
 
-        Debug.Log($"<color=red>[Player]</color> รับ {rawDmg} - Def{Defense:F0} = {actual} จริง | HP:{currentHP}");
+        Debug.Log($"<color=orange>[Player]</color> {gameObject.name} took {actual} damage. HP: {currentHP}/{maxHP}");
         if (currentHP <= 0) Die();
     }
 
@@ -717,11 +718,23 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
-        Debug.Log("<color=red>[Player]</color> ตายแล้ว!");
-
+        Debug.Log($"<color=red>[Player]</color> {gameObject.name} Die() called! IsOwner={GetComponent<NetworkObject>()?.IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
+        
         if (animator != null) animator.SetTrigger("Die");
         if (controller != null) controller.enabled = false;
 
         SpectatorController.Instance?.EnterSpectate(transform);
+
+        // แจ้งการตายไปยังส่วนกลาง (GameManager)
+        if (GameManager.Instance != null && NetworkManager.Singleton != null)
+        {
+            ulong myId = NetworkManager.Singleton.LocalClientId;
+            Debug.Log($"<color=red>[Player]</color> {gameObject.name} sending death notification for LocalClientId: {myId}");
+            GameManager.Instance.NotifyPlayerDiedServerRpc(myId);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=red>[Player]</color> {gameObject.name} Failed to sync death: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
+        }
     }
 }
