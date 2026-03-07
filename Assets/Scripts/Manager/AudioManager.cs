@@ -34,7 +34,11 @@ public class AudioManager : MonoBehaviour
 
     public enum SoundType 
     { 
-        None
+        None,
+        Click,
+        Buy,
+        Place,
+        Upgrade
     }
 
     [System.Serializable]
