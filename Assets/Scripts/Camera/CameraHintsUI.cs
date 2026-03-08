@@ -12,17 +12,7 @@ public class CameraHintsUI : MonoBehaviour
     public TopDownCameraController cameraController;
 
     [Header("Panels")]
-    public GameObject mainPanel; // ⭐ ลาก Panel หลักของ UI นี้มาใส่ตรงนี้
-    public GameObject rtsModePanel;
-    public GameObject freeFlyModePanel;
-
-    [Header("RTS Keys")]
-    public Image ui_ScrollUp;
-    public Image ui_ScrollDown;
-    public Image ui_Pan;
-    public Image ui_Q;
-    public Image ui_E;
-    public Image ui_F_RTS;
+    public GameObject mainPanel;
 
     [Header("Free Fly Keys")]
     public Image ui_W;
@@ -32,7 +22,13 @@ public class CameraHintsUI : MonoBehaviour
     public Image ui_Space;
     public Image ui_Shift;
     public Image ui_Ctrl;
-    public Image ui_F_FreeFly;
+    public Image ui_Esc;
+
+    [Header("Esc Label — เปลี่ยน Text ตามสถานะเมาส์")]
+    [Tooltip("ลาก TMP_Text ที่อยู่ใต้ปุ่ม Esc มาใส่ตรงนี้")]
+    public TMP_Text ui_EscLabel;
+    public string textWhenLocked   = "Unlock Mouse";
+    public string textWhenUnlocked = "Lock Mouse";
 
     [Header("Highlight Colors")]
     public Color normalColor    = new Color(1f, 1f, 1f, 0.35f);
@@ -50,57 +46,33 @@ public class CameraHintsUI : MonoBehaviour
 
     private void OnPhaseChanged(GamePhase phase)
     {
-        // แสดง UI เฉพาะเฟส Planning เท่านั้น
         if (mainPanel != null)
-        {
-            GameManager.SafeSetActive(mainPanel, phase == GamePhase.Planning, "CameraHintsUI (mainPanel)");
-        }
+            mainPanel.SetActive(phase == GamePhase.Planning);
         else
-        {
-            // ถ้าไม่ได้ใส่ mainPanel จะแจ้งเตือน
-            Debug.LogWarning("[CameraHintsUI] กรุณาลาก Main Panel มาใส่ใน Inspector เพื่อให้ระบบซ่อน UI ได้ถูกต้อง");
-        }
+            Debug.LogWarning("[CameraHintsUI] กรุณาลาก Main Panel มาใส่ใน Inspector");
     }
 
     private void Update()
     {
         if (cameraController == null) return;
 
-        bool freeFly = cameraController.IsFreeFly;
-
-        if (rtsModePanel     != null) GameManager.SafeSetActive(rtsModePanel,     !freeFly, "CameraHintsUI");
-        if (freeFlyModePanel != null) GameManager.SafeSetActive(freeFlyModePanel, freeFly,  "CameraHintsUI");
-
-        if (!freeFly) UpdateRTS();
-        else          UpdateFreeFly();
-    }
-
-    private void UpdateRTS()
-    {
-        var mouse = UnityEngine.InputSystem.Mouse.current;
-        var kb    = UnityEngine.InputSystem.Keyboard.current;
-
-        float scroll = mouse.scroll.ReadValue().y;
-        Highlight(ui_ScrollUp,   scroll > 0.01f);
-        Highlight(ui_ScrollDown, scroll < -0.01f);
-        Highlight(ui_Pan,        mouse.middleButton.isPressed);
-        Highlight(ui_Q,          kb.qKey.isPressed);
-        Highlight(ui_E,          kb.eKey.isPressed);
-        Highlight(ui_F_RTS,      kb.fKey.isPressed);
-    }
-
-    private void UpdateFreeFly()
-    {
         var kb = UnityEngine.InputSystem.Keyboard.current;
 
-        Highlight(ui_W,         kb.wKey.isPressed);
-        Highlight(ui_A,         kb.aKey.isPressed);
-        Highlight(ui_S,         kb.sKey.isPressed);
-        Highlight(ui_D,         kb.dKey.isPressed);
-        Highlight(ui_Space,     kb.spaceKey.isPressed);
-        Highlight(ui_Shift,     kb.leftShiftKey.isPressed);
-        Highlight(ui_Ctrl,      kb.leftCtrlKey.isPressed);
-        Highlight(ui_F_FreeFly, kb.fKey.isPressed);
+        Highlight(ui_W,     kb.wKey.isPressed);
+        Highlight(ui_A,     kb.aKey.isPressed);
+        Highlight(ui_S,     kb.sKey.isPressed);
+        Highlight(ui_D,     kb.dKey.isPressed);
+        Highlight(ui_Space, kb.spaceKey.isPressed);
+        Highlight(ui_Shift, kb.leftShiftKey.isPressed);
+        Highlight(ui_Ctrl,  kb.leftCtrlKey.isPressed);
+        Highlight(ui_Esc,   kb.escapeKey.isPressed);
+
+        // อัปเดต label ของ Esc ตามสถานะเมาส์ปัจจุบัน
+        if (ui_EscLabel != null)
+        {
+            bool isLocked = Cursor.lockState == CursorLockMode.Locked;
+            ui_EscLabel.text = isLocked ? textWhenLocked : textWhenUnlocked;
+        }
     }
 
     private void Highlight(Image img, bool active)
