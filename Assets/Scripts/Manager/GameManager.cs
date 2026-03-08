@@ -50,7 +50,10 @@ public class GameManager : NetworkBehaviour
     [Header("PvE System Wave")]
     public MinionData[] systemEnemyPool; // สุ่มจาก List นี้ครับ
     // เก็บข้อมูลเวฟที่สุ่มได้ในรูปแบบ "index:count|index:count"
-    public NetworkVariable<FixedString512Bytes> systemWaveDraft = new NetworkVariable<FixedString512Bytes>("");
+    public NetworkVariable<FixedString512Bytes> systemWaveDraft = new NetworkVariable<FixedString512Bytes>(
+        new FixedString512Bytes(""), 
+        NetworkVariableReadPermission.Everyone, 
+        NetworkVariableWritePermission.Server);
 
     [Header("Enemy Stats SOs")]
     [Tooltip("ลาก EnemyStatsSO ให้ตรงลำดับกับ systemEnemyPool ทุกตัวครับ")]
@@ -69,14 +72,41 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject crosshairObject;
     [SerializeField] private GameObject skillUI; // รูปสกิล (โชว์เฉพาะ Combat)
     [SerializeField] private GameObject nextPhaseButton; // ปุ่มเปลี่ยนเฟส (โชว์เฉพาะ Planning)
+
+    private bool isManualUnlock = false; // ⭐ สำหรับโหมดปลดล็อคเมาส์อิสระ (ไม่ล็อคกลับเมื่อคลิก)
+    public bool IsManualUnlock => isManualUnlock;
+    private bool currentModeWantsLock = false; // ⭐ สำหรับโหมดที่ต้องการล็อคเมาส์เป็นกรณีพิเศษ (เช่น Free Fly)
     private void Awake()
     {
         Instance = this;
-
         // --- เตรียม NetworkList ตามจำนวนมอนเตอร์ที่มีใน Pool ---
         p0SentCounts = new NetworkList<int>();
         p1SentCounts = new NetworkList<int>();
     }
+
+    private void OnEnable()
+    {
+        Debug.Log("<color=green>[Cursor]</color> GameManager: OnEnable (Script has been enabled)");
+        if (currentPhase != null) currentPhase.OnValueChanged += OnPhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        Debug.Log($"<color=red>[Cursor]</color> GameManager: OnDisable (Script disabled). ActiveSelf: {gameObject.activeSelf}, ActiveInHierarchy: {gameObject.activeInHierarchy}");
+        
+        // ตรวจสอบลำดับ Hierarchy ว่าใครเป็นคนพาสั่งปิด
+        Transform current = transform;
+        string path = current.name;
+        while (current.parent != null)
+        {
+            current = current.parent;
+            path = current.name + "/" + path;
+        }
+        Debug.Log($"<color=red>[Cursor]</color> GameManager Hierarchy Path: {path}");
+
+        if (currentPhase != null) currentPhase.OnValueChanged -= OnPhaseChanged;
+    }
+
 
     void Start()
     {
@@ -90,7 +120,7 @@ public class GameManager : NetworkBehaviour
         if (globalSpawner != null) Debug.Log("<color=green>[GameManager]</color> Global Spawner Linked.");
 
         displayPhase = currentPhase.Value;
-        currentPhase.OnValueChanged += OnPhaseChanged;
+        // currentPhase.OnValueChanged += OnPhaseChanged; // ย้ายไป OnEnable แล้ว
         
         // ผูก Event ให้ UI อัปเดตเมื่อค่าใน List เปลี่ยนครับ
         p0SentCounts.OnListChanged += (changeEvent) => UpdatePhaseUI(currentPhase.Value);
@@ -136,7 +166,10 @@ public class GameManager : NetworkBehaviour
             GenerateSystemWave();
         }
 
-        Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b>");
+        // ⭐ แจ้งเตือน UI ให้รีเฟรชข้อมูลทั้งหมดตอนเน็ตเวิร์คพร้อม (แก้บัคชุดข้อมูลตอน Join เข้าไปใหม่)
+        OnPhaseChangedGlobal?.Invoke(currentPhase.Value);
+
+        Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b> | Draft: {systemWaveDraft.Value}");
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
@@ -144,6 +177,8 @@ public class GameManager : NetworkBehaviour
         displayPhase = newValue;
         UpdatePhaseUI(newValue);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
+        isManualUnlock = false; // รีเซ็ตเมื่อเปลี่ยนเฟส
+        currentModeWantsLock = false; // รีเซ็ตโหมดพิเศษเมื่อเปลี่ยนเฟส
         UpdateCursorState(newValue);
 
         if (newValue == GamePhase.Planning)
@@ -212,6 +247,26 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
 {
+    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (Esc) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
+    if (Input.GetKeyDown(KeyCode.Escape))
+    {
+        isManualUnlock = !isManualUnlock;
+        Debug.Log($"<color=red>[Cursor]</color> Esc Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
+        
+        if (isManualUnlock)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            UpdateCursorState(currentPhase.Value);
+        }
+    }
+
+    // --- 🎮 [Debug] Heartbeat ทุกๆ 300 เฟรม (ประมาณ 5 วินาที) ---
+    if (Time.frameCount % 300 == 0) Debug.Log($"<color=grey>[Cursor]</color> GameManager Alive (Phase: {currentPhase.Value})");
+    
     // อัปเดตตัวแปร Debug ให้เห็นใน Inspector เรียลไทม์
     debugP0Dead = p0Dead.Value;
     debugP1Dead = p1Dead.Value;
@@ -249,48 +304,65 @@ public class GameManager : NetworkBehaviour
         if (nextPhaseButtonText != null) nextPhaseButtonText.text = "Next Phase";
     }
 
-    // ถ้าอยู่ในเฟส Combat และกด Esc ให้ปลดล็อกเมาส์มาชั่วคราวเพื่อกดปุ่มได้
-    if (currentPhase.Value == GamePhase.Combat && Input.GetKeyDown(KeyCode.Escape))
+
+    // ถ้าเมาส์เป็นอิสระอยู่ (และไม่ได้เปิดโหมดแมนนวล) ให้กลับมาล็อคใหม่เมื่อคลิกจอ (สำหรับ Combat หรือ Free Fly)
+    if (!isManualUnlock && Cursor.lockState != CursorLockMode.Locked && Input.GetMouseButtonDown(0))
     {
-        if (Cursor.lockState == CursorLockMode.Locked)
+        bool shouldModeLock = (currentPhase.Value == GamePhase.Combat) || (currentPhase.Value == GamePhase.Planning && currentModeWantsLock);
+        if (shouldModeLock)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            ApplyCursorState(true);
         }
     }
 }
+    /// <summary>⭐ เรียกจาก Camera Controller เพื่อบอกว่าโหมดนี้ต้องการล็อคเมาส์หรือไม่ (เช่น Free Fly)</summary>
+    public void SetCursorMode(bool wantsLock)
+    {
+        currentModeWantsLock = wantsLock;
+        UpdateCursorState(currentPhase.Value);
+    }
+
     private void UpdateCursorState(GamePhase phase)
     {
+        // Debug เพื่อดูว่าเรากำลังสั่งปิดอะไรบ้าง
+        Debug.Log($"<color=white>[Cursor]</color> UpdateCursorState: Phase={phase}. Crosshair={crosshairObject?.name}, SkillUI={skillUI?.name}, NextButton={nextPhaseButton?.name}");
+
+        // โหมดวางแผนแบบปกติ -> ไม่ล็อคเมาส์ (ยกเว้นเข้า Free Fly)
         if (phase == GamePhase.Planning)
+        {
+            ApplyCursorState(currentModeWantsLock); 
+
+            SafeSetActive(crosshairObject, false, "GameManager.UpdateCursorState");
+            SafeSetActive(skillUI,         false, "GameManager.UpdateCursorState");
+            SafeSetActive(nextPhaseButton, true,  "GameManager.UpdateCursorState");
+        }
+        else // โหมดต่อสู้ -> ล็อคเมาส์
+        {
+            ApplyCursorState(true); // Default combat is locked mouse
+
+            SafeSetActive(crosshairObject, true,  "GameManager.UpdateCursorState");
+            SafeSetActive(skillUI,         true,  "GameManager.UpdateCursorState");
+            SafeSetActive(nextPhaseButton, false, "GameManager.UpdateCursorState");
+        }
+    }
+
+    /// <summary>
+    /// สั่งการล็อคเมาส์จริงๆ โดยเช็คสถานะ manualUnlock ด้วย
+    /// </summary>
+    public void ApplyCursorState(bool shouldLock)
+    {
+        // ถ้าผู้ใช้สั่งปลดล็อคเมาส์เองถาวร (Esc) ก็ต้องปล่อยให้มัน Unlocked
+        if (isManualUnlock)
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            // ปิด crosshair + skill UI ในเฟส Planning
-            if (crosshairObject != null)
-                crosshairObject.SetActive(false);
-            if (skillUI != null)
-                skillUI.SetActive(false);
-            // โชว์ปุ่ม Next Phase ในเฟส Planning
-            if (nextPhaseButton != null)
-                nextPhaseButton.SetActive(true);
+            Debug.Log($"<color=white>[Cursor]</color> ApplyCursorState({shouldLock}) -> Forced <b>Unlocked</b> (ManualUnlock is ON)");
         }
         else
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            // เปิด crosshair + skill UI ในเฟส Combat
-            if (crosshairObject != null)
-                crosshairObject.SetActive(true);
-            if (skillUI != null)
-                skillUI.SetActive(true);
-            // ซ่อนปุ่ม Next Phase ในเฟส Combat
-            if (nextPhaseButton != null)
-                nextPhaseButton.SetActive(false);
+            Cursor.lockState = shouldLock ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !shouldLock;
+            Debug.Log($"<color=white>[Cursor]</color> ApplyCursorState({shouldLock}) -> Result: <b>{Cursor.lockState}</b>");
         }
     }
 
@@ -340,7 +412,8 @@ private void UpdatePhaseUI(GamePhase phase)
             }
         }
 
-        systemWaveDraft.Value = draft;
+        systemWaveDraft.SetDirty(true); // บังคับให้ Sync ทันที
+        systemWaveDraft.Value = new FixedString512Bytes(draft);
         Debug.Log($"<color=orange>[GameManager]</color> Generated Wave {currentWave.Value}: {draft} (Total: {totalToSpawn})");
 
         if (enemyStatsSOs != null)
@@ -464,5 +537,28 @@ public void SetPlayerReadyServerRpc(bool ready, RpcParams rpcParams = default)
         else p1Dead.Value = true;
         
         Debug.Log($"<color=cyan>[GameManager]</color> p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
+    }
+
+    // ==================== [Safety Utility] ====================
+    
+    /// <summary>⭐ ใช้แทน SetActive เพื่อป้องกันการเผลอไปปิด Object ที่เป็นทางผ่านของ Manager</summary>
+    public static void SafeSetActive(GameObject target, bool active, string callerName = "")
+    {
+        if (target == null) return;
+        
+        // ถ้าจะสั่ง "ปิด" ให้เช็คก่อนว่าเป้าหมายกระทบถึง GameManager ไหม
+        if (active == false && Instance != null)
+        {
+            // IsChildOf จะคืนค่า True ถ้า target คือตัวเราเอง หรือเป็นพ่อนางสภา (Hierarchy) ของเรา
+            if (target == Instance.gameObject || Instance.transform.IsChildOf(target.transform))
+            {
+                 Debug.LogError($"<color=red>[Cursor Utility]</color> <b>CRITICAL SAFETY BLOCKED!</b> " +
+                                $"Script <b>'{callerName}'</b> tried to deactivate <b>'{target.name}'</b>, " +
+                                $"which would KILL GameManager! <b>Action skipped.</b>");
+                 return;
+            }
+        }
+        
+        target.SetActive(active);
     }
 }

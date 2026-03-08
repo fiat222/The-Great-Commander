@@ -185,15 +185,15 @@ public class ShopManager : MonoBehaviour
     {
         if (shopPanel != null)
         {
-            shopPanel.SetActive(true);
+            GameManager.SafeSetActive(shopPanel, true, "ShopManager");
             SetActiveTabVisual(0);
         }
-        if (openShopButton != null) openShopButton.SetActive(false);
+        GameManager.SafeSetActive(openShopButton, false, "ShopManager");
     }
 
     public void CloseShop()
     {
-        if (shopPanel != null) shopPanel.SetActive(false);
-        if (openShopButton != null) openShopButton.SetActive(true);
+        GameManager.SafeSetActive(shopPanel, false, "ShopManager");
+        GameManager.SafeSetActive(openShopButton, true, "ShopManager");
     }
 }
