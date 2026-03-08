@@ -182,6 +182,12 @@ public class PlacementManager : MonoBehaviour
         if (sell != null)
             sell.Setup(currentMinionData, gridX, gridY);
 
+        // เล่นเสียงเมื่อวางสำเร็จ
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(AudioManager.SoundType.Place);
+        }
+
         Destroy(ghost);
         ghost = null;
         isPlacing = false;

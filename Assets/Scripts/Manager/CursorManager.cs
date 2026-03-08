@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using UnityEngine.InputSystem;
 
 public class CursorManager : MonoBehaviour
@@ -12,7 +12,7 @@ public class CursorManager : MonoBehaviour
 
     void Update()
     {
-        // ‡™Á§ªÿË¡ ESC ·∫∫ Input System „À¡Ë
+        // Toggle cursor with G key
         if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame)
         {
             ToggleCursor();

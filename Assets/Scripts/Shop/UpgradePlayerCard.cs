@@ -1,11 +1,7 @@
-using UnityEngine;
+๏ปฟusing UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// การ์ด Upgrade Player (Warrior + Archer พร้อมกัน)
-/// วางไว้ในแท็บ Upgrade (ไม่ถูก generate)
-/// </summary>
 public class UpgradePlayerCard : MonoBehaviour
 {
     [Header("UI References")]
@@ -39,8 +35,10 @@ public class UpgradePlayerCard : MonoBehaviour
     private void OnUpgradeClicked()
     {
         if (UpgradeManager.Instance != null)
+        {
             UpgradeManager.Instance.UpgradePlayer();
-
+        }
+        
         RefreshUI();
     }
 
@@ -76,3 +74,4 @@ public class UpgradePlayerCard : MonoBehaviour
             upgradeButton.interactable = !isMax && currentMoney >= cost;
     }
 }
+
