@@ -241,13 +241,13 @@ public class PlacementManager : MonoBehaviour
         if (phase == GamePhase.Combat)
         {
             // Planning→Combat: Minion อยู่เพื่อสู้ แค่ซ่อนปุ่ม Sell
-            if (sellButton != null) sellButton.SetActive(false);
+            GameManager.SafeSetActive(sellButton, false, "PlacementManager");
         }
         else // Planning (Combat→Planning)
         {
             // Combat→Planning: ลบ Minion ทั้งหมด เริ่มรอบใหม่
             DespawnAllMinions();
-            if (sellButton != null) sellButton.SetActive(true);
+            GameManager.SafeSetActive(sellButton, true, "PlacementManager");
         }
     }
 

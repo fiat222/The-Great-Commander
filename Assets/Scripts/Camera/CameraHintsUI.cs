@@ -12,6 +12,7 @@ public class CameraHintsUI : MonoBehaviour
     public TopDownCameraController cameraController;
 
     [Header("Panels")]
+    public GameObject mainPanel; // ⭐ ลาก Panel หลักของ UI นี้มาใส่ตรงนี้
     public GameObject rtsModePanel;
     public GameObject freeFlyModePanel;
 
@@ -50,7 +51,15 @@ public class CameraHintsUI : MonoBehaviour
     private void OnPhaseChanged(GamePhase phase)
     {
         // แสดง UI เฉพาะเฟส Planning เท่านั้น
-        gameObject.SetActive(phase == GamePhase.Planning);
+        if (mainPanel != null)
+        {
+            GameManager.SafeSetActive(mainPanel, phase == GamePhase.Planning, "CameraHintsUI (mainPanel)");
+        }
+        else
+        {
+            // ถ้าไม่ได้ใส่ mainPanel จะแจ้งเตือน
+            Debug.LogWarning("[CameraHintsUI] กรุณาลาก Main Panel มาใส่ใน Inspector เพื่อให้ระบบซ่อน UI ได้ถูกต้อง");
+        }
     }
 
     private void Update()
@@ -59,8 +68,8 @@ public class CameraHintsUI : MonoBehaviour
 
         bool freeFly = cameraController.IsFreeFly;
 
-        if (rtsModePanel     != null) rtsModePanel.SetActive(!freeFly);
-        if (freeFlyModePanel != null) freeFlyModePanel.SetActive(freeFly);
+        if (rtsModePanel     != null) GameManager.SafeSetActive(rtsModePanel,     !freeFly, "CameraHintsUI");
+        if (freeFlyModePanel != null) GameManager.SafeSetActive(freeFlyModePanel, freeFly,  "CameraHintsUI");
 
         if (!freeFly) UpdateRTS();
         else          UpdateFreeFly();

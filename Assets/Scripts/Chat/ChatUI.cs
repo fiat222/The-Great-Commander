@@ -73,15 +73,13 @@ public class ChatUI : MonoBehaviour
             ChatManager.Instance?.SendMessage(msg);
 
         isOpen = false;
-        chatBG.SetActive(false);
-        inputField.gameObject.SetActive(false);
+        GameManager.SafeSetActive(chatBG, false, "ChatUI");
+        GameManager.SafeSetActive(inputField.gameObject, false, "ChatUI");
         inputField.text = "";
 
         if (GameManager.Instance != null)
         {
-            bool isCombat = GameManager.Instance.CurrentPhase == GamePhase.Combat;
-            Cursor.lockState = isCombat ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !isCombat;
+            GameManager.Instance.ApplyCursorState(GameManager.Instance.CurrentPhase == GamePhase.Combat);
         }
     }
 

@@ -35,6 +35,45 @@ public class CameraManager : MonoBehaviour
             SetPhaseCamera(GameManager.Instance.CurrentPhase);
     }
 
+    private void OnEnable()
+    {
+        // ⭐ Global override: ให้ Cinemachine อ่านค่าผ่านฟังก์ชันของเรา เพื่อให้เราสั่งหยุดหมุนได้ตอนปลดล็อกเมาส์
+        CinemachineCore.GetInputAxis = HandleCinemachineInput;
+    }
+
+    private void OnDisable()
+    {
+        CinemachineCore.GetInputAxis = null;
+    }
+
+    private float HandleCinemachineInput(string axisName)
+    {
+        // ถ้าเมาส์ไม่ได้ถูกล็อก (เช่น กด Esc หรืออยู่ในเฟส Planning) ให้คืนค่า 0 เพื่อไม่ให้กล้องหมุน
+        if (Cursor.lockState != CursorLockMode.Locked)
+            return 0;
+
+        return Input.GetAxis(axisName);
+    }
+
+    private void Update()
+    {
+        bool isLocked = Cursor.lockState == CursorLockMode.Locked;
+        
+        // --- ส่วนที่ 1: บล็อก InputProvider ทั่วทั้งซีน (เพื่อความชัวร์ที่สุด) ---
+        // บางครั้ง InputProvider อาจจะไม่ได้อยู่ที่ตัวกล้องโดยตรง แต่อยู่ที่ Brain หรือ Player
+        var allProviders = Object.FindObjectsByType<CinemachineInputProvider>(FindObjectsSortMode.None);
+        foreach (var provider in allProviders)
+        {
+            if (provider.enabled != isLocked)
+            {
+                provider.enabled = isLocked;
+            }
+        }
+
+        // --- ส่วนที่ 2: บล็อก Legacy Axes (ผ่าน HandleCinemachineInput ที่เรา override ไว้ใน OnEnable) ---
+        // โค้ดส่วนนี้ทำงานอัตโนมัติผ่าน OnEnable/OnDisable
+    }
+
     public void RegisterPlayerCameras(CinemachineCamera freeLook, CinemachineCamera targetLock)
     {
         this.freelookCamera    = freeLook;
