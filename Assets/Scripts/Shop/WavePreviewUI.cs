@@ -23,6 +23,7 @@ public class WavePreviewUI : MonoBehaviour
     // เก็บจำนวนศัตรูแยกตามประเภท
     private Dictionary<int, int> incomingCounts = new Dictionary<int, int>();
     private Dictionary<int, int> sentCounts = new Dictionary<int, int>();
+    private Dictionary<int, int> deathCounts = new Dictionary<int, int>(); // ⭐ เก็บยอดที่ตายไปแล้วในเวฟนี้
     private List<WaveIconItem> combatIcons = new List<WaveIconItem>();
 
     private bool hasInitialized = false;
@@ -52,6 +53,7 @@ public class WavePreviewUI : MonoBehaviour
 
         GameManager.Instance.p0SentCounts.OnListChanged += OnSentListChanged;
         GameManager.Instance.p1SentCounts.OnListChanged += OnSentListChanged;
+        GameManager.OnEnemyIncoming += HandleIncomingEnemy;
         
         hasInitialized = true;
         RefreshLayout();
@@ -68,6 +70,7 @@ public class WavePreviewUI : MonoBehaviour
 
         GameManager.Instance.p0SentCounts.OnListChanged -= OnSentListChanged;
         GameManager.Instance.p1SentCounts.OnListChanged -= OnSentListChanged;
+        GameManager.OnEnemyIncoming -= HandleIncomingEnemy;
 
         hasInitialized = false;
     }
@@ -79,6 +82,10 @@ public class WavePreviewUI : MonoBehaviour
 
     private void RefreshLayoutOnPhaseChange(GamePhase phase)
     {
+        if (phase == GamePhase.Planning)
+        {
+            deathCounts.Clear(); // รีเซ็ตยอดตายเมื่อเริ่มรอบวางแผนใหม่
+        }
         RefreshLayout();
     }
 
@@ -157,7 +164,20 @@ public class WavePreviewUI : MonoBehaviour
             }
         }
 
-        // 4. อัปเดต UI Containers
+        // 4. หักยอดที่ตายไปแล้ว (เฉพาะช่วง Combat)
+        if (!isPlanning)
+        {
+            foreach (var pair in deathCounts)
+            {
+                if (incomingCounts.ContainsKey(pair.Key))
+                {
+                    incomingCounts[pair.Key] -= pair.Value;
+                    if (incomingCounts[pair.Key] < 0) incomingCounts[pair.Key] = 0;
+                }
+            }
+        }
+
+        // 5. อัปเดต UI Containers
         UpdateContainerWithCounts(planningContainer, incomingCounts, planningIconPrefab, true);
         UpdateContainerWithCounts(combatContainer, incomingCounts, combatIconPrefab, false);
         UpdateContainerWithCounts(sentEnemiesContainer, sentCounts, sentIconPrefab ?? planningIconPrefab, false);
@@ -199,21 +219,23 @@ public class WavePreviewUI : MonoBehaviour
         }
     }
 
+    private void HandleIncomingEnemy(int typeIndex)
+    {
+        // เมื่อมีมอนสเตอร์ใหม่พุ่งเข้ามา เราแค่สั่ง RefreshLayout
+        // ซึ่งจะไปดึงค่าใหม่จาก NetworkList ที่ GameManager อัปเดตให้แล้วครับ
+        RefreshLayout();
+    }
+
     private void HandleEnemyDeath(int typeIndex)
     {
         // ⚠️ เราจะลดจำนวนเฉพาะในเฟส Combat เท่านั้นครับ
         if (GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
-        if (incomingCounts.ContainsKey(typeIndex))
-        {
-            if (incomingCounts[typeIndex] > 0)
-            {
-                incomingCounts[typeIndex]--;
-                
-                // อัปเดต UI เฉพาะใน Combat Panel (เพื่อให้ดูเรียลไทม์)
-                UpdateCombatUIOnly();
-            }
-        }
+        if (deathCounts.ContainsKey(typeIndex)) deathCounts[typeIndex]++;
+        else deathCounts[typeIndex] = 1;
+
+        // สั่ง Refresh เพื่อหักลบกลบหนี้และแสดงผลใหม่
+        RefreshLayout();
     }
 
     private void UpdateCombatUIOnly()

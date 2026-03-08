@@ -92,6 +92,7 @@ public class PlayerController : MonoBehaviour
     private bool isDead;
     public bool IsDead => isDead;
     public bool IsDodging => isDodging;
+    private float flinchImmunityTimer; // ⭐ บัฟกันชะงักหลัง Parry สำเร็จ
     private Coroutine rotationCoroutine;
 
     public bool isMovementLocked { get; set; }
@@ -207,6 +208,7 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
 
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
+        if (flinchImmunityTimer > 0) flinchImmunityTimer -= Time.deltaTime;
 
         if (!inputEnabled)
         {
@@ -660,6 +662,11 @@ public class PlayerController : MonoBehaviour
                 GameObject vfx = Instantiate(parryHitVFXPrefab, vfxSpawnPos, Quaternion.identity);
                 Destroy(vfx, 2f);
             }
+
+            // ⭐ ให้บัฟกันชะงัก 3 วินาที
+            flinchImmunityTimer = 3f;
+            Debug.Log("<color=cyan>[Player]</color> ได้รับบัฟกันชะงัก (Flinch Immunity) 3 วินาที!");
+
             return;
         }
 
@@ -668,8 +675,21 @@ public class PlayerController : MonoBehaviour
         var sInfo = animator.GetCurrentAnimatorStateInfo(0);
         var nInfo = animator.GetNextAnimatorStateInfo(0);
         bool isCastingSkill = sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
+        bool hasFlinchImmunity = flinchImmunityTimer > 0;
 
-        if (!isCastingSkill)
+        // ⭐ เล่นเอฟเฟคโดนฟัน (VFX/Sound) เสมอแม้จะเป็น Super Armor
+        if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
+
+        if (hitVFXPrefab != null)
+        {
+            Vector3 vfxPos = hitVFXSpawnPoint != null
+                ? hitVFXSpawnPoint.position
+                : transform.position + Vector3.up * 1.5f;
+            GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.identity);
+            Destroy(vfx, 2f);
+        }
+
+        if (!isCastingSkill && !hasFlinchImmunity)
         {
             if (animator != null)
             {
@@ -682,17 +702,6 @@ public class PlayerController : MonoBehaviour
 
             if (weaponHandler != null) weaponHandler.DisableHitbox();
 
-            if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
-
-            if (hitVFXPrefab != null)
-            {
-                Vector3 vfxPos = hitVFXSpawnPoint != null
-                    ? hitVFXSpawnPoint.position
-                    : transform.position + Vector3.up * 1.5f;
-                GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.identity);
-                Destroy(vfx, 2f);
-            }
-
             Vector3 knockbackDir = -transform.forward;
             if (attackerPosition != default)
             {
@@ -703,14 +712,27 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จากสกิล!");
+            if (isCastingSkill)
+                Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จากสกิล!");
+            else if (hasFlinchImmunity)
+                Debug.Log("<color=cyan>[Player]</color> ทนทานการโจมตี (Super Armor) จาก Parry Buff!");
         }
 
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
+        string armorType = "";
+
+        if (isCastingSkill || hasFlinchImmunity)
+        {
+            // ⭐ ลดดาเมจลง 60% (เหลือ 40%)
+            actual = Mathf.Max(1, Mathf.RoundToInt(actual * 0.4f));
+            armorType = isCastingSkill ? " (Super Armor From Skill)" : " (Super Armor From Parry Buff)";
+        }
+
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
 
-        Debug.Log($"<color=orange>[Player]</color> {gameObject.name} took {actual} damage. HP: {currentHP}/{maxHP}");
+        string buffInfo = !string.IsNullOrEmpty(armorType) ? $"<color=cyan>{armorType} [-60% Damage]</color> " : "";
+        Debug.Log($"<color=orange>[Player]</color> {gameObject.name} took {actual} damage{buffInfo}. HP: {currentHP}/{maxHP}");
         if (currentHP <= 0) Die();
     }
 
