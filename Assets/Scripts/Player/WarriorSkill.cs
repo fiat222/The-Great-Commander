@@ -137,6 +137,8 @@ public class WarriorSkill : MonoBehaviour
 
     private void HandleSkillInput()
     {
+        if (ChatManager.Instance != null && ChatManager.Instance.IsChatOpen) return;
+        
         if (Input.GetKeyDown(KeyCode.R) && !isOnCooldown)
         {
             var sInfo = animator.GetCurrentAnimatorStateInfo(0);

@@ -98,6 +98,8 @@ public class PlayerController : MonoBehaviour
     public bool isMovementLocked { get; set; }
 
     private bool inputEnabled = true;
+    private bool mouseEnabled => Cursor.lockState == CursorLockMode.Locked;
+    private bool isChatOpen => ChatManager.Instance != null && ChatManager.Instance.IsChatOpen;
 
     // ==================== Lifecycle ====================
 
@@ -210,7 +212,7 @@ public class PlayerController : MonoBehaviour
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
         if (flinchImmunityTimer > 0) flinchImmunityTimer -= Time.deltaTime;
 
-        if (!inputEnabled)
+        if (!inputEnabled || isChatOpen)
         {
             if (!isDodging) ApplyGravityOnly();
             return;
@@ -218,8 +220,11 @@ public class PlayerController : MonoBehaviour
 
         HandleTargetLockInput();
         HandleRollInput();
-        HandleParryInput();
-        HandleAttackInput();
+        if (mouseEnabled)
+        {
+            HandleParryInput();
+            HandleAttackInput();
+        }
         CheckAnimationLogic();
         UpdateWeaponEffect();
 
