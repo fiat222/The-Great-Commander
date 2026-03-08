@@ -274,7 +274,24 @@ public class EnemyAI : MonoBehaviour
 
     private void UpdateTargetsAndDistances()
     {
-        // ถ้า playerTransform หาย (เช่น respawn ใหม่) ให้ค้นหาใหม่
+        // 1. ค้นหาป้อม/ฐานที่ใกล้ที่สุด (รองรับหลายป้อม)
+        GameObject[] bases = GameObject.FindGameObjectsWithTag("Base");
+        float shortestBaseDist = Mathf.Infinity;
+        Transform closestBase = null;
+
+        foreach (GameObject b in bases)
+        {
+            float dist = DistanceToEdge(b.transform);
+            if (dist < shortestBaseDist)
+            {
+                shortestBaseDist = dist;
+                closestBase = b.transform;
+            }
+        }
+        baseTransform = closestBase;
+        distanceToBase = shortestBaseDist;
+
+        // 2. ถ้า playerTransform หาย (เช่น respawn ใหม่) ให้ค้นหาใหม่
         if (playerTransform == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
@@ -285,11 +302,7 @@ public class EnemyAI : MonoBehaviour
         if (playerTransform != null)
             distanceToPlayer = DistanceToEdge(playerTransform);
 
-        // อัปเดตระยะ Base
-        if (baseTransform != null)
-            distanceToBase = DistanceToEdge(baseTransform);
-
-        // ค้นหา Minion ที่ใกล้ที่สุดในระยะ detectionRange ถ้ายังไม่มีเป้าหมาย Minion
+        // 3. ค้นหา Minion ที่ใกล้ที่สุดในระยะ detectionRange ถ้ายังไม่มีเป้าหมาย Minion
         if (minionTransform == null || !minionTransform.gameObject.activeInHierarchy)
         {
             FindClosestMinion();
@@ -397,11 +410,11 @@ public class EnemyAI : MonoBehaviour
                 else if (distanceToPlayer <= GetCurrentAttackRange() * 0.8f && !inCooldown) currentState = EnemyState.AttackPlayer;
                 break;
 
-            // --- ตีฐาน / เดินไปฐาน → ล็อคสิ่งแรกที่เข้ามาในระยะ ---
+            // --- ตีฐาน / เดินไปฐาน → ล็อคป้อมเป็นอันดับหนึ่ง (ไม่วอกแวก) ---
             case EnemyState.AttackBase:
-                if (baseTransform == null || distanceToBase > baseAttackRange + 1f) currentState = EnemyState.MoveToBase;
-                else if (minionTransform != null && distanceToMinion <= detectionRange) currentState = EnemyState.ChaseMinion;
-                else if (!playerDead && playerTransform != null && distanceToPlayer <= detectionRange) currentState = EnemyState.ChasePlayer;
+                if (baseTransform == null || distanceToBase > baseAttackRange + 1f) 
+                    currentState = EnemyState.MoveToBase;
+                // [Priority Fix] ลบเงื่อนไขการหันไปไล่ Player/Minion ออก เพื่อให้ตีป้อมจนแตก
                 break;
 
             case EnemyState.MoveToBase:
@@ -521,6 +534,7 @@ public class EnemyAI : MonoBehaviour
                 if (playerTransform != null)
                 {
                     agent.isStopped = false;
+                    agent.stoppingDistance = 0f; // Reset stopping distance
                     bool inCooldown = Time.time < nextAttackTime;
                     float currentAtkRng = GetCurrentAttackRange();
                     float sRange = combatSO != null ? combatSO.strafeRange : currentAtkRng + 2f;
@@ -651,6 +665,7 @@ public class EnemyAI : MonoBehaviour
                 if (minionTransform != null)
                 {
                     agent.isStopped = false;
+                    agent.stoppingDistance = 0f; // Reset stopping distance
                     bool inCooldownM = Time.time < nextAttackTime;
                     float currentAtkRngM = GetCurrentAttackRange();
                     float sRangeM = combatSO != null ? combatSO.strafeRange : currentAtkRngM + 2f;

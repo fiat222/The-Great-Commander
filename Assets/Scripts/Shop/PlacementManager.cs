@@ -81,6 +81,7 @@ public class PlacementManager : MonoBehaviour
             ToggleSellMode();
 
         if (data == null) return;
+        if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Planning) return; // ⭐ บล็อกตอน Combat
         if (Money < data.cost) return;
         if (isPlacing) return;
 

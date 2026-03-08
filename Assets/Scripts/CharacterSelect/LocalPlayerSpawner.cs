@@ -54,6 +54,9 @@ public class LocalPlayerSpawner : MonoBehaviour
 
     private void SpawnMyPlayer()
     {
+        // ⭐ ป้องกันการเกิดซ้ำ (ถ้ามีตัวเดิมอยู่แล้วไม่ต้องทำอะไร)
+        if (spawnedPlayer != null) return;
+
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsConnectedClient)
         {
             Invoke(nameof(SpawnMyPlayer), 0.5f);

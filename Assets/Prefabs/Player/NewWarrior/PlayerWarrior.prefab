@@ -2726,9 +2726,14 @@ MonoBehaviour:
   skillIconTag: SkillIcon
   cooldownFillTag: SkillCooldownFill
   statusTextTag: SkillStatusText
+  skillOverlayTag: SkillActiveOverlay
+  specialOverlayTag: SkillSpecialOverlay
   colorReady: {r: 1, g: 1, b: 1, a: 1}
   colorActive: {r: 0.7058824, g: 0.6901961, b: 0.6745098, a: 1}
   colorCooldown: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  colorOverlay: {r: 1, g: 1, b: 1, a: 0.35}
+  colorClear: {r: 0, g: 0, b: 0, a: 0}
+  hintUI: {fileID: 0}
 --- !u!114 &8222893807471953391
 MonoBehaviour:
   m_ObjectHideFlags: 0
