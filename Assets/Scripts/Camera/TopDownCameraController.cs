@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Cinemachine;
 
 /// <summary>
 /// Planning Phase Camera — RTS mode + Free Fly mode (กด F สลับ)
@@ -56,6 +57,24 @@ public class TopDownCameraController : MonoBehaviour
     private float   flyPitch;
 
     // ─────────────────────────────────────────────────────────────────────────
+    private void OnEnable()
+    {
+        GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+    }
+
+    private void OnPhaseChanged(GamePhase phase)
+    {
+        // เมื่อเปลี่ยนเฟส ให้ยกเลิกโหมด Free Fly ทันที เพื่อไม่ให้กล้องขยับค้างในเบื้องหลัง
+        if (isFreeFly)
+        {
+            SetMode(false);
+        }
+    }
 
     private void Start()
     {
@@ -107,18 +126,11 @@ public class TopDownCameraController : MonoBehaviour
     {
         isFreeFly = freeFly;
 
-        // สลับ Cursor
-        if (freeFly)
+        // บอก GameManager ว่าเราต้องการล็อคเมาส์หรือไม่ (Free Fly = ล็อค)
+        if (GameManager.Instance != null)
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible   = false;
+            GameManager.Instance.SetCursorMode(freeFly);
         }
-        else
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
-        }
-
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -128,7 +140,7 @@ public class TopDownCameraController : MonoBehaviour
     private void UpdateRTS()
     {
         // ---------- PAN (Middle Mouse Drag) ----------
-        if (Mouse.current.middleButton.isPressed)
+        if (Mouse.current.middleButton.isPressed && Cursor.lockState == CursorLockMode.Locked)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             float yaw = transform.eulerAngles.y;
@@ -180,11 +192,17 @@ public class TopDownCameraController : MonoBehaviour
         }
 
         // Mouse Look
-        float mouseX = Mouse.current.delta.ReadValue().x * mouseSensitivity;
-        float mouseY = Mouse.current.delta.ReadValue().y * mouseSensitivity;
-        flyYaw   += mouseX;
-        flyPitch -= mouseY;
-        flyPitch  = Mathf.Clamp(flyPitch, -89f, 89f);
+        bool isLocked = Cursor.lockState == CursorLockMode.Locked;
+
+        if (isLocked)
+        {
+            float mouseX = Mouse.current.delta.ReadValue().x * mouseSensitivity;
+            float mouseY = Mouse.current.delta.ReadValue().y * mouseSensitivity;
+            flyYaw   += mouseX;
+            flyPitch -= mouseY;
+            flyPitch  = Mathf.Clamp(flyPitch, -89f, 89f);
+        }
+        
         transform.rotation = Quaternion.Euler(flyPitch, flyYaw, 0f);
 
         // Movement

@@ -436,5 +436,5 @@ public class EnemyTracker : NetworkBehaviour
     }
 
     private static void SetUI(GameObject ui, bool active)
-        { if (ui != null) ui.SetActive(active); }
+        { GameManager.SafeSetActive(ui, active, "EnemyTracker"); }
 }

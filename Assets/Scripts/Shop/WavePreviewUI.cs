@@ -94,14 +94,21 @@ public class WavePreviewUI : MonoBehaviour
         bool isPlanning = GameManager.Instance.CurrentPhase == GamePhase.Planning;
         
         // 1. จัดการ PanelVisibility
-        if (planningPanel != null) planningPanel.SetActive(isPlanning);
-        if (combatPanel != null) combatPanel.SetActive(!isPlanning);
-        if (sentEnemiesPanel != null) sentEnemiesPanel.SetActive(isPlanning); // โชว์ตัวที่เราส่งเฉพาะตอนวางแผน
+        GameManager.SafeSetActive(planningPanel,    isPlanning,  "WavePreviewUI");
+        GameManager.SafeSetActive(combatPanel,      !isPlanning, "WavePreviewUI");
+        GameManager.SafeSetActive(sentEnemiesPanel, isPlanning,  "WavePreviewUI");
 
         // 2. คำนวณ Incoming (ศัตรูที่จะมาบุกเรา)
         incomingCounts.Clear();
         string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
-        Debug.Log($"<color=cyan>[WavePreviewUI]</color> Draft value currently: '{draft}'");
+        
+        Debug.Log($"<color=cyan>[WavePreviewUI]</color> RefreshLayout: Phase={GameManager.Instance.CurrentPhase}, Draft='{draft}'");
+
+        if (GameManager.Instance.systemEnemyPool == null || GameManager.Instance.systemEnemyPool.Length == 0)
+        {
+            Debug.LogWarning("<color=red>[WavePreviewUI]</color> systemEnemyPool is NULL or EMPTY! This is likely why nothing shows.");
+        }
+
         if (!string.IsNullOrEmpty(draft))
         {
             string[] parts = draft.Split('|');
@@ -111,6 +118,10 @@ public class WavePreviewUI : MonoBehaviour
                 if (sub.Length == 2)
                     incomingCounts[int.Parse(sub[0])] = int.Parse(sub[1]);
             }
+        }
+        else
+        {
+            Debug.Log("<color=yellow>[WavePreviewUI]</color> Draft is empty string.");
         }
 
         // รวม Incoming จากที่เพื่อนส่งมา (เฉพาะใน Combat)

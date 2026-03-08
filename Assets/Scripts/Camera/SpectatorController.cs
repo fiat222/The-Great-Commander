@@ -89,8 +89,9 @@ public class SpectatorController : MonoBehaviour
         if (CameraManager.Instance != null) CameraManager.Instance.SetSpectatorActive(true);
         else if (spectatorVcam != null) spectatorVcam.Priority.Value = SPECTATOR_PRIORITY;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // บอก GameManager ว่าเราเข้าโหมดที่ต้องการล็อคเมาส์
+        if (GameManager.Instance != null) GameManager.Instance.SetCursorMode(true);
+        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
 
         Debug.Log("<color=cyan>[Spectator]</color> เข้าโหมด Spectate แล้ว");
     }
@@ -105,9 +106,12 @@ public class SpectatorController : MonoBehaviour
         if (CameraManager.Instance != null) CameraManager.Instance.SetSpectatorActive(false);
         else if (spectatorVcam != null) spectatorVcam.Priority.Value = INACTIVE_PRIORITY;
 
-        // คืน Camera ให้ตรงกับเฟสปัจจุบัน
+        // คืน Camera ให้ตรงกับเฟสปัจจุบัน และบอก GameManager ว่าเราออกจากความต้องการล็อคเมาส์
         if (CameraManager.Instance != null && GameManager.Instance != null)
+        {
             CameraManager.Instance.SetPhaseCamera(GameManager.Instance.CurrentPhase);
+            GameManager.Instance.SetCursorMode(false);
+        }
 
         Debug.Log("<color=cyan>[Spectator]</color> ออกจากโหมด Spectate แล้ว");
     }
@@ -128,6 +132,9 @@ public class SpectatorController : MonoBehaviour
 
     private void HandleLook()
     {
+        // ป้องกันกล้องหมุนเมื่อเมาส์ถูกปลดล็อก (เช่น ตอนกด Esc)
+        if (Cursor.lockState != CursorLockMode.Locked) return;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
