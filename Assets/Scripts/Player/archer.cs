@@ -110,6 +110,8 @@ public class Archer : MonoBehaviour
     private bool pendingQuickShot;
 
     private bool inputEnabled = true;
+    private bool mouseEnabled => Cursor.lockState == CursorLockMode.Locked;
+    private bool isChatOpen => ChatManager.Instance != null && ChatManager.Instance.IsChatOpen;
 
     // ==================== Lifecycle ====================
 
@@ -232,7 +234,7 @@ public class Archer : MonoBehaviour
 
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
 
-        if (!inputEnabled)
+        if (!inputEnabled || isChatOpen)
         {
             if (!isDodging) ApplyGravityOnly();
             return;
@@ -240,7 +242,8 @@ public class Archer : MonoBehaviour
 
         HandleTargetLockInput();
         HandleRollInput();
-        HandleAimAndShootInput();
+        if (mouseEnabled)
+            HandleAimAndShootInput();
         CheckAnimationLogic();
 
         if (!isDodging)

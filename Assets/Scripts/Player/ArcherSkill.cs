@@ -164,6 +164,8 @@ public class ArcherSkill : MonoBehaviour
 
     private void HandleInput()
     {
+        if (ChatManager.Instance != null && ChatManager.Instance.IsChatOpen) return;
+        
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (isSkillActive)

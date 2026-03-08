@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7523719087965398692}
   - component: {fileID: 2098011334478904076}
   - component: {fileID: 4819869562914563818}
+  - component: {fileID: 6365136959317084943}
   m_Layer: 0
   m_Name: TargetLockCamera
   m_TagString: Untagged
@@ -147,6 +148,18 @@ MonoBehaviour:
   FovRange: {x: 1, y: 100}
   DollyRange: {x: -100, y: 100}
   OrthoSizeRange: {x: 1, y: 1000}
+--- !u!114 &6365136959317084943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 77279710008274133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2777468596f035845a6c16a6803e8184, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraInputBlocker
 --- !u!1 &244403281665110954
 GameObject:
   m_ObjectHideFlags: 0
@@ -500,7 +513,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3811231902
+  GlobalObjectIdHash: 2323391265
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1389,6 +1402,7 @@ GameObject:
   - component: {fileID: 4380765918518242798}
   - component: {fileID: 1389365402859017034}
   - component: {fileID: 7228761192188230904}
+  - component: {fileID: 6734695879765904337}
   m_Layer: 0
   m_Name: FreelookCamera
   m_TagString: Untagged
@@ -1604,6 +1618,18 @@ MonoBehaviour:
         DecelTime: 0
   PlayerIndex: -1
   AutoEnableInputs: 1
+--- !u!114 &6734695879765904337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3813345238951539526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2777468596f035845a6c16a6803e8184, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraInputBlocker
 --- !u!1 &3840006127757289356
 GameObject:
   m_ObjectHideFlags: 0
