@@ -76,6 +76,11 @@ public class AudioManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject); // BGM ไม่ขาดเมื่อ load scene
 
+        // โหลดค่า Volume จาก PlayerPrefs (เพื่อให้เสียงที่เซฟไว้ทำงานตั้งแต่เปิดเกม)
+        AudioListener.volume = PlayerPrefs.GetFloat("MasterVolume", 1f);
+        bgmVolume = PlayerPrefs.GetFloat("BGMVolume", 0.8f);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
+
         // ตั้งค่า BGM Source
         SetupBGMSource(bgmSource);
 
