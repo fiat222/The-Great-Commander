@@ -8,9 +8,9 @@ public class ChatUI : MonoBehaviour
     public static ChatUI Instance { get; private set; }
 
     [Header("References")]
-    public GameObject chatBG;                  // พื้นหลัง+ScrollView ซ่อน/แสดงตาม isOpen
-    public Transform floatingContainer;        // Content ลอย (แสดงตลอด)
-    public Transform scrollContainer;          // Content ใน ScrollView
+    public GameObject chatBG;
+    public Transform floatingContainer;
+    public Transform scrollContainer;
     public TMP_InputField inputField;
     public ScrollRect scrollRect;
     public GameObject messagePrefab;
@@ -47,13 +47,15 @@ public class ChatUI : MonoBehaviour
         inputField.gameObject.SetActive(true);
         inputField.text = "";
 
-        // ลบ floating ทั้งหมดเมื่อเปิด chat
         foreach (Transform child in floatingContainer)
             Destroy(child.gameObject);
         floatingCount = 0;
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // ⭐ แจ้งว่าแชทเปิดอยู่ → บล็อก input ตัวละครและกล้อง
+        ChatManager.Instance?.SetChatOpen(true);
 
         StartCoroutine(ActivateInputNextFrame());
     }
@@ -77,17 +79,17 @@ public class ChatUI : MonoBehaviour
         GameManager.SafeSetActive(inputField.gameObject, false, "ChatUI");
         inputField.text = "";
 
+        // ⭐ แจ้งว่าแชทปิดแล้ว → คืน input ตัวละครและกล้อง
+        ChatManager.Instance?.SetChatOpen(false);
+
         if (GameManager.Instance != null)
-        {
             GameManager.Instance.ApplyCursorState(GameManager.Instance.CurrentPhase == GamePhase.Combat);
-        }
     }
 
     public void AddMessage(string message)
     {
         if (messagePrefab == null) return;
 
-        // 1. สร้างข้อความลอย (แสดง 5 วิแล้วหาย)
         if (floatingContainer != null)
         {
             if (floatingCount >= maxMessages)
@@ -105,7 +107,6 @@ public class ChatUI : MonoBehaviour
             StartCoroutine(FadeAndDestroy(floatTmp, messageFadeDelay));
         }
 
-        // 2. สร้างข้อความใน ScrollView (ถาวร เห็นตอนเปิด)
         if (scrollContainer != null)
         {
             if (scrollCount >= maxMessages)
@@ -126,10 +127,8 @@ public class ChatUI : MonoBehaviour
 
     IEnumerator FadeAndDestroy(TMP_Text tmp, float delay)
     {
-        // รอ delay วินาที
         yield return new WaitForSeconds(delay);
 
-        // Fade ออก 1 วินาที
         float duration = 1f;
         float elapsed = 0f;
         while (elapsed < duration)
@@ -140,7 +139,6 @@ public class ChatUI : MonoBehaviour
             yield return null;
         }
 
-        // ลบออก
         if (tmp != null) Destroy(tmp.gameObject);
         floatingCount--;
     }
