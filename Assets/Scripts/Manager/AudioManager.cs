@@ -17,6 +17,7 @@ public class AudioManager : MonoBehaviour
     // ─────────────────────────────────────────
 
     [Header("BGM Clips")]
+    public AudioClip mainMenuBGM;
     public AudioClip planningBGM;
     public AudioClip combatBGM;
 
@@ -75,6 +76,11 @@ public class AudioManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject); // BGM ไม่ขาดเมื่อ load scene
 
+        // โหลดค่า Volume จาก PlayerPrefs (เพื่อให้เสียงที่เซฟไว้ทำงานตั้งแต่เปิดเกม)
+        AudioListener.volume = PlayerPrefs.GetFloat("MasterVolume", 1f);
+        bgmVolume = PlayerPrefs.GetFloat("BGMVolume", 0.8f);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
+
         // ตั้งค่า BGM Source
         SetupBGMSource(bgmSource);
 
@@ -114,7 +120,7 @@ public class AudioManager : MonoBehaviour
         Debug.Log($"[AudioManager] กำลังเริ่มเกมที่ Scene: {startScene} | BGM Source Assigned: {bgmSource != null}");
 
         if (startScene == "MenuSceneTest" || startScene == "CharacterSelectScene")
-            PlayBGM(combatBGM);
+            PlayBGM(mainMenuBGM);
         else if (startScene == "GameScene")
             PlayBGM(planningBGM); // เริ่ม GameScene โหมด Planning
         else
@@ -130,7 +136,7 @@ public class AudioManager : MonoBehaviour
         Debug.Log($"[AudioManager] โหลด Scene ใหม่: {scene.name}");
         if (scene.name == "MenuSceneTest" || scene.name == "CharacterSelectScene")
         {
-            PlayBGM(combatBGM);
+            PlayBGM(mainMenuBGM);
         }
         else if (scene.name == "GameScene")
         {
