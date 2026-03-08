@@ -215,11 +215,52 @@ public class EnemyTracker : NetworkBehaviour
         }
 
         // ⏳ ฝั่งใดหมดก่อน → โชว์ปุ่ม Kill Opponent ให้คนที่คลีย์
-        if ((p0Done || p1Done) && !countdownRunning)
+        if (p0Done || p1Done)
         {
+            if (countdownRunning) return; // ถ้าเริ่มนับถอยหลังไปแล้ว ไม่ต้องหาคนชนะใหม่
+
             // winnerIsP0 = true ถ้า P0 คลีย์ก่อน
             bool winnerIsP0 = p0Done && !p1Done;
             ShowKillOpponentButtonClientRpc(winnerIsP0);
+        }
+        else
+        {
+            // ถ้ายังไม่มีใครเคลียร์เลย (เช่น โดนส่งศัตรูมาเพิ่มจนไม่เคลียร์แล้ว)
+            HideKillOpponentButtonClientRpc();
+            countdownRunning = false; // หยุดคูลดาวน์ (ถ้ายังไม่ทันเริ่ม RPC ฝ่ายตรงข้าม)
+        }
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    public void NotifyMidCombatSpawnRpc(ulong targetedClientId, int count, int typeIndex)
+    {
+        if (!IsServer) return;
+
+        if (targetedClientId == 0) p0Cleared.Value = false;
+        else p1Cleared.Value = false;
+
+        NotifyMidCombatSpawnClientRpc(targetedClientId, count, typeIndex);
+        EvaluateOnServer();
+    }
+
+    [ClientRpc]
+    private void NotifyMidCombatSpawnClientRpc(ulong targetedClientId, int count, int typeIndex)
+    {
+        if (NetworkManager.Singleton.LocalClientId == targetedClientId)
+        {
+            if (!localHasCountedStart)
+            {
+                localRemainingEnemies = count;
+                localHasCountedStart = true;
+            }
+            else
+            {
+                localRemainingEnemies += count;
+            }
+            Debug.Log($"<color=cyan>[EnemyTracker]</color> Received {count} mid-combat enemies (Type {typeIndex}). New remaining: {localRemainingEnemies}");
+            
+            // ⭐ แจ้ง UI ว่ามีมอนสเตอร์มาใหม่
+            GameManager.OnEnemyIncoming?.Invoke(typeIndex);
         }
     }
 

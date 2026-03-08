@@ -57,6 +57,12 @@ public class ShopItemCard : MonoBehaviour
 
         if (itemType == ShopItemType.Minion)
         {
+            if (GameManager.Instance != null && GameManager.Instance.CurrentPhase != GamePhase.Planning)
+            {
+                Debug.LogWarning("[Shop] วาง Minion ได้เฉพาะช่วง Planning เท่านั้น!");
+                return;
+            }
+
             if (PlacementManager.Instance != null)
                 PlacementManager.Instance.StartPlacing(minionData);
         }

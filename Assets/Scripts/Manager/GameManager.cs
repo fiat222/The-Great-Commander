@@ -15,6 +15,7 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
     public static System.Action<int> OnSystemEnemyDied; // สำหรับแจ้ง UI เมื่อมอนสเตอร์รายทางตายครับ
+    public static System.Action<int> OnEnemyIncoming;   // ⭐ สำหรับแจ้ง UI เมื่อมีมอนสเตอร์มาใหม่ตอน Combat
     public static System.Action<GamePhase> OnPhaseChangedGlobal; // ⭐ สำหรับแจ้ง UI เมื่อเปลี่ยนเฟส
 
     public TextMeshProUGUI countdownText;
@@ -461,13 +462,29 @@ private void UpdatePhaseUI(GamePhase phase)
     [Rpc(SendTo.Server)]
     void BuyEnemyServerRpc(ulong clientId, int typeIndex)
     {
-        if (currentPhase.Value != GamePhase.Planning) return;
         if (typeIndex >= p0SentCounts.Count) return;
 
-        if (clientId == 0)
-            p0SentCounts[typeIndex]++;
-        else
-            p1SentCounts[typeIndex]++;
+        if (currentPhase.Value == GamePhase.Planning)
+        {
+            if (clientId == 0) p0SentCounts[typeIndex]++;
+            else p1SentCounts[typeIndex]++;
+        }
+        else if (currentPhase.Value == GamePhase.Combat)
+        {
+            // ⭐ บันทึกยอดเพิ่มด้วยเพื่อให้ WavePreviewUI อัปเดตไอคอนได้ถูกต้อง
+            if (clientId == 0) p0SentCounts[typeIndex]++;
+            else p1SentCounts[typeIndex]++;
+
+            // ถ้าซื้อตอน Combat -> สปอนทันทีลงหัวฝ่ายตรงข้าม
+            ulong targetId = (clientId == 0) ? (ulong)1 : (ulong)0;
+            
+            if (globalSpawner != null)
+            {
+                globalSpawner.SpawnEnemiesRpc(1, typeIndex, targetId);
+                // แจ้ง Tracker ให้เพิ่มจำนวนมอนสเตอร์แบบ Realtime
+                EnemyTracker.Instance?.NotifyMidCombatSpawnRpc(targetId, 1, typeIndex);
+            }
+        }
     }
 
     public void RequestNextPhase()
