@@ -74,6 +74,17 @@ public class EnemyTracker : NetworkBehaviour
         }
     }
 
+    private void Update()
+    {
+        // กด K เพื่อกดปุ่ม Kill Opponent (เฉพาะตอนที่ปุ่ม Active อยู่)
+        if (Input.GetKeyDown(KeyCode.K) &&
+            killOpponentButton != null &&
+            killOpponentButton.activeSelf)
+        {
+            OnKillOpponentPressed();
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         // ฟัง NetworkVariable เพื่ออัปเดต UI ทุก Client
