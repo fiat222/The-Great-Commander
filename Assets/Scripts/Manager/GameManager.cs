@@ -248,11 +248,11 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
 {
-    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (Esc) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
-    if (Input.GetKeyDown(KeyCode.Escape))
+    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (L) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
+    if (Input.GetKeyDown(KeyCode.L))
     {
         isManualUnlock = !isManualUnlock;
-        Debug.Log($"<color=red>[Cursor]</color> Esc Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
+        Debug.Log($"<color=red>[Cursor]</color> L Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
         
         if (isManualUnlock)
         {
