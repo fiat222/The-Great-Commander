@@ -6,17 +6,24 @@ public class ChatManager : NetworkBehaviour
 {
     public static ChatManager Instance { get; private set; }
 
-    // �纻���ѵ�᪷
     private List<string> chatHistory = new List<string>();
     private const int MAX_MESSAGES = 50;
 
+    // ⭐ สถานะว่าตอนนี้ Chat Input Field เปิดอยู่ไหม
+    public bool IsChatOpen { get; private set; }
+
     private void Awake() => Instance = this;
+
+    /// <summary>เรียกจาก ChatUI ตอนเปิด/ปิด Input Field</summary>
+    public void SetChatOpen(bool open)
+    {
+        IsChatOpen = open;
+    }
 
     public void SendMessage(string message)
     {
         if (string.IsNullOrWhiteSpace(message)) return;
 
-        // �Ҫ��ͼ����
         string senderName = NetworkManager.Singleton.IsHost ? "Player1" : "Player2";
         string fullMessage = $"[{senderName}]: {message}";
 
