@@ -74,7 +74,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject skillUI; // รูปสกิล (โชว์เฉพาะ Combat)
     [SerializeField] private GameObject nextPhaseButton; // ปุ่มเปลี่ยนเฟส (โชว์เฉพาะ Planning)
 
-    private bool isManualUnlock = false; // ⭐ สำหรับโหมดปลดล็อคเมาส์อิสระ (ไม่ล็อคกลับเมื่อคลิก)
+    private bool isManualUnlock = true;  // ⭐ เริ่มต้นเป็น True เพื่อให้หน้า Planning ปลดล็อคเมาส์ทันที
     public bool IsManualUnlock => isManualUnlock;
     private bool currentModeWantsLock = false; // ⭐ สำหรับโหมดที่ต้องการล็อคเมาส์เป็นกรณีพิเศษ (เช่น Free Fly)
     private void Awake()
@@ -175,10 +175,12 @@ public class GameManager : NetworkBehaviour
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
     {
-        displayPhase = newValue;
         UpdatePhaseUI(newValue);
         if (CameraManager.Instance != null) CameraManager.Instance.SetPhaseCamera(newValue);
-        isManualUnlock = false; // รีเซ็ตเมื่อเปลี่ยนเฟส
+        
+        // ⭐ เข้าสู่ Planning ให้ปลดล็อคเมาส์ (True), เข้าสู่ Combat ให้ล็อคเมาส์ (False)
+        isManualUnlock = (newValue == GamePhase.Planning); 
+
         currentModeWantsLock = false; // รีเซ็ตโหมดพิเศษเมื่อเปลี่ยนเฟส
         UpdateCursorState(newValue);
 
@@ -248,21 +250,22 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
 {
-    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (L) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
-    if (Input.GetKeyDown(KeyCode.L))
+    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (F) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
+    if (Input.GetKeyDown(KeyCode.F))
     {
-        isManualUnlock = !isManualUnlock;
-        Debug.Log($"<color=red>[Cursor]</color> L Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
-        
-        if (isManualUnlock)
+        if (currentPhase.Value == GamePhase.Planning)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // ในโหมด Planning, F จะสลับระหว่าง "ล็อคเมาส์หมุนกล้อง" กับ "ปลดล็อคเมาส์ซื้อของ"
+            currentModeWantsLock = !currentModeWantsLock;
+            isManualUnlock = !currentModeWantsLock;
         }
         else
         {
-            UpdateCursorState(currentPhase.Value);
+            isManualUnlock = !isManualUnlock;
         }
+
+        Debug.Log($"<color=red>[Cursor]</color> F Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
+        UpdateCursorState(currentPhase.Value);
     }
 
     // --- 🎮 [Debug] Heartbeat ทุกๆ 300 เฟรม (ประมาณ 5 วินาที) ---

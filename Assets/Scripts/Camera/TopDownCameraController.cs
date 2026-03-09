@@ -35,9 +35,32 @@ public class TopDownCameraController : MonoBehaviour
 
     private void OnPhaseChanged(GamePhase phase)
     {
+        // ⭐ เมื่อกลับมาเฟส Planning ให้รีเซ็ตตำแหน่งกล้อง
+        if (phase == GamePhase.Planning)
+        {
+            ResetToDefault();
+        }
+
         // เมื่อเปลี่ยนเฟส ให้คืน cursor ให้ GameManager จัดการ
         if (GameManager.Instance != null)
             GameManager.Instance.SetCursorMode(false);
+    }
+
+    public void ResetToDefault()
+    {
+        transform.position = defaultPosition;
+        transform.rotation = Quaternion.Euler(defaultRotation);
+
+        flyYaw   = defaultRotation.y;
+        flyPitch = defaultRotation.x;
+        flyVelocity = Vector3.zero;
+
+        // ⭐ บังคับ Cinemachine ให้ Snap ทันที
+        var vcam = GetComponent<CinemachineCamera>();
+        if (vcam != null)
+        {
+            vcam.ForceCameraPosition(defaultPosition, Quaternion.Euler(defaultRotation));
+        }
     }
 
     private void Start()
