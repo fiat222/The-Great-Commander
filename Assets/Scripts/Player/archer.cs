@@ -108,6 +108,7 @@ public class Archer : MonoBehaviour
     private bool isChargeModeActive;
     public bool IsChargeModeActive => isChargeModeActive;
     private bool pendingQuickShot;
+    private bool bufferedShot; // ⭐ สำหรับเก็บ Input คลิกซ้ายตอนกำลังกลิ้ง
 
     private bool inputEnabled = true;
     private bool mouseEnabled => Cursor.lockState == CursorLockMode.Locked;
@@ -414,8 +415,11 @@ public class Archer : MonoBehaviour
         bool isPlayingRoll = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") || animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
         bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
         bool isTransitioning = animator != null && animator.IsInTransition(0);
+        
+        // isBusy จะใช้สำหรับกันการ "เริ่ม" ท่าทางใหม่เท่านั้น
         bool isBusy = isPlayingRoll || isPlayingAttack || isTransitioning;
 
+        // --- 🖱️ ระบบสลับโหมด (ชาร์จ / ยิงเร็ว) ---
         if (Input.GetMouseButtonDown(1))
         {
             if (isAiming) StopAiming();
@@ -423,26 +427,78 @@ public class Archer : MonoBehaviour
             Debug.Log($"<color=yellow>[Archer]</color> โหมด: {(isChargeModeActive ? "ชาร์จ" : "ยิงเร็ว")}");
         }
 
-        if (isChargeModeActive)
+        // --- 🏹 ระบบ Input Buffering ---
+        if (Input.GetMouseButtonDown(0) && isBusy)
         {
-            if (Input.GetMouseButtonDown(0) && !isBusy)
-                StartAiming();
+            bufferedShot = true;
+            animator.SetBool("hasBuffer", true);
 
-            if (Input.GetMouseButtonUp(0) && isAiming)
+            if (isPlayingRoll)
             {
-                if (!hasFiredThisAim) Shoot();
-                StopAiming();
+                if (isChargeModeActive) 
+                {
+                    // ⭐ [เเก้ไข] เริ่มระบบ logic การชาร์จทันที (วงจะได้บีบเเละเริ่มนับค่าพลัง)
+                    animator.SetTrigger("DrawArrow");
+                    StartAiming();
+                }
+                else animator.SetTrigger("QuickShot");
             }
-
-            if (isAiming && isPlayingRoll) StopAiming();
         }
-        else
+
+        // --- 🎯 ระบบควบคุมการทำงาน (Logic) ---
+        
+        // 1. จัดการเรื่อง Buffer เมื่อหายกลิ้ง (เปลี่ยนจาก isBusy เป็น !isPlayingRoll เพื่อความแม่นยำ)
+        if (!isPlayingRoll && bufferedShot)
         {
-            if (Input.GetMouseButtonDown(0) && !isBusy)
+            bufferedShot = false;
+            animator.SetBool("hasBuffer", false);
+            if (isChargeModeActive) 
+            {
+                if (!isAiming) StartAiming();
+                if (!Input.GetMouseButton(0)) { Shoot(); StopAiming(); }
+            }
+            else
             {
                 pendingQuickShot = true;
                 lastAccuracy = 1f;
-                if (animator != null) animator.SetTrigger("QuickShot");
+                animator.SetTrigger("QuickShot");
+            }
+        }
+
+        // 2. จัดการการยิง/ง้าง (แยกออกจาก isBusy เพื่อให้ปล่อยเมาส์ได้ทุกเมื่อ)
+        if (isChargeModeActive)
+        {
+            // การ "เริ่ม" ง้าง ต้องว่างก่อน
+            if (!isBusy && Input.GetMouseButton(0) && !isAiming && !bufferedShot)
+            {
+                StartAiming();
+            }
+
+            // การ "ปล่อย" หรือ "ชาร์จ" ต้องทำได้ตลอดถ้า isAiming เป็น true
+            if (isAiming)
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    // ⭐ [เเก้ไข] ถ้ายังกลิ้งอยู่ ห้ามยิงเด็ดขาด (ป้องกันการยิงดาเมจ 0)
+                    if (!isPlayingRoll)
+                    {
+                        if (!hasFiredThisAim) Shoot();
+                        StopAiming();
+                    }
+                }
+            }
+
+            // ระบบความปลอดภัย: หยุดง้างถ้ากลิ้ง (ยกเว้นตอนกำลังจองท่า)
+            if (isAiming && isPlayingRoll && !bufferedShot) StopAiming();
+        }
+        else
+        {
+            // โหมดยิงเร็ว: ต้องว่างถึงจะยิงได้
+            if (!isBusy && Input.GetMouseButtonDown(0))
+            {
+                pendingQuickShot = true;
+                lastAccuracy = 1f;
+                animator.SetTrigger("QuickShot");
             }
         }
 
