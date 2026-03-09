@@ -62,6 +62,18 @@ public class ShopManager : MonoBehaviour
             PlacementManager.Instance.OnMoneyChanged += _ => RefreshPlayerUpgradeUI();
     }
 
+    void Update()
+    {
+        // กด B เพื่อเปิด/ปิดร้านค้า (ใช้ได้เฉพาะตอนมี shopPanel)
+        if (Input.GetKeyDown(KeyCode.B) && shopPanel != null)
+        {
+            if (shopPanel.activeSelf)
+                CloseShop();
+            else
+                OpenShop();
+        }
+    }
+
     // ==================== Generate Cards ====================
 
     void GenerateAllCards()

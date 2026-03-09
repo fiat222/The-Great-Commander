@@ -22,10 +22,10 @@ public class CameraHintsUI : MonoBehaviour
     public Image ui_Space;
     public Image ui_Shift;
     public Image ui_Ctrl;
-    public Image ui_Esc;
+    public Image ui_L;
 
-    [Header("Esc Label — เปลี่ยน Text ตามสถานะเมาส์")]
-    [Tooltip("ลาก TMP_Text ที่อยู่ใต้ปุ่ม Esc มาใส่ตรงนี้")]
+    [Header("L Label — เปลี่ยน Text ตามสถานะเมาส์")]
+    [Tooltip("ลาก TMP_Text ที่อยู่ใต้ปุ่ม L มาใส่ตรงนี้")]
     public TMP_Text ui_EscLabel;
     public string textWhenLocked   = "Unlock Mouse";
     public string textWhenUnlocked = "Lock Mouse";
@@ -65,7 +65,7 @@ public class CameraHintsUI : MonoBehaviour
         Highlight(ui_Space, kb.spaceKey.isPressed);
         Highlight(ui_Shift, kb.leftShiftKey.isPressed);
         Highlight(ui_Ctrl,  kb.leftCtrlKey.isPressed);
-        Highlight(ui_Esc,   kb.escapeKey.isPressed);
+        Highlight(ui_L,     kb.lKey.isPressed);
 
         // อัปเดต label ของ Esc ตามสถานะเมาส์ปัจจุบัน
         if (ui_EscLabel != null)
