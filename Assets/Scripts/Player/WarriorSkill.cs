@@ -153,19 +153,26 @@ public class WarriorSkill : MonoBehaviour
 
             if (isGrounded && !player.IsDodging && !isBusy && !isCastingSkill)
             {
-                animator.ResetTrigger("Attack");
-                animator.SetTrigger("Skill1");
-
-                player.ResetComboAndDash();
-
-                StartCooldown();
-                StartCoroutine(SkillMovementRoutine());
+                ExecuteSkillExternal();
             }
         }
         else if (Input.GetKeyDown(KeyCode.R) && isOnCooldown)
         {
             Debug.Log($"<color=yellow>[WarriorSkill]</color> Cooldown อีก {skill1CooldownTimer:F1}s");
         }
+    }
+
+    public void ExecuteSkillExternal()
+    {
+        if (isOnCooldown || isCastingSkill) return;
+
+        animator.ResetTrigger("Attack");
+        animator.SetTrigger("Skill1");
+
+        player.ResetComboAndDash();
+
+        StartCooldown();
+        StartCoroutine(SkillMovementRoutine());
     }
 
     // ==================== Cooldown ====================

@@ -42,6 +42,10 @@ public class PlayerController : MonoBehaviour
     private bool alreadyAppliedForce;
     private bool bufferCombo;
 
+    // ==================== Buffering Actions ====================
+    private enum BufferedAction { None, Attack, Parry, Skill }
+    private BufferedAction currentBufferedAction = BufferedAction.None;
+
     // ==================== Target Lock ====================
     [Header("Target Lock Settings")]
     public float lockRange = 15f;
@@ -224,7 +228,34 @@ public class PlayerController : MonoBehaviour
         {
             HandleParryInput();
             HandleAttackInput();
+            HandleSkillInputBuffer();
         }
+
+        // --- 🏹 ระบบ Buffer Resolution (Warrior) ---
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        
+        bool isPlayingRoll = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
+        bool isPlayingAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
+        bool inTransition = animator != null && animator.IsInTransition(0);
+
+        // ⭐ Resolve เมื่อมีคำสั่งค้างอยู่ และไม่ได้กำลังทำอย่างอื่น (ยกเว้นกลิ้งที่เกือบจบ)
+        if (currentBufferedAction != BufferedAction.None && !isPlayingAttack && !inTransition)
+        {
+            if (isPlayingRoll)
+            {
+                // ถ้ากลิ้งอยู่ ให้รอช่วงท้าย (70%+) ค่อย Resolve ท่าแรกออกไป
+                if (sInfo.normalizedTime % 1f > 0.7f)
+                {
+                    ResolveBufferedAction();
+                }
+            }
+            else
+            {
+                ResolveBufferedAction();
+            }
+        }
+
         CheckAnimationLogic();
         UpdateWeaponEffect();
 
@@ -372,7 +403,59 @@ public class PlayerController : MonoBehaviour
         }
         else { rollDirection = transform.forward; }
 
+        ResetCombo(); // ⭐ เริ่มกลิ้งควร Reset Combo เดิมทิ้งเสมอ
         StartCoroutine(DodgeRoutine());
+    }
+
+    private void HandleSkillInputBuffer()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+            bool isBusy = sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || sInfo.IsTag("Hit") || nInfo.IsTag("Hit");
+
+            if (isBusy || isDodging)
+            {
+                currentBufferedAction = BufferedAction.Skill;
+                if (animator != null) animator.SetBool("hasBuffer", true);
+                lastClickTime = Time.time;
+            }
+        }
+    }
+
+    private void ResolveBufferedAction()
+    {
+        // ⭐ กันเหนียว: ถ้าตอนนี้เริ่มเล่นท่าโจมตีไปแล้วจากแรงคลิกปกติ ไม่ต้อง Resolve ซ้ำซ้อน
+        var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
+        if (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || animator.IsInTransition(0))
+        {
+            currentBufferedAction = BufferedAction.None;
+            if (animator != null) animator.SetBool("hasBuffer", false);
+            return;
+        }
+
+        BufferedAction actionToRun = currentBufferedAction;
+        currentBufferedAction = BufferedAction.None;
+        if (animator != null) animator.SetBool("hasBuffer", false);
+
+        switch (actionToRun)
+        {
+            case BufferedAction.Attack:
+                if (comboStep == 0) // ⭐ Resolve ท่าแรกเท่านั้น
+                {
+                    lastClickTime = Time.time;
+                    TriggerAttack();
+                }
+                break;
+            case BufferedAction.Parry:
+                TriggerParry();
+                break;
+            case BufferedAction.Skill:
+                TriggerSkill();
+                break;
+        }
     }
 
     private System.Collections.IEnumerator DodgeRoutine()
@@ -418,11 +501,42 @@ public class PlayerController : MonoBehaviour
         {
             var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
             var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
-            if (sInfo.IsTag("Roll") || nInfo.IsTag("Roll") || sInfo.IsTag("Jump") || nInfo.IsTag("Jump")) goto checkReset;
+            
+            bool isPlayingAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
+            bool isRolling = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
+            bool isBusy = isRolling || sInfo.IsTag("Jump") || nInfo.IsTag("Jump") || sInfo.IsTag("Hit") || nInfo.IsTag("Hit");
+
+            if (isBusy || isDodging)
+            {
+                // ⭐ ตอนกลิ้ง/กระโดด ให้จองได้เฉพาะหากยังไม่มีคำสั่ง Attack ค้างอยู่ และยังไม่ได้เริ่ม Combo
+                if (comboStep == 0 && currentBufferedAction != BufferedAction.Attack)
+                {
+                    currentBufferedAction = BufferedAction.Attack;
+                    if (animator != null) animator.SetBool("hasBuffer", true);
+                }
+                else if (comboStep > 0)
+                {
+                    // หากฟันไปแล้ว (เช่น จังหวะ Recovery 70%+) ให้ส่งเข้า Buffer ปกติ
+                    bufferCombo = true;
+                }
+                
+                lastClickTime = Time.time;
+                goto checkReset;
+            }
 
             lastClickTime = Time.time;
-            if (comboStep == 0) TriggerAttack();
-            else bufferCombo = true;
+            
+            // ⭐ ตรวจสอบว่าอยู่ในท่าโจมตีจริงๆ หรือไม่ ถ้าไม่อยู่ (เช่น Idle/Run) ให้เริ่มท่า 1 ใหม่เสมอ
+            // ป้องกันปัญหาค้างจาก ComboStep เดิม (เช่น ฟันจบท่า 3 แล้วยืนเฉยๆ เลขยังเป็น 3 อยู่)
+            if (comboStep == 0 || !isPlayingAttack) 
+            {
+                comboStep = 0; 
+                TriggerAttack();
+            }
+            else
+            {
+                bufferCombo = true;
+            }
         }
     checkReset:
         if (comboStep > 0 && Time.time - lastClickTime > comboResetTime) ResetCombo();
@@ -439,19 +553,39 @@ public class PlayerController : MonoBehaviour
 
             bool isBusy = sInfo.IsTag("Roll") || nInfo.IsTag("Roll") ||
                           sInfo.IsTag("Hit") || nInfo.IsTag("Hit") ||
-                          sInfo.IsTag("Parry") || nInfo.IsTag("Parry");
+                          sInfo.IsTag("Parry") || nInfo.IsTag("Parry") || 
+                          sInfo.IsTag("Attack") || nInfo.IsTag("Attack");
 
-            if (isGrounded && !isDodging && !isBusy)
+            if (isBusy || isDodging)
             {
-                if (animator != null)
-                {
-                    animator.ResetTrigger("Attack");
-                    animator.SetTrigger("Parry");
-                    ResetCombo();
-                    currentDashVelocity = Vector3.zero;
-                }
+                currentBufferedAction = BufferedAction.Parry;
+                if (animator != null) animator.SetBool("hasBuffer", true);
+                lastClickTime = Time.time; // ⭐ อัพเดตเวลาด้วย
+                return;
+            }
+
+            if (isGrounded)
+            {
+                TriggerParry();
             }
         }
+    }
+
+    private void TriggerParry()
+    {
+        if (animator != null)
+        {
+            animator.ResetTrigger("Attack");
+            animator.SetTrigger("Parry");
+            ResetCombo();
+            currentDashVelocity = Vector3.zero;
+        }
+    }
+
+    private void TriggerSkill()
+    {
+        var skill = GetComponent<WarriorSkill>();
+        if (skill != null) skill.ExecuteSkillExternal();
     }
 
     private void TriggerAttack()
@@ -502,18 +636,24 @@ public class PlayerController : MonoBehaviour
                 t = nInfo.normalizedTime % 1f;
 
             bool isRolling = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
-            if (t >= forceTime && !alreadyAppliedForce && sInfo.IsTag("Attack") && !isRolling)
+            // ⭐ แก้ไข: นอกจากการเช็คเป้าหมายแล้ว ต้องไม่สะท้อนแรงขณะกำลังเปลี่ยน Transition (ป้องกันแรงสะท้อนซ้ำซ้อนตอนจบ)
+            if (t >= forceTime && !alreadyAppliedForce && sInfo.IsTag("Attack") && !isRolling && !animator.IsInTransition(0))
             {
                 PerformAttackDash();
                 alreadyAppliedForce = true;
             }
 
             float window = comboStep == 3 ? finisherWindowTime : comboWindowTime;
-            if (bufferCombo && t >= window) TriggerAttack();
+            // ⭐ สำคัญ: จะให้ Combo ต่อได้ ต้องอยู่ในท่า Attack เท่านั้น (ไม่ใช่ Roll)
+            if (bufferCombo && t >= window && sInfo.IsTag("Attack")) 
+            {
+                TriggerAttack();
+            }
         }
         else
         {
-            if (comboStep != 0 && !animator.IsInTransition(0) && !justTrigger) ResetCombo();
+            // ⭐ หากไม่อยู่ในท่าโจมตี ให้ Reset เสมอ (ไม่ใช้ justTrigger บล็อก เพราะทำให้ Combo ค้างตอน spam)
+            if (comboStep != 0 && !animator.IsInTransition(0)) ResetCombo();
         }
     }
 
