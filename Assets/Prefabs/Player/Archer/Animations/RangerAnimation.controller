@@ -110,9 +110,6 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: QuickShot
     m_EventTreshold: 0
-  - m_ConditionMode: 1
-    m_ConditionEvent: hasBuffer
-    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -2804521584027013576}
   m_Solo: 0
@@ -321,9 +318,6 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 1
     m_ConditionEvent: DrawArrow
-    m_EventTreshold: 0
-  - m_ConditionMode: 1
-    m_ConditionEvent: hasBuffer
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 7194721336957007487}
@@ -740,7 +734,7 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: 4643526622529776262}
-    m_Position: {x: 380, y: 120, z: 0}
+    m_Position: {x: 380, y: 150, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 1871092468720313345}
     m_Position: {x: 330, y: -70, z: 0}
