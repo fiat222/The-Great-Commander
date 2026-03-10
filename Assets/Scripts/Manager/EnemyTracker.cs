@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class EnemyTracker : NetworkBehaviour
 {
@@ -379,19 +380,35 @@ public class EnemyTracker : NetworkBehaviour
         activeCoroutine = StartCoroutine(DeathCountdownRoutine());
     }
 
-    /// <summary>ป้อมพัง → แสดง You Win / You Lost</summary>
     [ClientRpc]
     public void ShowGameResultClientRpc(ulong loserClientId)
     {
         ulong myId = NetworkManager.Singleton.LocalClientId;
-        SetUI(youLostUI, myId == loserClientId);
-        SetUI(youWinUI,  myId != loserClientId);
-
-        // หยุด Countdown ที่รันอยู่ (ถ้ามี)
-        if (activeCoroutine != null) StopCoroutine(activeCoroutine);
-        SetUI(centerPanel, false);
+        StopAllCoroutines();
+        bool iWon = (myId != loserClientId);
+        if (youWinUI != null)  youWinUI.SetActive(iWon);
+        if (youLostUI != null) youLostUI.SetActive(!iWon);
+        if (centerPanel != null)        centerPanel.SetActive(false);
+        if (killOpponentButton != null) killOpponentButton.SetActive(false);
+        GameManager.Instance?.OnGameEnded();
     }
 
+    [ClientRpc]
+    public void ForceClientsToMenuClientRpc()
+    {
+        if (NetworkManager.Singleton.IsHost) return;
+        StartCoroutine(ClientForceReturnRoutine());
+    }
+
+    private IEnumerator ClientForceReturnRoutine()
+    {
+        if (centerPanel != null) centerPanel.SetActive(true);
+        if (centerText  != null) centerText.text = "Host has disconnected...";
+        yield return new WaitForSeconds(1.5f);
+        NetworkManager.Singleton.Shutdown();
+        yield return new WaitForSeconds(0.3f);
+        SceneManager.LoadScene("MenuScene");
+    }
     // ────────────────────────────────────────────────────────────
     //  COROUTINES
     // ────────────────────────────────────────────────────────────

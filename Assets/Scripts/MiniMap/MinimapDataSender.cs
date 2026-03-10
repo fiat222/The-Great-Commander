@@ -11,10 +11,12 @@ public class MinimapDataSender : NetworkBehaviour
     private float timer;
     private List<MinimapUnitData> dataBuffer = new List<MinimapUnitData>();
 
-    // ⭐ เพิ่ม: เก็บจำนวน Enemy ฝั่งตรงข้ามที่รับมาล่าสุด
-    private int opponentEnemyCount = -1;
-
     private void Awake() => Instance = this;
+
+    public override void OnNetworkSpawn()
+    {
+        Debug.Log($"[MinimapDataSender] OnNetworkSpawn! IsServer={IsServer} IsClient={IsClient}");
+    }
 
     void Update()
     {
@@ -28,29 +30,19 @@ public class MinimapDataSender : NetworkBehaviour
         }
     }
 
-    public override void OnNetworkSpawn()
-    {
-        Debug.Log($"[MinimapDataSender] OnNetworkSpawn! IsServer={IsServer} IsClient={IsClient}");
-    }
-
     void SendMySceneData()
     {
         dataBuffer.Clear();
 
-        ulong myClientId = NetworkManager.Singleton.LocalClientId;
-        var players = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var p in players)
+        // ✅ ดึง Player ตัวเองจาก LocalPlayerSpawner (Local Instantiate ไม่มี NetworkObject)
+        var myPlayer = LocalPlayerSpawner.Instance?.GetSpawnedPlayer();
+        if (myPlayer != null)
         {
-            var netObj = p.GetComponent<NetworkObject>();
-            if (netObj != null && netObj.OwnerClientId == myClientId)
+            dataBuffer.Add(new MinimapUnitData
             {
-                dataBuffer.Add(new MinimapUnitData
-                {
-                    Position = new Vector2(p.transform.position.x, p.transform.position.z),
-                    UnitType = 0
-                });
-                break;
-            }
+                Position = new Vector2(myPlayer.transform.position.x, myPlayer.transform.position.z),
+                UnitType = 0 // white dot
+            });
         }
 
         foreach (var m in GameObject.FindGameObjectsWithTag("Minion"))
@@ -69,15 +61,17 @@ public class MinimapDataSender : NetworkBehaviour
 
         if (dataBuffer.Count == 0) return;
 
+        // ✅ RequireOwnership = false ทำให้ Client ส่งได้ด้วย
         SendSceneDataServerRpc(dataBuffer.ToArray());
     }
 
+    // ✅ RequireOwnership = false — สำคัญมาก ไม่งั้น Client ส่งไม่ได้
     [ServerRpc(RequireOwnership = false)]
     void SendSceneDataServerRpc(MinimapUnitData[] units, ServerRpcParams rpcParams = default)
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        // ── โค้ดเดิม ──────────────────────────────────────────────
+        // ส่งข้อมูลให้ฝั่งตรงข้ามเท่านั้น
         var targetIds = new List<ulong>();
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
             if (clientId != senderClientId)
