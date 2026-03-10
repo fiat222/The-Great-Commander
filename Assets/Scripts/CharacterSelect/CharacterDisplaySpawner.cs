@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class CharacterDisplaySpawner : MonoBehaviour
 {
@@ -12,8 +12,8 @@ public class CharacterDisplaySpawner : MonoBehaviour
     public Vector3 p1Rotation = new Vector3(0, 30, 0);  // หันเข้ากล้องนิดนึง
     public Vector3 p2Rotation = new Vector3(0, -30, 0); // หันเข้ากล้องนิดนึง
 
-    [Header("Preview Layer")]
-    public string previewLayerName = "CharacterPreview";
+    // [Header("Preview Layer")]
+    // public string previewLayerName = "CharacterPreview";
 
     private GameObject p1Instance;
     private GameObject p2Instance;
@@ -22,7 +22,7 @@ public class CharacterDisplaySpawner : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        previewLayer = LayerMask.NameToLayer(previewLayerName);
+        // previewLayer = LayerMask.NameToLayer(previewLayerName);
     }
 
     private void OnEnable()
@@ -84,8 +84,8 @@ public class CharacterDisplaySpawner : MonoBehaviour
         // ลบ Component ที่ไม่ต้องการใน Preview
         RemoveGameplayComponents(instance);
 
-        // ตั้ง Layer ให้ CharacterCamera ถ่ายได้
-        SetLayerRecursive(instance, previewLayer);
+        // ตั้ง Layer ให้ CharacterCamera ถ่ายได้ (ถ้าต้องการ)
+        // SetLayerRecursive(instance, previewLayer);
 
         // เล่น Idle Animation
         var animator = instance.GetComponent<Animator>();
