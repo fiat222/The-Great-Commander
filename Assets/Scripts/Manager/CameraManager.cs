@@ -33,6 +33,8 @@ public class CameraManager : MonoBehaviour
     {
         if (GameManager.Instance != null)
             SetPhaseCamera(GameManager.Instance.CurrentPhase);
+        else if (SoloGameManager.Instance != null)
+            SetPhaseCamera(SoloGameManager.Instance.CurrentPhase);
     }
 
     private void OnEnable()
@@ -78,8 +80,11 @@ public class CameraManager : MonoBehaviour
     {
         this.freelookCamera    = freeLook;
         this.targetLockCamera  = targetLock;
+        
         if (GameManager.Instance != null)
             SetPhaseCamera(GameManager.Instance.CurrentPhase);
+        else if (SoloGameManager.Instance != null)
+            SetPhaseCamera(SoloGameManager.Instance.CurrentPhase);
     }
 
     /// <summary>⭐ เปิด/ปิด Spectator Camera — เรียกจาก SpectatorController</summary>

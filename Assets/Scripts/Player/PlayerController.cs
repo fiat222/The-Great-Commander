@@ -186,22 +186,31 @@ public class PlayerController : MonoBehaviour
     private void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += OnPhaseChanged;
     }
 
     private void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
     }
 
     private void OnPhaseChanged(GamePhase phase)
     {
         inputEnabled = (phase == GamePhase.Combat);
+
+        if (phase == GamePhase.Combat)
+        {
+            ApplySkillIcons();
+        }
     }
 
     private void Start()
     {
         if (GameManager.Instance != null)
             inputEnabled = (GameManager.Instance.CurrentPhase == GamePhase.Combat);
+        else if (SoloGameManager.Instance != null)
+            inputEnabled = (SoloGameManager.Instance.CurrentPhase == GamePhase.Combat);
 
         if (CameraManager.Instance != null)
         {
