@@ -876,8 +876,14 @@ public class EnemyAI : MonoBehaviour
         }
 
         // --- ตายถาวร ---
+        // เช็คว่าอยู่โหมดไหน แล้วยิง event ให้ถูกตัว:
         if (countsInWaveUI)
-            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        {
+            if (SoloGameManager.Instance != null)
+                SoloGameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+            else
+                GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        }
             
         PowerBallDropper.Drop(transform.position, powerBallDropAmount);
 

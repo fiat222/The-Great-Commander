@@ -33,11 +33,13 @@ public class PlacementManager : MonoBehaviour
     void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
     }
 
     void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
     }
 
     [Header("Grid Visuals")]

@@ -20,6 +20,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MenuSceneTest.unity
     guid: 8dc9146678aa2804c9419585617ef921
+  - enabled: 1
+    path: Assets/Scenes/SoloCharactor.unity
+    guid: 3a61f1fc0c030f34d85ebc15e4f85d48
+  - enabled: 1
+    path: Assets/Scenes/SoloGameScene.unity
+    guid: efbcf9eab482b5642acabb13ccd8a26c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
