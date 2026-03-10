@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32c5db45b6ab5824ca6de1092f08be33, type: 3}
   m_Name: ArcherCharacter
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
-  characterName: Archer
+  characterName: Mockingjay
   portrait: {fileID: 21300000, guid: c7ad16c728ad64442a1ac3b01b86557e, type: 3}
   icon: {fileID: 246377832, guid: cd78162952d198b48a39d642d50ca309, type: 3}
   playerPrefab: {fileID: 244403281665110954, guid: 73551a9e48f0f7444ab32e3b45a64651, type: 3}

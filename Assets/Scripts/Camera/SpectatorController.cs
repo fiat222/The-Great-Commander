@@ -40,11 +40,13 @@ public class SpectatorController : MonoBehaviour
     private void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += OnPhaseChanged;
     }
 
     private void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
     }
 
     public void EnterSpectate(Transform deadPlayerTransform = null)
@@ -68,6 +70,8 @@ public class SpectatorController : MonoBehaviour
 
         if (GameManager.Instance != null)
             GameManager.Instance.SetCursorMode(true);
+        else if (SoloGameManager.Instance != null)
+            SoloGameManager.Instance.ApplyCursorState(false);
         else
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -91,6 +95,11 @@ public class SpectatorController : MonoBehaviour
         {
             CameraManager.Instance.SetPhaseCamera(GameManager.Instance.CurrentPhase);
             GameManager.Instance.SetCursorMode(false);
+        }
+        else if (CameraManager.Instance != null && SoloGameManager.Instance != null)
+        {
+            CameraManager.Instance.SetPhaseCamera(SoloGameManager.Instance.CurrentPhase);
+            SoloGameManager.Instance.ApplyCursorState(true);
         }
 
         Debug.Log("<color=cyan>[Spectator]</color> ออกจากโหมด Spectate แล้ว");
@@ -155,7 +164,7 @@ public class SpectatorController : MonoBehaviour
 
         pos.x = Mathf.Clamp(pos.x, origin.x, origin.x + size.x);
         pos.z = Mathf.Clamp(pos.z, origin.z, origin.z + size.z);
-        pos.y = Mathf.Clamp(pos.y, origin.y + 2f, origin.y + size.y);
+        pos.y = Mathf.Clamp(pos.y, origin.y + 50f, origin.y + 150f);
 
         return pos;
     }

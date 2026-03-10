@@ -15,6 +15,7 @@ public class StartNetworkTest : MonoBehaviour
 
     [SerializeField] private string gameSceneName = "GameScene";
     [SerializeField] private string characterSelectSceneName = "CharacterSelectScene";
+    [SerializeField] private string solocharacterSelectSceneName = "SoloCharactor";
     [SerializeField] private ushort port = 7777;
 
     /// <summary>True = Solo Play (Host-only), False = Duo Play (Networked 2 players)</summary>
@@ -32,17 +33,12 @@ public class StartNetworkTest : MonoBehaviour
 
     // PUBLIC API
 
-    // Solo Play: StartHost แล้วโหลด CharacterSelectScene ก่อน → GameScene
+    // Solo Play: ไม่ใช้ Netcode — โหลด SoloCharactor Scene โดยตรง
     public void StartSolo()
     {
         IsSolo = true;
-        string localIP = GetLocalIPAddress();
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.SetConnectionData(localIP, port);
-
-        NetworkManager.Singleton.StartHost();
-        Debug.Log("<color=cyan>[RoomTest]</color> Solo Play! Loading CharacterSelectScene ...");
-        NetworkManager.Singleton.SceneManager.LoadScene(characterSelectSceneName, LoadSceneMode.Single);
+        Debug.Log("<color=cyan>[RoomTest]</color> Solo Play! Loading SoloCharactor ...");
+        SceneManager.LoadScene(solocharacterSelectSceneName, LoadSceneMode.Single);
     }
 
     // Host: StartHost แล้วรอ Client เชื่อมต่อ
