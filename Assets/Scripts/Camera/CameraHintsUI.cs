@@ -37,11 +37,13 @@ public class CameraHintsUI : MonoBehaviour
     private void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += OnPhaseChanged;
     }
 
     private void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
     }
 
     private void OnPhaseChanged(GamePhase phase)

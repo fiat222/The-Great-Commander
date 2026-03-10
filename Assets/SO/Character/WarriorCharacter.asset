@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32c5db45b6ab5824ca6de1092f08be33, type: 3}
   m_Name: WarriorCharacter
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
-  characterName: Warrior
+  characterName: Lancelot
   portrait: {fileID: 21300000, guid: 7847d39cd110e8e42af7720545cf8fbb, type: 3}
   icon: {fileID: 1593917029, guid: 5f8f58ead8f0a6c45a0cebc7cb7b7cbe, type: 3}
   playerPrefab: {fileID: 7711133326226633498, guid: 41daf370bf51aa34a9d25040e5666463, type: 3}
