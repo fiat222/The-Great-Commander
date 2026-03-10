@@ -3,7 +3,7 @@ using UnityEngine;
 
 public struct MinimapUnitData : INetworkSerializable
 {
-    public Vector2 Position; // ‡°Á∫§Ë“ x ·≈– z
+    public Vector2 Position; // x ‡πÅ‡∏•‡∏∞ z
     public byte UnitType;    // 0=Player, 1=Minion, 2=Enemy
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter

@@ -3,6 +3,8 @@ using Unity.Netcode;
 using UnityEngine;
 using Unity.Cinemachine;
 using Unity.Collections;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 public enum GamePhase
 {
@@ -171,6 +173,73 @@ public class GameManager : NetworkBehaviour
         OnPhaseChangedGlobal?.Invoke(currentPhase.Value);
 
         Debug.Log($"<color=yellow>[GameManager]</color> Game Started! Initial Phase: <b>{currentPhase.Value}</b> | Draft: {systemWaveDraft.Value}");
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (currentPhase != null) 
+            currentPhase.OnValueChanged -= OnPhaseChanged;
+            
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
+
+    private bool isIntentionalDisconnect = false;
+    public void SetIntentionalDisconnect()
+    {
+        isIntentionalDisconnect = true;
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (isIntentionalDisconnect) return; // ตั้งใจออกอยู่แล้ว ไม่ต้องทำซ้ำ
+
+        if (NetworkManager.Singleton == null) return;
+
+        if (NetworkManager.Singleton.IsHost && clientId != NetworkManager.Singleton.LocalClientId)
+        {
+            StartCoroutine(LoadMenuAfterDisconnect());
+            return;
+        }
+
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            StartCoroutine(LoadMenuAfterDisconnect());
+        }
+    }
+
+    private bool isGameEnded = false;
+    // ใน GameManager.cs เพิ่ม method นี้
+    public void OnGameEnded()
+    {
+        isGameEnded = true;
+
+        // หยุด timer ไม่ให้ phase เปลี่ยน
+        if (IsServer)
+        {
+            planningTimer.Value = 999f;
+            p0Ready.Value = false;
+            p1Ready.Value = false;
+        }
+        
+        ForceUnlockCursor();
+    }
+
+    private IEnumerator LoadMenuAfterDisconnect()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.Shutdown();
+            
+        yield return new WaitForSeconds(0.5f);
+        SceneManager.LoadScene("MenuScene");
+    }
+
+    public void ForceUnlockCursor()
+    {
+        isManualUnlock = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void OnPhaseChanged(GamePhase previousValue, GamePhase newValue)
@@ -185,54 +254,54 @@ public class GameManager : NetworkBehaviour
         UpdateCursorState(newValue);
 
         if (newValue == GamePhase.Planning)
-    {
-        EnemyTracker.Instance?.ResetForNewWaveServerRpc();
-        if (IsServer)
         {
-            currentWave.Value++;
+            EnemyTracker.Instance?.ResetForNewWaveServerRpc();
+            if (IsServer)
+            {
+                currentWave.Value++;
 
-            // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
-            if (enemyStatsSOs != null)
-                foreach (var so in enemyStatsSOs)
-                    if (so != null) so.SetWave(currentWave.Value);
+                // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
+                if (enemyStatsSOs != null)
+                    foreach (var so in enemyStatsSOs)
+                        if (so != null) so.SetWave(currentWave.Value);
 
-            p0Dead.Value = false;
-            p1Dead.Value = false;
+                p0Dead.Value = false;
+                p1Dead.Value = false;
 
-            // Reset Timer and Readiness
-            planningTimer.Value = planningDuration;
-            p0Ready.Value = false;
-            p1Ready.Value = false;
+                // Reset Timer and Readiness
+                planningTimer.Value = planningDuration;
+                p0Ready.Value = false;
+                p1Ready.Value = false;
 
-            GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
+                GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
+            }
+            CleanupEnemies();
         }
-        CleanupEnemies();
-    }
 
-    // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
-    if (ShopManager.Instance != null)
-    {
-        if (newValue == GamePhase.Planning)
-            ShopManager.Instance.OpenShop();
-        else
-            ShopManager.Instance.CloseShop();
-    }
+        // --- 🛒 จัดการเปิด/ปิดร้านค้าอัตโนมัติตามเฟส ---
+        if (ShopManager.Instance != null)
+        {
+            if (newValue == GamePhase.Planning)
+                ShopManager.Instance.OpenShop();
+            else
+                ShopManager.Instance.CloseShop();
+        }
 
-    // --- 🗺️ จัดการเปิด/ปิด Minimap และ Wave UI ตามเฟส ---
-    if (MinimapUI.Instance != null)
-    {
-        // Minimap: เปิดเฉพาะ Combat
-        MinimapUI.Instance.SetVisible(newValue == GamePhase.Combat);
-    }
+        // --- 🗺️ จัดการเปิด/ปิด Minimap และ Wave UI ตามเฟส ---
+        if (MinimapUI.Instance != null)
+        {
+            // Minimap: เปิดเฉพาะ Combat
+            MinimapUI.Instance.SetVisible(newValue == GamePhase.Combat);
+        }
 
-    if (waveText != null)
-    {
-        // Wave Text: เปิดเฉพาะ Planning (หรือปิดตอน Combat)
-        waveText.gameObject.SetActive(newValue == GamePhase.Planning);
-    }
+        if (waveText != null)
+        {
+            // Wave Text: เปิดเฉพาะ Planning (หรือปิดตอน Combat)
+            waveText.gameObject.SetActive(newValue == GamePhase.Planning);
+        }
 
-    OnPhaseChangedGlobal?.Invoke(newValue);
-}
+        OnPhaseChangedGlobal?.Invoke(newValue);
+    }
     private void CleanupEnemies()
     {
         if (!IsServer) return; // เฉพาะ Server เท่านั้นที่ Despawn ได้
@@ -249,76 +318,84 @@ public class GameManager : NetworkBehaviour
     }
 
     private void Update()
-{
-    // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (F) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
-    if (Input.GetKeyDown(KeyCode.F))
     {
+        if (isGameEnded)
+        {
+            // เกมจบแล้ว ไม่ต้องทำอะไรนอกจากรักษาเมาส์ให้ปลดล็อค
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+    }
+
+        // --- 🎮 ระบบล็อค/ปลดล็อคเมาส์ (F) - ย้ายมาไว้บนสุดเพื่อความชัวร์ ---
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (currentPhase.Value == GamePhase.Planning)
+            {
+                // ในโหมด Planning, F จะสลับระหว่าง "ล็อคเมาส์หมุนกล้อง" กับ "ปลดล็อคเมาส์ซื้อของ"
+                currentModeWantsLock = !currentModeWantsLock;
+                isManualUnlock = !currentModeWantsLock;
+            }
+            else
+            {
+                isManualUnlock = !isManualUnlock;
+            }
+
+            Debug.Log($"<color=red>[Cursor]</color> F Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
+            UpdateCursorState(currentPhase.Value);
+        }
+
+        // --- 🎮 [Debug] Heartbeat ทุกๆ 300 เฟรม (ประมาณ 5 วินาที) ---
+        if (Time.frameCount % 300 == 0) Debug.Log($"<color=grey>[Cursor]</color> GameManager Alive (Phase: {currentPhase.Value})");
+        
+        // อัปเดตตัวแปร Debug ให้เห็นใน Inspector เรียลไทม์
+        debugP0Dead = p0Dead.Value;
+        debugP1Dead = p1Dead.Value;
+
+        // --- ⏱️ ระบบนับเวลาถอยหลัง (เฉพาะ Server) ---
+        if (IsServer && currentPhase.Value == GamePhase.Planning)
+        {
+            if (planningTimer.Value > 0)
+            {
+                planningTimer.Value -= Time.deltaTime;
+            }
+
+            // เงื่อนไขข้ามเฟส: เวลาหมด หรือ พร้อมทั้งคู่
+            if (planningTimer.Value <= 0 || (p0Ready.Value && p1Ready.Value))
+            {
+                ChangePhaseServerRpc(); // เปลี่ยนเป็น Combat
+            }
+        }
+
+        // ทุกคนอัปเดต UI เวลาถ้าอยู่ในเฟสวางแผน
         if (currentPhase.Value == GamePhase.Planning)
         {
-            // ในโหมด Planning, F จะสลับระหว่าง "ล็อคเมาส์หมุนกล้อง" กับ "ปลดล็อคเมาส์ซื้อของ"
-            currentModeWantsLock = !currentModeWantsLock;
-            isManualUnlock = !currentModeWantsLock;
+            UpdatePhaseUI(currentPhase.Value);
+
+            // --- 🔘 อัปเดตข้อความปุ่ม Next Phase ของตัวเอง ---
+            if (nextPhaseButtonText != null)
+            {
+                bool amIReady = (NetworkManager.Singleton.LocalClientId == 0) ? p0Ready.Value : p1Ready.Value;
+                nextPhaseButtonText.text = amIReady ? "Cancel" : "Next Phase";
+            }
         }
         else
         {
-            isManualUnlock = !isManualUnlock;
+            // เฟส Combat: รีเซ็ตปุ่มเป็น Next Phase เผื่อไว้
+            if (nextPhaseButtonText != null) nextPhaseButtonText.text = "Next Phase";
         }
 
-        Debug.Log($"<color=red>[Cursor]</color> F Pressed! <b>ManualUnlock: {isManualUnlock}</b> | Phase: {currentPhase.Value}");
-        UpdateCursorState(currentPhase.Value);
-    }
 
-    // --- 🎮 [Debug] Heartbeat ทุกๆ 300 เฟรม (ประมาณ 5 วินาที) ---
-    if (Time.frameCount % 300 == 0) Debug.Log($"<color=grey>[Cursor]</color> GameManager Alive (Phase: {currentPhase.Value})");
-    
-    // อัปเดตตัวแปร Debug ให้เห็นใน Inspector เรียลไทม์
-    debugP0Dead = p0Dead.Value;
-    debugP1Dead = p1Dead.Value;
-
-    // --- ⏱️ ระบบนับเวลาถอยหลัง (เฉพาะ Server) ---
-    if (IsServer && currentPhase.Value == GamePhase.Planning)
-    {
-        if (planningTimer.Value > 0)
+        // ถ้าเมาส์เป็นอิสระอยู่ (และไม่ได้เปิดโหมดแมนนวล) ให้กลับมาล็อคใหม่เมื่อคลิกจอ (สำหรับ Combat หรือ Free Fly)
+        if (!isManualUnlock && Cursor.lockState != CursorLockMode.Locked && Input.GetMouseButtonDown(0))
         {
-            planningTimer.Value -= Time.deltaTime;
-        }
-
-        // เงื่อนไขข้ามเฟส: เวลาหมด หรือ พร้อมทั้งคู่
-        if (planningTimer.Value <= 0 || (p0Ready.Value && p1Ready.Value))
-        {
-            ChangePhaseServerRpc(); // เปลี่ยนเป็น Combat
+            bool shouldModeLock = (currentPhase.Value == GamePhase.Combat) || (currentPhase.Value == GamePhase.Planning && currentModeWantsLock);
+            if (shouldModeLock)
+            {
+                ApplyCursorState(true);
+            }
         }
     }
-
-    // ทุกคนอัปเดต UI เวลาถ้าอยู่ในเฟสวางแผน
-    if (currentPhase.Value == GamePhase.Planning)
-    {
-        UpdatePhaseUI(currentPhase.Value);
-
-        // --- 🔘 อัปเดตข้อความปุ่ม Next Phase ของตัวเอง ---
-        if (nextPhaseButtonText != null)
-        {
-            bool amIReady = (NetworkManager.Singleton.LocalClientId == 0) ? p0Ready.Value : p1Ready.Value;
-            nextPhaseButtonText.text = amIReady ? "Cancel" : "Next Phase";
-        }
-    }
-    else
-    {
-        // เฟส Combat: รีเซ็ตปุ่มเป็น Next Phase เผื่อไว้
-        if (nextPhaseButtonText != null) nextPhaseButtonText.text = "Next Phase";
-    }
-
-
-    // ถ้าเมาส์เป็นอิสระอยู่ (และไม่ได้เปิดโหมดแมนนวล) ให้กลับมาล็อคใหม่เมื่อคลิกจอ (สำหรับ Combat หรือ Free Fly)
-    if (!isManualUnlock && Cursor.lockState != CursorLockMode.Locked && Input.GetMouseButtonDown(0))
-    {
-        bool shouldModeLock = (currentPhase.Value == GamePhase.Combat) || (currentPhase.Value == GamePhase.Planning && currentModeWantsLock);
-        if (shouldModeLock)
-        {
-            ApplyCursorState(true);
-        }
-    }
-}
     /// <summary>⭐ เรียกจาก Camera Controller เพื่อบอกว่าโหมดนี้ต้องการล็อคเมาส์หรือไม่ (เช่น Free Fly)</summary>
     public void SetCursorMode(bool wantsLock)
     {
