@@ -4,12 +4,31 @@ using UnityEngine;
 public class BaseHealth : NetworkBehaviour
 {
     public int health = 100;
-
-    // ⭐ เพิ่ม: แจ้ง EnemyTracker เมื่อป้อมพัง
     public static System.Action<ulong> OnBaseDied;
 
-    public void TakeDamage(int amount)
+    private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            // ✅ ส่ง LocalClientId ของเครื่องตัวเองมาด้วย
+            TakeDamageServerRpc(999, NetworkManager.Singleton.LocalClientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void TakeDamageServerRpc(int amount, ulong senderClientId)
+    {
+        TakeDamage(amount, senderClientId);
+    }
+
+    public void TakeDamage(int amount, ulong senderClientId = ulong.MaxValue)
+    {
+        if (!IsServer)
+        {
+            TakeDamageServerRpc(amount, NetworkManager.Singleton.LocalClientId);
+            return;
+        }
+
         health -= amount;
         Debug.Log($"<color=green>[Base]</color> HP : {health}");
 
@@ -17,12 +36,13 @@ public class BaseHealth : NetworkBehaviour
         {
             Debug.LogError("ฐานพังแล้ว! จบเกม");
 
-            // ⭐ เพิ่ม: แจ้ง Server ว่าป้อมฝั่งใดพัง
-            if (IsServer)
-            {
-                ulong loserClientId = OwnerClientId; // ป้อมของใคร = ใครแพ้
-                EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
-            }
+            // ✅ ใช้ senderClientId แทน LocalClientId
+            ulong loserClientId = senderClientId == ulong.MaxValue 
+                ? NetworkManager.Singleton.LocalClientId 
+                : senderClientId;
+                
+            Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
+            EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
         }
     }
 }
