@@ -10,6 +10,7 @@ public class ArrowProjectile : MonoBehaviour
     private float speed;
     private int damage;
     private PlayerAudioComponent ownerAudio;
+    private AimCrosshair crosshair;
     private Vector3 velocity;
     private bool isFlying = false;
     private bool noGravity = false;
@@ -19,20 +20,21 @@ public class ArrowProjectile : MonoBehaviour
     private readonly Quaternion rotationOffset = Quaternion.Euler(90f, 0f, 0f);
 
     /// <summary>ยิงปกติ (charge shot) — มี gravity</summary>
-    public void Launch(Vector3 direction, float launchSpeed, int launchDamage, PlayerAudioComponent audio = null)
+    public void Launch(Vector3 direction, float launchSpeed, int launchDamage, AimCrosshair crosshairRef = null, PlayerAudioComponent audio = null)
     {
-        LaunchInternal(direction, launchSpeed, launchDamage, false, audio);
+        LaunchInternal(direction, launchSpeed, launchDamage, crosshairRef, false, audio);
     }
 
     /// <summary>ยิงเร็ว — ไม่มี gravity บินตรงเสมอ</summary>
-    public void LaunchStraight(Vector3 direction, float launchSpeed, int launchDamage, PlayerAudioComponent audio = null)
+    public void LaunchStraight(Vector3 direction, float launchSpeed, int launchDamage, AimCrosshair crosshairRef = null, PlayerAudioComponent audio = null)
     {
-        LaunchInternal(direction, launchSpeed, launchDamage, true, audio);
+        LaunchInternal(direction, launchSpeed, launchDamage, crosshairRef, true, audio);
     }
 
-    private void LaunchInternal(Vector3 direction, float launchSpeed, int launchDamage, bool straight, PlayerAudioComponent audio)
+    private void LaunchInternal(Vector3 direction, float launchSpeed, int launchDamage, AimCrosshair crosshairRef, bool straight, PlayerAudioComponent audio)
     {
         ownerAudio = audio;
+        crosshair = crosshairRef;
         speed = launchSpeed;
         damage = launchDamage;
         noGravity = straight;
@@ -109,6 +111,7 @@ public class ArrowProjectile : MonoBehaviour
 
             DamageNumberSpawner.Show(finalDamage, spawnPos);
             
+            if (crosshair != null) crosshair.TriggerHitMarker();
             if (ownerAudio != null) ownerAudio.PlaySound(PlayerSoundType.AttackHit);
 
             if (isHeadshot)

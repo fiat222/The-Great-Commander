@@ -68,6 +68,13 @@ public class Archer : MonoBehaviour
     public GameObject hitVFXPrefab;
     public Transform hitVFXSpawnPoint;
 
+    [Header("Attack VFX")]
+    public GameObject chargingVFXPrefab;
+    public GameObject fullChargeVFXPrefab;
+    public GameObject shootVFXPrefab;
+    private GameObject activeChargingVFX;
+    private GameObject activeFullChargeVFX;
+
     [Header("Player Cameras")]
     public CinemachineCamera freelookCamera;
     public CinemachineCamera targetLockCamera;
@@ -226,6 +233,11 @@ public class Archer : MonoBehaviour
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
+        }
+
+        if (crosshair != null)
+        {
+            crosshair.SetQuickShotMode(!isChargeModeActive);
         }
     }
 
@@ -424,6 +436,7 @@ public class Archer : MonoBehaviour
         {
             if (isAiming) StopAiming();
             isChargeModeActive = !isChargeModeActive;
+            if (crosshair != null) crosshair.SetQuickShotMode(!isChargeModeActive);
             Debug.Log($"<color=yellow>[Archer]</color> โหมด: {(isChargeModeActive ? "ชาร์จ" : "ยิงเร็ว")}");
         }
 
@@ -503,6 +516,36 @@ public class Archer : MonoBehaviour
         }
 
         if (isAiming || isPlayingAttack) { UpdateAimBlendTree(); FaceCamera(); }
+
+        // --- ระบบสปาวน์ Charging & Full Charge VFX ---
+        if (isAiming && !isQuickShotModeActive())
+        {
+            float acc = crosshair != null ? crosshair.GetAccuracy() : 0f;
+            
+            if (acc >= 1f)
+            {
+                // เข้าสู่สถานะชาร์จเต็ม
+                if (activeFullChargeVFX == null && fullChargeVFXPrefab != null)
+                {
+                    activeFullChargeVFX = Instantiate(fullChargeVFXPrefab, arrowSpawnPoint);
+                }
+                if (activeChargingVFX != null) Destroy(activeChargingVFX);
+            }
+            else if (acc > 0.1f) // เริ่มแสดงผลเมื่อมีการชาร์จไปสักพัก (เลี่ยงแวบๆ ตอนคลิกไว)
+            {
+                // กำลังชาร์จ
+                if (activeChargingVFX == null && chargingVFXPrefab != null)
+                {
+                    activeChargingVFX = Instantiate(chargingVFXPrefab, arrowSpawnPoint);
+                }
+                if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
+            }
+        }
+    }
+
+    private bool isQuickShotModeActive()
+    {
+        return !isChargeModeActive;
     }
 
     private void StartAiming()
@@ -517,6 +560,9 @@ public class Archer : MonoBehaviour
         isAiming = false;
         if (animator != null) animator.SetBool("isAiming", false);
         if (crosshair != null) crosshair.StopAim();
+
+        if (activeChargingVFX != null) Destroy(activeChargingVFX);
+        if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
     }
 
     private void Shoot()
@@ -534,6 +580,16 @@ public class Archer : MonoBehaviour
         }
 
         if (animator != null) animator.SetTrigger("Shoot");
+
+        // --- ระบบสปาวน์ Shoot VFX ---
+        if (shootVFXPrefab != null && arrowSpawnPoint != null)
+        {
+            GameObject vfx = Instantiate(shootVFXPrefab, arrowSpawnPoint.position, transform.rotation);
+            Destroy(vfx, 2f);
+        }
+
+        if (activeChargingVFX != null) Destroy(activeChargingVFX);
+        if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
     }
 
     public void ForceNextShotAccuracy(Vector3? targetPos = null)
@@ -576,14 +632,14 @@ public class Archer : MonoBehaviour
         if (pendingQuickShot)
         {
             pendingQuickShot = false;
-            proj?.LaunchStraight(dir, quickShotSpeed, quickShotDamage, playerAudio);
+            proj?.LaunchStraight(dir, quickShotSpeed, quickShotDamage, crosshair, playerAudio);
             Debug.Log($"<color=cyan>[Archer]</color> Quick Shot! Spd:{quickShotSpeed:F1} Dmg:{quickShotDamage}");
         }
         else
         {
             float finalSpd = Mathf.Lerp(minArrowSpeed, maxArrowSpeed, lastAccuracy);
             int finalDmg = Mathf.RoundToInt(Mathf.Lerp(minDamage, maxDamage, lastAccuracy));
-            proj?.Launch(dir, finalSpd, finalDmg, playerAudio);
+            proj?.Launch(dir, finalSpd, finalDmg, crosshair, playerAudio);
             Debug.Log($"<color=cyan>[Archer]</color> Charge Shot! Acc:{lastAccuracy:P0} Spd:{finalSpd:F1} Dmg:{finalDmg}");
         }
     }

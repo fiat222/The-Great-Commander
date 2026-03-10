@@ -6,6 +6,8 @@ public class AimCrosshair : MonoBehaviour
     [Header("Crosshair Panels")]
     [SerializeField] private GameObject normalPanel;
     [SerializeField] private GameObject fullChargePanel;
+    [SerializeField] private GameObject quickShotPanel;
+    [SerializeField] private GameObject hitMarkerPanel;
 
     [Header("Shrink Settings (Normal)")]
     [SerializeField] private RectTransform shrinkPart; 
@@ -13,14 +15,33 @@ public class AimCrosshair : MonoBehaviour
     public float minSpread = 20f;
 
     [Header("Charge Settings")]
-    public float maxChargeTime = 1.2f; // ใช้เวลากี่วินาทีถึงชาร์จเต็ม
-    
+    public float maxChargeTime = 1.2f; 
+
+    [Header("Hit Marker Settings")]
+    [SerializeField] private float hitMarkerDuration = 0.5f;
+
     private float currentCharge = 0f;
     private bool isAiming = false;
+    private bool isQuickShotMode = false;
+    private float hitMarkerTimer = 0f;
 
 
     void Update()
     {
+        // --- จัดการระบบ Hit Marker (ลำดับความสำคัญสูงสุด) ---
+        if (hitMarkerTimer > 0)
+        {
+            hitMarkerTimer -= Time.deltaTime;
+            ShowHitMarker();
+            return;
+        }
+
+        if (isQuickShotMode)
+        {
+            ShowQuickShot();
+            return;
+        }
+
         if (!isAiming)
         {
             // --- สถานะปกติ (ไม่ได้ง้าง) ---
@@ -64,18 +85,50 @@ public class AimCrosshair : MonoBehaviour
     {
         if (normalPanel != null && !normalPanel.activeSelf) normalPanel.SetActive(true);
         if (fullChargePanel != null && fullChargePanel.activeSelf) fullChargePanel.SetActive(false);
+        if (quickShotPanel != null && quickShotPanel.activeSelf) quickShotPanel.SetActive(false);
+        if (hitMarkerPanel != null && hitMarkerPanel.activeSelf) hitMarkerPanel.SetActive(false);
     }
 
     private void ShowFullCharge()
     {
         if (normalPanel != null && normalPanel.activeSelf) normalPanel.SetActive(false);
         if (fullChargePanel != null && !fullChargePanel.activeSelf) fullChargePanel.SetActive(true);
+        if (quickShotPanel != null && quickShotPanel.activeSelf) quickShotPanel.SetActive(false);
+        if (hitMarkerPanel != null && hitMarkerPanel.activeSelf) hitMarkerPanel.SetActive(false);
     }
 
-    // ==================== Public Methods (เรียกจาก Archer.cs) ====================
+    private void ShowQuickShot()
+    {
+        if (normalPanel != null && normalPanel.activeSelf) normalPanel.SetActive(false);
+        if (fullChargePanel != null && fullChargePanel.activeSelf) fullChargePanel.SetActive(false);
+        if (quickShotPanel != null && !quickShotPanel.activeSelf) quickShotPanel.SetActive(true);
+        if (hitMarkerPanel != null && hitMarkerPanel.activeSelf) hitMarkerPanel.SetActive(false);
+    }
+
+    private void ShowHitMarker()
+    {
+        if (normalPanel != null && normalPanel.activeSelf) normalPanel.SetActive(false);
+        if (fullChargePanel != null && fullChargePanel.activeSelf) fullChargePanel.SetActive(false);
+        if (quickShotPanel != null && quickShotPanel.activeSelf) quickShotPanel.SetActive(false);
+        if (hitMarkerPanel != null && !hitMarkerPanel.activeSelf) hitMarkerPanel.SetActive(true);
+    }
+
+    // ==================== Public Methods (เรียกจาก Archer.cs หรือ ArrowProjectile.cs) ====================
+
+    public void TriggerHitMarker()
+    {
+        hitMarkerTimer = hitMarkerDuration;
+    }
+
+    public void SetQuickShotMode(bool active)
+    {
+        isQuickShotMode = active;
+        if (!active) ResetToIdle();
+    }
 
     public void StartAim()
     {
+        if (isQuickShotMode) return;
         isAiming = true;
         currentCharge = 0f;
     }
@@ -86,7 +139,7 @@ public class AimCrosshair : MonoBehaviour
         currentCharge = 0f;
         
         // ไม่สั่ง SetActive(false) แล้วครับ เพื่อให้เป้าค้างอยู่ตลอด
-        ResetToIdle();
+        if (!isQuickShotMode) ResetToIdle();
     }
 
     /// <summary>
