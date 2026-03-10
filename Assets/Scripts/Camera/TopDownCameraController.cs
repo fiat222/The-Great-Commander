@@ -23,11 +23,13 @@ public class TopDownCameraController : MonoBehaviour
     private void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += OnPhaseChanged;
     }
 
     private void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
     }
 
     private void OnPhaseChanged(GamePhase phase)
@@ -37,6 +39,8 @@ public class TopDownCameraController : MonoBehaviour
 
         if (GameManager.Instance != null)
             GameManager.Instance.SetCursorMode(false);
+        else if (SoloGameManager.Instance != null)
+            SoloGameManager.Instance.ApplyCursorState(true);
     }
 
     public void ResetToDefault()
@@ -63,6 +67,8 @@ public class TopDownCameraController : MonoBehaviour
 
         if (GameManager.Instance != null)
             GameManager.Instance.SetCursorMode(true);
+        else if (SoloGameManager.Instance != null)
+            SoloGameManager.Instance.ApplyCursorState(false);
     }
 
     private void Update()
@@ -132,7 +138,9 @@ public class TopDownCameraController : MonoBehaviour
 
         pos.x = Mathf.Clamp(pos.x, origin.x, origin.x + size.x);
         pos.z = Mathf.Clamp(pos.z, origin.z, origin.z + size.z);
-        pos.y = Mathf.Clamp(pos.y, origin.y + 2f, origin.y + size.y);
+        
+        // เพดานบินของกล้อง ปรับขึ้นเป็น 1000f เพื่อไม่ให้ติดความสูงของ Terrain 
+        pos.y = Mathf.Clamp(pos.y, origin.y + 50f, origin.y + 150f);
 
         return pos;
     }

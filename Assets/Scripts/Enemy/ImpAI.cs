@@ -439,8 +439,14 @@ public class ImpAI : MonoBehaviour
             animator.SetTrigger("Die");
         }
         // --- ตายถาวร ---
+        // เช็คว่าอยู่โหมดไหน แล้วยิง event ให้ถูกตัว:
         if (countsInWaveUI)
-            GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        {
+            if (SoloGameManager.Instance != null)
+                SoloGameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+            else
+                GameManager.OnSystemEnemyDied?.Invoke(typeIndex);
+        }
             
         if (agent != null)
         {

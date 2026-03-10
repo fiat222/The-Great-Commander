@@ -10,8 +10,14 @@ public class BaseHealth : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.P))
         {
-            // ✅ ส่ง LocalClientId ของเครื่องตัวเองมาด้วย
-            TakeDamageServerRpc(999, NetworkManager.Singleton.LocalClientId);
+            if (SoloGameManager.Instance != null)
+            {
+                TakeDamage(999);
+            }
+            else if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                TakeDamageServerRpc(999, NetworkManager.Singleton.LocalClientId);
+            }
         }
     }
 
@@ -23,26 +29,44 @@ public class BaseHealth : NetworkBehaviour
 
     public void TakeDamage(int amount, ulong senderClientId = ulong.MaxValue)
     {
-        if (!IsServer)
+        // ─── Singleplayer ───
+        if (SoloGameManager.Instance != null)
         {
-            TakeDamageServerRpc(amount, NetworkManager.Singleton.LocalClientId);
+            health -= amount;
+            Debug.Log($"<color=green>[Base Singleplayer]</color> HP : {health}");
+
+            if (health <= 0)
+            {
+                Debug.LogError("ฐานพังแล้ว! จบเกม (Solo)");
+                if (SoloEnemyTracker.Instance != null)
+                    SoloEnemyTracker.Instance.NotifyPlayerDied();
+            }
             return;
         }
 
-        health -= amount;
-        Debug.Log($"<color=green>[Base]</color> HP : {health}");
-
-        if (health <= 0)
+        // ─── Multiplayer ───
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            Debug.LogError("ฐานพังแล้ว! จบเกม");
+            if (!IsServer)
+            {
+                TakeDamageServerRpc(amount, NetworkManager.Singleton.LocalClientId);
+                return;
+            }
 
-            // ✅ ใช้ senderClientId แทน LocalClientId
-            ulong loserClientId = senderClientId == ulong.MaxValue 
-                ? NetworkManager.Singleton.LocalClientId 
-                : senderClientId;
-                
-            Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
-            EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
+            health -= amount;
+            Debug.Log($"<color=green>[Base]</color> HP : {health}");
+
+            if (health <= 0)
+            {
+                Debug.LogError("ฐานพังแล้ว! จบเกม");
+
+                ulong loserClientId = senderClientId == ulong.MaxValue 
+                    ? NetworkManager.Singleton.LocalClientId 
+                    : senderClientId;
+                    
+                Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
+                EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
+            }
         }
     }
 }

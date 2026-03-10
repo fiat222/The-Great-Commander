@@ -212,23 +212,38 @@ public class Archer : MonoBehaviour
     private void OnEnable()
     {
         GameManager.OnPhaseChangedGlobal += OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += OnPhaseChanged;
     }
 
     private void OnDisable()
     {
         GameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= OnPhaseChanged;
     }
 
     private void OnPhaseChanged(GamePhase phase)
     {
         inputEnabled = (phase == GamePhase.Combat);
         if (!inputEnabled) StopAiming();
+
+        if (phase == GamePhase.Combat)
+        {
+            ApplySkillIcons();
+            if (crosshair == null)
+            {
+                var obj = GameObject.FindWithTag("Crosshair");
+                if (obj != null) crosshair = obj.GetComponent<AimCrosshair>();
+                if (crosshair != null) crosshair.SetQuickShotMode(!isChargeModeActive);
+            }
+        }
     }
 
     private void Start()
     {
         if (GameManager.Instance != null)
             inputEnabled = (GameManager.Instance.CurrentPhase == GamePhase.Combat);
+        else if (SoloGameManager.Instance != null)
+            inputEnabled = (SoloGameManager.Instance.CurrentPhase == GamePhase.Combat);
 
         if (CameraManager.Instance != null)
         {
