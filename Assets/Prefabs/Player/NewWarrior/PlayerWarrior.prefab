@@ -223,7 +223,7 @@ Transform:
   m_GameObject: {fileID: 1053625436251099676}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.4312671, y: 1.1700003, z: 1.4110631}
+  m_LocalPosition: {x: 1.4312671, y: 1.1700002, z: 1.4110631}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1568,8 +1568,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5497730276686074822}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.23670903, y: -0.15252624, z: -0.03765598, w: 0.95879436}
-  m_LocalPosition: {x: 2.080435, y: 0.07000028, z: -0.57766646}
+  m_LocalRotation: {x: 0.12236136, y: -0.0675018, z: 0.00834176, w: 0.99015236}
+  m_LocalPosition: {x: 1.9786144, y: 2.1822536, z: -2.5846708}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1589,7 +1589,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 20
+    m_Value: 40
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -1652,7 +1652,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: -18.077896
+    Value: -7.8
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -1662,7 +1662,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: -10
+    Value: 19.3
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -2896,14 +2896,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1053498268
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 770560401
+  InScenePlacedSourceGlobalObjectIdHash: 1053498268
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
