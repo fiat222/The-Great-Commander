@@ -407,7 +407,7 @@ public class EnemyTracker : NetworkBehaviour
         yield return new WaitForSeconds(1.5f);
         NetworkManager.Singleton.Shutdown();
         yield return new WaitForSeconds(0.3f);
-        SceneManager.LoadScene("MenuScene");
+        SceneManager.LoadScene("MenuSceneTest");
     }
     // ────────────────────────────────────────────────────────────
     //  COROUTINES

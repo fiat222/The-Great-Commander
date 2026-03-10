@@ -232,7 +232,7 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.Shutdown();
             
         yield return new WaitForSeconds(0.5f);
-        SceneManager.LoadScene("MenuScene");
+        SceneManager.LoadScene("MenuSceneTest");
     }
 
     public void ForceUnlockCursor()
