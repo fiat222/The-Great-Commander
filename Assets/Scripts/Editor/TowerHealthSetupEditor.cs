@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine.UI;
 
 public class TowerHealthSetupEditor : Editor
@@ -59,15 +60,12 @@ public class TowerHealthSetupEditor : Editor
         smoothGO.transform.SetParent(bgGO.transform, false);
         Image smoothImage = smoothGO.AddComponent<Image>();
         smoothImage.color = new Color(0.8f, 0.1f, 0.1f, 1f); // สีแดง
-        smoothImage.type = Image.Type.Filled;
-        smoothImage.fillMethod = Image.FillMethod.Horizontal;
-        smoothImage.fillAmount = 1f;
-        // เซ็ตให้มันลดจากขวาไปซ้าย
-        smoothImage.fillOrigin = (int)Image.OriginHorizontal.Left;
 
         RectTransform smoothRect = smoothGO.GetComponent<RectTransform>();
         smoothRect.anchorMin = Vector2.zero;
         smoothRect.anchorMax = Vector2.one;
+        smoothRect.pivot = new Vector2(0f, 0.5f);
+        smoothRect.anchoredPosition = Vector2.zero;
         smoothRect.sizeDelta = Vector2.zero; // ให้ขนาดเท่ากับ Background
 
         // 5. สร้าง Fill Bar (หลอดเลือดสีเขียว ที่ลดปุ๊บปั๊บ)
@@ -75,23 +73,22 @@ public class TowerHealthSetupEditor : Editor
         fillGO.transform.SetParent(bgGO.transform, false);
         Image fillImage = fillGO.AddComponent<Image>();
         fillImage.color = new Color(0.1f, 0.8f, 0.2f, 1f); // สีเขียว
-        fillImage.type = Image.Type.Filled;
-        fillImage.fillMethod = Image.FillMethod.Horizontal;
-        fillImage.fillAmount = 1f;
-        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
 
         RectTransform fillRect = fillGO.GetComponent<RectTransform>();
         fillRect.anchorMin = Vector2.zero;
         fillRect.anchorMax = Vector2.one;
+        fillRect.pivot = new Vector2(0f, 0.5f);
+        fillRect.anchoredPosition = Vector2.zero;
         fillRect.sizeDelta = Vector2.zero; // ให้ขนาดเท่ากับ Background
 
         // 6. โยง UI ทั้งหมดกลับไปที่ Script TowerHealth ให้อัตโนมัติ
-        towerHealth.healthCanvas = canvas;
-        towerHealth.healthBarSmooth = smoothImage;
-        towerHealth.healthBarFill = fillImage;
+        Undo.RecordObject(towerHealth, "Assign Tower Health UI References");
+        towerHealth.AssignUIReferences(canvas, fillImage, smoothImage);
 
         // บันทึกการเปลี่ยนแปลง เพื่อให้เซฟ Scene ได้
         EditorUtility.SetDirty(selectedTower);
+        EditorUtility.SetDirty(towerHealth);
+        EditorSceneManager.MarkSceneDirty(selectedTower.scene);
 
         Debug.Log("✅ สร้างหลอดเลือดให้ป้อม " + selectedTower.name + " เสร็จเรียบร้อย!");
     }
