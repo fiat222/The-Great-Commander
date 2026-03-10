@@ -9,16 +9,30 @@ public class BaseHealth : NetworkBehaviour
 
     [SerializeField] private HealthSystem healthUI;
 
-    private NetworkVariable<int> networkHealth = new NetworkVariable<int>(
+    private readonly NetworkVariable<int> networkHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    private int currentHealth;
     private bool isSubscribed;
 
     private void Awake()
     {
+        maxHealth = Mathf.Max(1, maxHealth);
+        currentHealth = maxHealth;
+
         ResolveHealthUI();
+        UpdateUI(currentHealth);
+    }
+
+    private void Start()
+    {
+        if (!IsUsingNetworkGameplay())
+        {
+            UpdateUI(currentHealth);
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -50,9 +64,25 @@ public class BaseHealth : NetworkBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (!Input.GetKeyDown(KeyCode.P))
+            return;
+
+        if (SoloGameManager.Instance != null)
+        {
+            TakeDamage(999);
+        }
+        else if (IsUsingNetworkGameplay())
+        {
+            TakeDamageServerRpc(999, NetworkManager.Singleton.LocalClientId);
+        }
+    }
+
     private void OnValidate()
     {
         maxHealth = Mathf.Max(1, maxHealth);
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
     }
 
     private void ResolveHealthUI()
@@ -83,7 +113,6 @@ public class BaseHealth : NetworkBehaviour
             healthUI.ForceSetHealth(currentHP, maxHealth);
     }
 
-    // ─── RPC / Damage ─────────────────────────────────────────────────────────
     [ServerRpc(RequireOwnership = false)]
     public void TakeDamageServerRpc(int amount, ulong senderClientId)
     {
@@ -93,6 +122,25 @@ public class BaseHealth : NetworkBehaviour
     public void TakeDamage(int amount, ulong senderClientId = ulong.MaxValue)
     {
         if (amount <= 0)
+            return;
+
+        if (SoloGameManager.Instance != null)
+        {
+            currentHealth = Mathf.Max(0, currentHealth - amount);
+            UpdateUI(currentHealth);
+
+            Debug.Log($"<color=green>[Base Singleplayer]</color> HP : {currentHealth}/{maxHealth}");
+
+            if (currentHealth <= 0)
+            {
+                Debug.LogError("ฐานพังแล้ว! จบเกม (Solo)");
+                SoloEnemyTracker.Instance?.NotifyPlayerDied();
+            }
+
+            return;
+        }
+
+        if (!IsUsingNetworkGameplay())
             return;
 
         if (!IsServer)
@@ -117,5 +165,10 @@ public class BaseHealth : NetworkBehaviour
             Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
             EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
         }
+    }
+
+    private static bool IsUsingNetworkGameplay()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 }
