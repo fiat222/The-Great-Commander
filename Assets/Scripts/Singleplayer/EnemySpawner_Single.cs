@@ -12,34 +12,48 @@ public class EnemySpawner_Single : MonoBehaviour
 
     // ─── PUBLIC API ───────────────────────────────────────────
 
-    public void SpawnWaveBatch(EnemyStatsSO[] pool, int total)
+    public void SpawnWaveFromDraft(string draft, EnemyStatsSO[] pool)
     {
-        StartCoroutine(SpawnBatchRoutine(pool, total));
+        StartCoroutine(SpawnDraftRoutine(draft, pool));
     }
 
-    public void SpawnEnemySolo(EnemyStatsSO stats)
+    public void SpawnEnemySolo(EnemyStatsSO stats, int typeIndex = 0)
     {
         if (stats == null || stats.prefab == null) return;
 
         GameObject enemy = InstantiateAtRandom(stats.prefab);
-        SetupEnemy(enemy, stats);
+        SetupEnemy(enemy, stats, typeIndex);
     }
 
     // ─── COROUTINES ───────────────────────────────────────────
 
-    IEnumerator SpawnBatchRoutine(EnemyStatsSO[] pool, int total)
+    IEnumerator SpawnDraftRoutine(string draft, EnemyStatsSO[] pool)
     {
-        for (int i = 0; i < total; i++)
+        if (string.IsNullOrEmpty(draft) || pool == null || pool.Length == 0) yield break;
+
+        string[] parts = draft.Split('|');
+        foreach (string p in parts)
         {
-            EnemyStatsSO stats = pool[Random.Range(0, pool.Length)];
-
-            if (stats != null && stats.prefab != null)
+            string[] sub = p.Split(':');
+            if (sub.Length == 2)
             {
-                GameObject enemy = InstantiateAtRandom(stats.prefab);
-                SetupEnemy(enemy, stats);
-            }
+                int typeIndex = int.Parse(sub[0]);
+                int count = int.Parse(sub[1]);
 
-            yield return new WaitForSeconds(spawnInterval);
+                if (typeIndex >= 0 && typeIndex < pool.Length)
+                {
+                    EnemyStatsSO stats = pool[typeIndex];
+                    if (stats != null && stats.prefab != null)
+                    {
+                        for (int i = 0; i < count; i++)
+                        {
+                            GameObject enemy = InstantiateAtRandom(stats.prefab);
+                            SetupEnemy(enemy, stats, typeIndex);
+                            yield return new WaitForSeconds(spawnInterval);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -55,12 +69,13 @@ public class EnemySpawner_Single : MonoBehaviour
     /// Assign stats + เปิด countsInWaveUI ให้ SoloEnemyTracker นับได้
     /// Start() ของ EnemyAI/ImpAI จะ ApplyStatsFromSO() เองหลัง Instantiate
     /// </summary>
-    void SetupEnemy(GameObject enemy, EnemyStatsSO stats)
+    void SetupEnemy(GameObject enemy, EnemyStatsSO stats, int typeIndex)
     {
         EnemyAI ai = enemy.GetComponent<EnemyAI>();
         if (ai != null)
         {
             ai.stats = stats;           // assign ก่อน Start() รัน
+            ai.typeIndex = typeIndex;   // บอกว่าตัวนี้คือ typeIndex อะไร
             ai.countsInWaveUI = true;   // ให้ Die() ยิง OnSystemEnemyDied
             return;
         }
@@ -69,6 +84,7 @@ public class EnemySpawner_Single : MonoBehaviour
         if (imp != null)
         {
             imp.stats = stats;
+            imp.typeIndex = typeIndex;
             imp.countsInWaveUI = true;
         }
     }

@@ -74,7 +74,8 @@ public class PlayerController : MonoBehaviour
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundDistance = 0.4f;
+    public float groundDistance = 0.2f;
+    public float groundCheckRadius = 0.4f;
     public LayerMask groundMask;
 
     // ==================== Health UI ====================
@@ -280,8 +281,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyGravityOnly()
     {
-        if (groundCheck != null)
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        UpdateGroundedStatus();
         if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
         else verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
@@ -289,8 +289,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyGravityDuringDodge()
     {
-        if (groundCheck != null)
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        UpdateGroundedStatus();
 
         if (isGrounded && verticalVelocity.y < 0)
             verticalVelocity.y = -2f;
@@ -385,6 +384,16 @@ public class PlayerController : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, lockRange);
+
+        if (groundCheck != null)
+        {
+            Gizmos.color = isGrounded ? Color.green : Color.red;
+            // วาดวงกลมตามขนาด groundCheckRadius
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+            
+            // วาดเส้นแสดงระยะที่ยิงลงไป (groundDistance)
+            Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * groundDistance);
+        }
     }
 
     // ==================== Roll ====================
@@ -692,8 +701,7 @@ public class PlayerController : MonoBehaviour
                                              sInfo.IsTag("Parry")  || nInfo.IsTag("Parry") ||
                                              sInfo.IsTag("Skill")  || nInfo.IsTag("Skill"));
 
-        if (groundCheck != null)
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        UpdateGroundedStatus();
         if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
 
         float h = Input.GetAxisRaw("Horizontal");
@@ -742,6 +750,23 @@ public class PlayerController : MonoBehaviour
         verticalVelocity.y += gravity * Time.deltaTime;
         finalMove += verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
+    }
+
+    private void UpdateGroundedStatus()
+    {
+        if (groundCheck == null) return;
+
+        // Use SphereCast for more robust slope detection
+        // groundCheckRadius: ความกว้างของวงกลม (Radius)
+        // groundDistance: ระยะที่ยิงลงไปตรวจเช็ค (Distance)
+        float castRadius = groundCheckRadius;
+        float castDistance = groundDistance; 
+        Vector3 origin = groundCheck.position + Vector3.up * castRadius;
+        
+        isGrounded = Physics.SphereCast(origin, castRadius, Vector3.down, out _, castDistance, groundMask);
+
+        // Debug visualization (วาดเส้นสีใน Scene View เพื่อดูระยะเช็ค)
+        // Debug.DrawRay(origin, Vector3.down * (castDistance), isGrounded ? Color.green : Color.red);
     }
 
     // ==================== Animation Events ====================
