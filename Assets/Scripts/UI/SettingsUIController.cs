@@ -110,10 +110,33 @@ public class SettingsUIController : MonoBehaviour
     /// <summary>ปุ่ม "ยอมแพ้" (Surrender)</summary>
     public void Surrender()
     {
-        Debug.Log("Surrender clicked! กดยอมแพ้ โหลดกลับหน้า Main Menu");
-        // ถ้ามีระบบ GameManager.Instance.EndGame() ก็เรียกตรงนี้ได้เลย
-        // ในที่นี้สมมติว่ากลับหน้า MenuSceneTest
-        SceneManager.LoadScene("MenuSceneTest");
+        Debug.Log("Surrender clicked! กดยอมแพ้ โชว์หน้า Lose");
+
+        // ปิดหน้า Settings
+        if (settingsPanel) settingsPanel.SetActive(false);
+
+        // แสดงหน้า Lose Panel
+        if (EnemyTracker.Instance == null)
+        {
+            Debug.LogError("[Surrender] EnemyTracker.Instance is NULL! กรุณาตรวจสอบว่าใน Scene มี EnemyTracker หรือไม่");
+            return;
+        }
+
+        if (EnemyTracker.Instance.youLostUI == null)
+        {
+            Debug.LogError("[Surrender] EnemyTracker.Instance.youLostUI is NULL! กรุณาลาก You Lost UI ไปใส่ใน Inspector ของ EnemyTracker");
+            return;
+        }
+
+        // เปิดใช้งาน You Lost UI
+        EnemyTracker.Instance.youLostUI.SetActive(true);
+        EnemyTracker.Instance.youLostUI.transform.SetAsLastSibling(); // เอามาไว้หน้าสุดกันโดน UI อื่นบัง
+
+        // ปลดล็อคเมาส์เพื่อให้สามารถกดปุ่มในหน้า Lose ได้
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        Debug.Log("[Surrender] แสดงหน้าต่าง Lose ไปแล้ว!");
     }
 
     /// <summary>ทำงานทุกครั้งที่เลื่อน Slider</summary>
