@@ -20,23 +20,15 @@ public class WavePreviewUI : MonoBehaviour
     [SerializeField] private Transform sentEnemiesContainer;
     [SerializeField] private GameObject sentIconPrefab;
 
-    // เก็บจำนวนศัตรูแยกตามประเภท
     private Dictionary<int, int> incomingCounts = new Dictionary<int, int>();
     private Dictionary<int, int> sentCounts = new Dictionary<int, int>();
-    private Dictionary<int, int> deathCounts = new Dictionary<int, int>(); // ⭐ เก็บยอดที่ตายไปแล้วในเวฟนี้
+    private Dictionary<int, int> deathCounts = new Dictionary<int, int>();
     private List<WaveIconItem> combatIcons = new List<WaveIconItem>();
 
     private bool hasInitialized = false;
 
-    void OnEnable()
-    {
-        TryInitialize();
-    }
-
-    void Start()
-    {
-        TryInitialize();
-    }
+    void OnEnable()  => TryInitialize();
+    void Start()     => TryInitialize();
 
     void Update()
     {
@@ -54,10 +46,10 @@ public class WavePreviewUI : MonoBehaviour
         GameManager.Instance.p0SentCounts.OnListChanged += OnSentListChanged;
         GameManager.Instance.p1SentCounts.OnListChanged += OnSentListChanged;
         GameManager.OnEnemyIncoming += HandleIncomingEnemy;
-        
+
         hasInitialized = true;
         RefreshLayout();
-        Debug.Log($"<color=cyan>[WavePreviewUI]</color> Initialized successfully. Phase: {GameManager.Instance.CurrentPhase}");
+        Debug.Log($"<color=cyan>[WavePreviewUI]</color> Initialized. Phase: {GameManager.Instance.CurrentPhase}");
     }
 
     void OnDisable()
@@ -75,112 +67,79 @@ public class WavePreviewUI : MonoBehaviour
         hasInitialized = false;
     }
 
-    private void OnSentListChanged(NetworkListEvent<int> changeEvent)
-    {
-        RefreshLayout();
-    }
+    private void OnSentListChanged(NetworkListEvent<int> changeEvent) => RefreshLayout();
 
     private void RefreshLayoutOnPhaseChange(GamePhase phase)
     {
         if (phase == GamePhase.Planning)
-        {
-            deathCounts.Clear(); // รีเซ็ตยอดตายเมื่อเริ่มรอบวางแผนใหม่
-        }
+            deathCounts.Clear();
         RefreshLayout();
     }
 
-    private void OnWaveDraftChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
-    {
-        RefreshLayout();
-    }
+    private void OnWaveDraftChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal) => RefreshLayout();
 
     private void RefreshLayout()
     {
         if (GameManager.Instance == null) return;
 
         bool isPlanning = GameManager.Instance.CurrentPhase == GamePhase.Planning;
-        
-        // 1. จัดการ PanelVisibility
+
         GameManager.SafeSetActive(planningPanel,    isPlanning,  "WavePreviewUI");
         GameManager.SafeSetActive(combatPanel,      !isPlanning, "WavePreviewUI");
         GameManager.SafeSetActive(sentEnemiesPanel, isPlanning,  "WavePreviewUI");
 
-        // 2. คำนวณ Incoming (ศัตรูที่จะมาบุกเรา)
+        // --- คำนวณ Incoming ---
         incomingCounts.Clear();
         string draft = GameManager.Instance.systemWaveDraft.Value.ToString();
-        
-        Debug.Log($"<color=cyan>[WavePreviewUI]</color> RefreshLayout: Phase={GameManager.Instance.CurrentPhase}, Draft='{draft}'");
 
         if (GameManager.Instance.systemEnemyPool == null || GameManager.Instance.systemEnemyPool.Length == 0)
-        {
-            Debug.LogWarning("<color=red>[WavePreviewUI]</color> systemEnemyPool is NULL or EMPTY! This is likely why nothing shows.");
-        }
+            Debug.LogWarning("<color=red>[WavePreviewUI]</color> systemEnemyPool is NULL or EMPTY!");
 
         if (!string.IsNullOrEmpty(draft))
         {
-            string[] parts = draft.Split('|');
-            foreach (string p in parts)
+            foreach (string p in draft.Split('|'))
             {
                 string[] sub = p.Split(':');
                 if (sub.Length == 2)
                     incomingCounts[int.Parse(sub[0])] = int.Parse(sub[1]);
             }
         }
-        else
-        {
-            Debug.Log("<color=yellow>[WavePreviewUI]</color> Draft is empty string.");
-        }
 
-        // รวม Incoming จากที่เพื่อนส่งมา (เฉพาะใน Combat)
+        // รวม Incoming จากที่เพื่อนส่งมา (Combat เท่านั้น)
         if (!isPlanning)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;
-            if (myId == 0) // เราคือ Host (P0) -> ดูที่ Client (P1) ส่งมา
-            {
-                for (int i = 0; i < GameManager.Instance.p1SentCounts.Count; i++)
-                    AddCountToDict(incomingCounts, i, GameManager.Instance.p1SentCounts[i]);
-            }
-            else // เราคือ Client (P1) -> ดูที่ Host (P0) ส่งมา
-            {
-                for (int i = 0; i < GameManager.Instance.p0SentCounts.Count; i++)
-                    AddCountToDict(incomingCounts, i, GameManager.Instance.p0SentCounts[i]);
-            }
+            var opponentList = myId == 0 ? GameManager.Instance.p1SentCounts : GameManager.Instance.p0SentCounts;
+            for (int i = 0; i < opponentList.Count; i++)
+                AddCountToDict(incomingCounts, i, opponentList[i]);
         }
 
-        // 3. คำนวณ Sent (ศัตรูที่ "เรา" ส่งไปหาเพื่อน)
+        // --- คำนวณ Sent (Planning เท่านั้น) ---
         sentCounts.Clear();
         if (isPlanning)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;
-            if (myId == 0) // เราคือ Host (P0) -> โชว์กองทัพ P0
-            {
-                for (int i = 0; i < GameManager.Instance.p0SentCounts.Count; i++)
-                    AddCountToDict(sentCounts, i, GameManager.Instance.p0SentCounts[i]);
-            }
-            else // เราคือ Client (P1) -> โชว์กองทัพ P1
-            {
-                for (int i = 0; i < GameManager.Instance.p1SentCounts.Count; i++)
-                    AddCountToDict(sentCounts, i, GameManager.Instance.p1SentCounts[i]);
-            }
+            var myList = myId == 0 ? GameManager.Instance.p0SentCounts : GameManager.Instance.p1SentCounts;
+            for (int i = 0; i < myList.Count; i++)
+                AddCountToDict(sentCounts, i, myList[i]);
         }
 
-        // 4. หักยอดที่ตายไปแล้ว (เฉพาะช่วง Combat)
+        // หักยอดที่ตายไปแล้ว (Combat เท่านั้น)
         if (!isPlanning)
         {
             foreach (var pair in deathCounts)
             {
                 if (incomingCounts.ContainsKey(pair.Key))
                 {
-                    incomingCounts[pair.Key] -= pair.Value;
-                    if (incomingCounts[pair.Key] < 0) incomingCounts[pair.Key] = 0;
+                    incomingCounts[pair.Key] = Mathf.Max(0, incomingCounts[pair.Key] - pair.Value);
                 }
             }
         }
 
-        // 5. อัปเดต UI Containers
-        UpdateContainerWithCounts(planningContainer, incomingCounts, planningIconPrefab, true);
-        UpdateContainerWithCounts(combatContainer, incomingCounts, combatIconPrefab, false);
-        UpdateContainerWithCounts(sentEnemiesContainer, sentCounts, sentIconPrefab ?? planningIconPrefab, false);
+        // --- อัปเดต UI ---
+        UpdateContainerWithCounts(planningContainer,     incomingCounts, planningIconPrefab,              true);
+        UpdateContainerWithCounts(combatContainer,       incomingCounts, combatIconPrefab,                false);
+        UpdateContainerWithCounts(sentEnemiesContainer,  sentCounts,     sentIconPrefab ?? planningIconPrefab, false);
     }
 
     private void AddCountToDict(Dictionary<int, int> dict, int index, int count)
@@ -194,70 +153,65 @@ public class WavePreviewUI : MonoBehaviour
     {
         if (container == null || prefab == null) return;
 
-        foreach (Transform child in container)
-            Destroy(child.gameObject);
+        foreach (Transform child in container) Destroy(child.gameObject);
+        if (!isPlanningContainer && container == combatContainer) combatIcons.Clear();
 
-        if (isPlanningContainer == false && container == combatContainer) 
-            combatIcons.Clear();
+        var pool = GameManager.Instance.systemEnemyPool;
+        if (pool == null) return;
 
         foreach (var pair in counts)
         {
             int index = pair.Key;
             int count = pair.Value;
 
-            if (GameManager.Instance.systemEnemyPool != null && index < GameManager.Instance.systemEnemyPool.Length)
+            if (index >= pool.Length) continue;
+
+            // ✅ ใช้ EnemyStatsSO โดยตรง — ดึง icon จาก field ที่ถูกต้อง
+            EnemyStatsSO data = pool[index];
+            if (data == null) continue;
+
+            GameObject obj = Instantiate(prefab, container);
+            WaveIconItem item = obj.GetComponent<WaveIconItem>();
+            if (item != null)
             {
-                MinionData data = GameManager.Instance.systemEnemyPool[index];
-                GameObject obj = Instantiate(prefab, container);
-                WaveIconItem item = obj.GetComponent<WaveIconItem>();
-                if (item != null)
-                {
-                    item.Setup(data.picture != null ? data.picture : data.icon, count, index);
-                    if (container == combatContainer) combatIcons.Add(item);
-                }
+                item.Setup(data.icon, count, index);
+                if (container == combatContainer) combatIcons.Add(item);
             }
         }
     }
 
-    private void HandleIncomingEnemy(int typeIndex)
-    {
-        // เมื่อมีมอนสเตอร์ใหม่พุ่งเข้ามา เราแค่สั่ง RefreshLayout
-        // ซึ่งจะไปดึงค่าใหม่จาก NetworkList ที่ GameManager อัปเดตให้แล้วครับ
-        RefreshLayout();
-    }
+    private void HandleIncomingEnemy(int typeIndex) => RefreshLayout();
 
     private void HandleEnemyDeath(int typeIndex)
     {
-        // ⚠️ เราจะลดจำนวนเฉพาะในเฟส Combat เท่านั้นครับ
         if (GameManager.Instance.CurrentPhase != GamePhase.Combat) return;
 
         if (deathCounts.ContainsKey(typeIndex)) deathCounts[typeIndex]++;
         else deathCounts[typeIndex] = 1;
 
-        // สั่ง Refresh เพื่อหักลบกลบหนี้และแสดงผลใหม่
         RefreshLayout();
     }
 
     private void UpdateCombatUIOnly()
     {
-        // อัปเดตตัวเลขใน CombatIcons โดยอ้างอิงจาก EnemyTypeIndex
+        var pool = GameManager.Instance.systemEnemyPool;
+        if (pool == null) return;
+
         foreach (var item in combatIcons)
         {
             if (item == null) continue;
 
             int typeIndex = item.EnemyTypeIndex;
-            if (incomingCounts.ContainsKey(typeIndex))
+            if (!incomingCounts.ContainsKey(typeIndex)) continue;
+
+            int currentValue = incomingCounts[typeIndex];
+
+            // ✅ ใช้ EnemyStatsSO โดยตรง
+            if (typeIndex < pool.Length && pool[typeIndex] != null)
             {
-                int currentValue = incomingCounts[typeIndex];
-                
-                MinionData data = GameManager.Instance.systemEnemyPool[typeIndex];
-                item.Setup(data.picture != null ? data.picture : data.icon, currentValue, typeIndex);
-                
-                // ถ้าเหลือ 0 ให้ซ่อนไอคอนไป
+                item.Setup(pool[typeIndex].icon, currentValue, typeIndex);
                 if (currentValue <= 0) item.gameObject.SetActive(false);
             }
         }
     }
-
-    // OnDestroy logic moved to OnDisable
 }

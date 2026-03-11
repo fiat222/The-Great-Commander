@@ -206,6 +206,9 @@ public class SoloGameManager : MonoBehaviour
         globalSpawner.SpawnWaveFromDraft(systemWaveDraft, enemyStatsSOs);
     }
 
+    // ================= ENEMY SHOP (Solo) =================
+    // Solo Mode ไม่มีระบบส่ง Enemy ครับ — Tab Enemy ใน Shop ถูกซ่อนไว้แล้ว
+
     // ================= CLEANUP =================
 
     void CleanupEnemies()
