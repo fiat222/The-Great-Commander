@@ -223,7 +223,7 @@ Transform:
   m_GameObject: {fileID: 1053625436251099676}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.4312671, y: 1.1700002, z: 1.4110631}
+  m_LocalPosition: {x: 1.4312671, y: 1.1700003, z: 1.4110631}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -274,7 +274,7 @@ Transform:
   m_GameObject: {fileID: 1063483295039600699}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.578168, y: 0, z: -3.5276575}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1588,7 +1588,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
-    Enabled: 1
+    Enabled: 0
     m_Value: 40
   OutputChannel: 1
   StandbyUpdate: 2
@@ -2692,7 +2692,8 @@ MonoBehaviour:
   freelookCamera: {fileID: 5664849722078882424}
   targetLockCamera: {fileID: 3588336575911302007}
   groundCheck: {fileID: 6728241864739391125}
-  groundDistance: 0.4
+  groundDistance: 0.2
+  groundCheckRadius: 0.4
   groundMask:
     serializedVersion: 2
     m_Bits: 64
@@ -2896,7 +2897,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 770560401
+  GlobalObjectIdHash: 1053498268
   InScenePlacedSourceGlobalObjectIdHash: 1053498268
   DeferredDespawnTick: 0
   Ownership: 1

@@ -327,7 +327,8 @@ MonoBehaviour:
   freelookCamera: {fileID: 5240872148639642401}
   targetLockCamera: {fileID: 6396577261000392489}
   groundCheck: {fileID: 5223564998722230334}
-  groundDistance: 0.4
+  groundDistance: 0.2
+  groundCheckRadius: 0.4
   groundMask:
     serializedVersion: 2
     m_Bits: 64
@@ -516,7 +517,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 208849156
+  GlobalObjectIdHash: 2323391265
   InScenePlacedSourceGlobalObjectIdHash: 2323391265
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1441,7 +1442,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
-    Enabled: 1
+    Enabled: 0
     m_Value: 40
   OutputChannel: 1
   StandbyUpdate: 2

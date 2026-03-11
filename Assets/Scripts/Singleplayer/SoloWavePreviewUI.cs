@@ -15,7 +15,8 @@ public class SoloWavePreviewUI : MonoBehaviour
     [SerializeField] private Transform planningIncomingContainer;
     [SerializeField] private Transform combatIncomingContainer;
 
-    [SerializeField] private GameObject incomingIconPrefab;
+    [SerializeField] private GameObject planningIconPrefab;
+    [SerializeField] private GameObject combatIconPrefab;
 
     // Data Storage
     private Dictionary<int, int> incomingCounts = new Dictionary<int, int>();
@@ -83,20 +84,24 @@ public class SoloWavePreviewUI : MonoBehaviour
         SafeSetActive(combatPanel, !isPlanning);
 
         // 2. คำนวณ Incoming Enemies (จำนวนศัตรูที่จะเกิดจากสุ่ม)
-        // ในโหมด Solo, SoloGameManager แจ้ง ExpectedEnemyCount แต่ไม่ได้บอกว่ากี่ตัวชนิดไหนแน่ชัด 
-        // อาศัยจาก EnemyStatsSO ที่รับ Wave ใหม่
         incomingCounts.Clear();
         
-        int totalExpected = SoloGameManager.Instance.ExpectedEnemyCount;
+        string draft = SoloGameManager.Instance.systemWaveDraft;
         var enemyPool = SoloGameManager.Instance.enemyStatsSOs;
 
-        if (enemyPool != null && enemyPool.Length > 0 && totalExpected > 0)
+        if (!string.IsNullOrEmpty(draft) && enemyPool != null)
         {
-            // (เรายังไม่รู้ชัวร์ๆ ว่า Spawner จะแจกจ่าย Type ไหนกี่ตัวเป๊ะๆ เพราะมันสุ่มตอนเกิด)
-            // แต่สำหรับความสวยงาม ให้ถัวเฉลี่ย หรือแสดงแค่ประเภทตัวแรกเพื่อให้เห็นไอคอน
-            // หรือถ้ามีระบบเดาคงที่ ก็คำนวณเอาตรงนี้ได้
-            // **ตัวอย่าง:** สมมติว่าเป็น Type 0 ล้วนๆ ไปก่อน
-            incomingCounts[0] = totalExpected; 
+            string[] parts = draft.Split('|');
+            foreach (string p in parts)
+            {
+                string[] sub = p.Split(':');
+                if (sub.Length == 2)
+                {
+                    int index = int.Parse(sub[0]);
+                    int count = int.Parse(sub[1]);
+                    incomingCounts[index] = count;
+                }
+            }
         }
 
         // 4. หักลบตัวที่ตาย (Combat)
@@ -113,8 +118,8 @@ public class SoloWavePreviewUI : MonoBehaviour
         }
 
         // 5. อัปเดต UI 
-        UpdateContainer(planningIncomingContainer, incomingCounts, incomingIconPrefab, true);
-        UpdateContainer(combatIncomingContainer, incomingCounts, incomingIconPrefab, false);
+        UpdateContainer(planningIncomingContainer, incomingCounts, planningIconPrefab, true);
+        UpdateContainer(combatIncomingContainer, incomingCounts, combatIconPrefab, false);
     }
 
     private void AddCountToDict(Dictionary<int, int> dict, int index, int count)
