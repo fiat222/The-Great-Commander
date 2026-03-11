@@ -532,7 +532,7 @@ MonoBehaviour:
   nameText: {fileID: 2504720280366937874}
   costText: {fileID: 5036355276754760167}
   iconImage: {fileID: 2034529494661510503}
-  button: {fileID: 0}
+  button: {fileID: 7294731318587315178}
   highlightObj: {fileID: 6319576100353459004}
 --- !u!114 &2019963546592518182
 MonoBehaviour:

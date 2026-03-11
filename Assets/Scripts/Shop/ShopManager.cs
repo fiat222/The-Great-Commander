@@ -79,17 +79,18 @@ public class ShopManager : MonoBehaviour
     void GenerateAllCards()
     {
         // แท็บ Minion
-        GenerateShopGroup(minionDataList, minionContainer, ShopItemCard.ShopItemType.Minion);
+        GenerateMinionGroup(minionDataList, minionContainer);
 
-        // แท็บ Enemy
+        // ✅ แท็บ Enemy — ใช้ EnemyStatsSO[] จาก systemEnemyPool โดยตรง
         if (GameManager.Instance?.systemEnemyPool != null)
-            GenerateShopGroup(GameManager.Instance.systemEnemyPool, enemyContainer, ShopItemCard.ShopItemType.Enemy);
+            GenerateEnemyGroup(GameManager.Instance.systemEnemyPool, enemyContainer);
 
         // แท็บ Upgrade (การ์ด Minion แต่ละชนิด)
         GenerateUpgradeGroup(minionDataList, upgradeContainer);
     }
 
-    void GenerateShopGroup(MinionData[] dataList, Transform container, ShopItemCard.ShopItemType type)
+    // ✅ สร้างการ์ด Minion (MinionData[])
+    void GenerateMinionGroup(MinionData[] dataList, Transform container)
     {
         if (container == null || dataList == null) return;
         foreach (Transform child in container) Destroy(child.gameObject);
@@ -98,7 +99,21 @@ public class ShopManager : MonoBehaviour
         {
             if (dataList[i] == null) continue;
             var card = Instantiate(shopItemCardPrefab, container);
-            card.GetComponent<ShopItemCard>()?.Setup(dataList[i], type, i);
+            card.GetComponent<ShopItemCard>()?.Setup(dataList[i], ShopItemCard.ShopItemType.Minion, i);
+        }
+    }
+
+    // ✅ สร้างการ์ด Enemy (EnemyStatsSO[]) — แยกออกมาเพื่อรับ type ที่ถูกต้อง
+    void GenerateEnemyGroup(EnemyStatsSO[] dataList, Transform container)
+    {
+        if (container == null || dataList == null) return;
+        foreach (Transform child in container) Destroy(child.gameObject);
+
+        for (int i = 0; i < dataList.Length; i++)
+        {
+            if (dataList[i] == null) continue;
+            var card = Instantiate(shopItemCardPrefab, container);
+            card.GetComponent<ShopItemCard>()?.Setup(dataList[i], ShopItemCard.ShopItemType.Enemy, i);
         }
     }
 
@@ -110,18 +125,14 @@ public class ShopManager : MonoBehaviour
         for (int i = container.childCount - 1; i >= 0; i--)
         {
             Transform child = container.GetChild(i);
-
             if (child.GetComponent<UpgradeItemCard>() != null)
-            {
                 Destroy(child.gameObject);
-            }
         }
 
         // สร้างใหม่
         for (int i = 0; i < dataList.Length; i++)
         {
             if (dataList[i] == null) continue;
-
             var card = Instantiate(upgradeItemCardPrefab, container);
             card.GetComponent<UpgradeItemCard>()?.Setup(dataList[i], i);
         }
@@ -163,14 +174,12 @@ public class ShopManager : MonoBehaviour
     {
         if (UpgradeManager.Instance != null)
             UpgradeManager.Instance.UpgradePlayer();
-        // RefreshPlayerUpgradeUI จะถูกเรียกผ่าน OnMoneyChanged อัตโนมัติครับ
     }
 
     private void RefreshPlayerUpgradeUI()
     {
         if (UpgradeManager.Instance == null) return;
 
-        // ดึง reference SO จาก UpgradeManager
         PlayerStatsSO reference = UpgradeManager.Instance.warriorStats != null
             ? UpgradeManager.Instance.warriorStats
             : UpgradeManager.Instance.archerStats;
