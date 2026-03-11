@@ -164,7 +164,7 @@ public class SpectatorController : MonoBehaviour
 
         pos.x = Mathf.Clamp(pos.x, origin.x, origin.x + size.x);
         pos.z = Mathf.Clamp(pos.z, origin.z, origin.z + size.z);
-        pos.y = Mathf.Clamp(pos.y, origin.y + 50f, origin.y + 150f);
+        pos.y = Mathf.Clamp(pos.y, origin.y + 10f, origin.y + 150f);
 
         return pos;
     }
