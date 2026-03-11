@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
   enemyName: Troll
   prefab: {fileID: 8378969683373002168, guid: 42d717d445b109b449d89fb3c4191517, type: 3}
-  icon: {fileID: 1916907267, guid: c061270db74999d4ca9dba1344e78d85, type: 3}
+  icon: {fileID: 21300000, guid: 5a36cf3e4242e9740a1ba4857ff89509, type: 3}
   cost: 50
   orbDrop: 0
   attackRange: 8

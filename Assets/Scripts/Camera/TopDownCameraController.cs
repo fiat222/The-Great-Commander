@@ -139,8 +139,8 @@ public class TopDownCameraController : MonoBehaviour
         pos.x = Mathf.Clamp(pos.x, origin.x, origin.x + size.x);
         pos.z = Mathf.Clamp(pos.z, origin.z, origin.z + size.z);
         
-        // เพดานบินของกล้อง ปรับขึ้นเป็น 1000f เพื่อไม่ให้ติดความสูงของ Terrain 
-        pos.y = Mathf.Clamp(pos.y, origin.y + 50f, origin.y + 150f);
+        // เพดานบินของกล้อง ปรับเพื่อไม่ให้ติดความสูงของ Terrain 
+        pos.y = Mathf.Clamp(pos.y, origin.y + 10f, origin.y + 150f);
 
         return pos;
     }
