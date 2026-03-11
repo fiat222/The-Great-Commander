@@ -1,0 +1,151 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4553607180254524416
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8394865369192502105}
+  - component: {fileID: 8772342214542014663}
+  - component: {fileID: 6479629276237491264}
+  - component: {fileID: 1406699720048328134}
+  - component: {fileID: 318429452353604679}
+  - component: {fileID: 7384316338884164754}
+  m_Layer: 0
+  m_Name: SoloGameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8394865369192502105
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1172.7034, y: -529.2349, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8772342214542014663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995d13a1b745b5c48bf33e4398df2da1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacementManager
+  hexGrid: {fileID: 0}
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  Money: 200
+  sellCursorOverlay: {fileID: 0}
+  sellButton: {fileID: 0}
+  gridVisual: {fileID: 0}
+--- !u!114 &6479629276237491264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76264c0019eb722469b32c5fd293339f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
+  warriorStats: {fileID: 11400000, guid: 0d5f05283bf903d409d8186ce6bc0316, type: 2}
+  archerStats: {fileID: 11400000, guid: cbae5f884a15e7c4dab15085c8b9c39a, type: 2}
+  minionStats:
+  - {fileID: 11400000, guid: 14b38f23bcdb24546953a7099cf2ac90, type: 2}
+  - {fileID: 11400000, guid: b584eb5dd906daa4593159b49ea80890, type: 2}
+  - {fileID: 11400000, guid: 63befe7b08d67a141905431b343d130f, type: 2}
+  - {fileID: 11400000, guid: 98305398f2dbc0a489e8d7e0539a9e0b, type: 2}
+  - {fileID: 11400000, guid: 09cd65bdd919e224b8dfe43d13ac6fdb, type: 2}
+--- !u!114 &1406699720048328134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51d4772ffa30c654992ae95cc9ea0866, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraHintsUI
+  cameraController: {fileID: 0}
+  mainPanel: {fileID: 0}
+  ui_W: {fileID: 0}
+  ui_A: {fileID: 0}
+  ui_S: {fileID: 0}
+  ui_D: {fileID: 0}
+  ui_Space: {fileID: 0}
+  ui_Shift: {fileID: 0}
+  ui_Ctrl: {fileID: 0}
+  ui_L: {fileID: 0}
+  ui_EscLabel: {fileID: 0}
+  textWhenLocked: Unlock Mouse
+  textWhenUnlocked: Lock Mouse
+  normalColor: {r: 1, g: 1, b: 1, a: 0.35}
+  highlightColor: {r: 0.15, g: 0.15, b: 0.15, a: 1}
+--- !u!114 &318429452353604679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcbcca4081aca50448b2199d34a93850, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoloGameManager
+  countdownText: {fileID: 0}
+  waveText: {fileID: 0}
+  planningDuration: 30
+  enemyStatsSOs:
+  - {fileID: 11400000, guid: 31141d067ccdd66458ed5b006437446a, type: 2}
+  - {fileID: 11400000, guid: 8f575cf0407e766438fcce55ca611a72, type: 2}
+  - {fileID: 11400000, guid: 8eeaddc6655f6ea41808f57ee7bd11c1, type: 2}
+  - {fileID: 11400000, guid: cb81fb4419f6a8b49bd62c061062d321, type: 2}
+  - {fileID: 11400000, guid: 2f3c2dcbfd7c59a4cabbfab40d383b44, type: 2}
+  - {fileID: 11400000, guid: 49bfa040ae688bb4092f611127822152, type: 2}
+  crosshairObject: {fileID: 0}
+  skillUI: {fileID: 0}
+  nextPhaseButton: {fileID: 0}
+--- !u!114 &7384316338884164754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4553607180254524416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c182905e5ede1a4e86bf747af882e4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoloEnemyTracker
+  centerPanel: {fileID: 0}
+  centerText: {fileID: 0}
+  enemyCounterText: {fileID: 0}
+  youWinUI: {fileID: 0}
+  youLostUI: {fileID: 0}
+  winBackToMenuButton: {fileID: 0}
+  loseBackToMenuButton: {fileID: 0}
+  waveClearDelay: 15
+  deathLightningVFX: {fileID: 2705533495200665743, guid: e84c40719cee66744925cce01bef28fc, type: 3}
