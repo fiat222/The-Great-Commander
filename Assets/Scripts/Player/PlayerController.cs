@@ -141,19 +141,25 @@ public class PlayerController : MonoBehaviour
     {
         if (stats != null)
         {
+            int oldMaxHP = maxHP;  // เก็บค่าเดิมก่อน
+
             maxHP = stats.GetHP();
             moveSpeed = stats.GetSpeed() * 2.4f;
             AttackDamage = stats.GetDamage();
             Defense = stats.GetDefense();
 
-            // อัพเดต Skill Icons อัตโนมัติจาก Tag
             ApplySkillIcons();
+
+            // เพิ่ม currentHP ตาม diff ที่ max เพิ่มขึ้น
+            if (!isFirstInit && oldMaxHP > 0)
+            {
+                int diff = maxHP - oldMaxHP;
+                currentHP = Mathf.Min(currentHP + diff, maxHP);
+            }
         }
 
         if (isFirstInit)
-        {
             currentHP = maxHP;
-        }
 
         if (healthBar != null)
         {
@@ -161,7 +167,7 @@ public class PlayerController : MonoBehaviour
             healthBar.value = currentHP;
         }
 
-        Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
+        Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{currentHP}/{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
     }
 
     private void ApplySkillIcons()

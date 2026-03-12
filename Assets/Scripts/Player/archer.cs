@@ -161,6 +161,8 @@ public class Archer : MonoBehaviour
     {
         if (stats != null)
         {
+            int oldMaxHP = maxHP;  // เก็บค่าเดิมก่อน
+
             maxHP = stats.GetHP();
             moveSpeed = stats.GetSpeed();
             aimMoveSpeed = stats.GetSpeed();
@@ -171,19 +173,30 @@ public class Archer : MonoBehaviour
             maxDamage = Mathf.RoundToInt(AttackDamage * 2f);
             quickShotDamage = Mathf.RoundToInt(AttackDamage);
 
-            // อัพเดต Skill Icons อัตโนมัติจาก Tag
             ApplySkillIcons();
+
+            // เพิ่ม currentHP ตาม diff ที่ max เพิ่มขึ้น
+            if (!isFirstInit && oldMaxHP > 0)
+            {
+                int diff = maxHP - oldMaxHP;
+                currentHP = Mathf.Min(currentHP + diff, maxHP);
+            }
         }
 
         if (isFirstInit)
         {
             currentHP = maxHP;
             if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
+            return;
         }
 
-        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} " +
-                  $"| HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} " +
-                  $"MinDmg:{minDamage} MaxDmg:{maxDamage}");
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHP;
+            healthBar.value = currentHP;
+        }
+
+        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{currentHP}/{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
     /// <summary>
