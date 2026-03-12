@@ -22773,7 +22773,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 782.2914, y: 123.4}
+  m_AnchoredPosition: {x: 848, y: 139}
   m_SizeDelta: {x: 1471.203, y: 176.3358}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &786362736156724343
@@ -24124,6 +24124,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 779292294421005915}
     m_Modifications:
+    - target: {fileID: 978781982072744216, guid: 6764d783daddef643b581521d69ed155, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.9000015
+      objectReference: {fileID: 0}
     - target: {fileID: 4823019926882902312, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_Name
       value: UpgradeItemCard
@@ -24142,7 +24146,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_AnchorMin.x
@@ -24150,15 +24154,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_LocalPosition.x
@@ -24190,11 +24194,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 210.98001
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -88.1679
       objectReference: {fileID: 0}
     - target: {fileID: 8512822454879388001, guid: 6764d783daddef643b581521d69ed155, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -25920,9 +25924,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 779292294421005915}
     m_Modifications:
+    - target: {fileID: 753692985964796117, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.20000076
+      objectReference: {fileID: 0}
+    - target: {fileID: 1721909825073752358, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.5999985
+      objectReference: {fileID: 0}
     - target: {fileID: 5127751216840648904, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_Name
       value: UpgradePlayerCard
+      objectReference: {fileID: 0}
+    - target: {fileID: 5628207966710642472, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.5999985
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_Pivot.x
@@ -25938,7 +25954,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_AnchorMin.x
@@ -25946,15 +25962,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -25990,7 +26006,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -88.1679
       objectReference: {fileID: 0}
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -26003,6 +26019,14 @@ PrefabInstance:
     - target: {fileID: 5649714773921849673, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8170815534577249670, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.70000076
+      objectReference: {fileID: 0}
+    - target: {fileID: 8685965595386047444, guid: 634790538eb98294e8ee6a9eaaa8937c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.1847992
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
