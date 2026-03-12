@@ -21,7 +21,7 @@ MonoBehaviour:
   damage: 24
   defense: 1
   speed: 5
-  hp: 400
+  hp: 40
   attackrange: 5
   costEscalation: 1.5
   hpMultiplier: 1.3

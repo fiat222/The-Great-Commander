@@ -6,7 +6,7 @@ using System;
 
 /// <summary>
 /// ShopItemCard — การ์ดในแท็บ Minion และ Enemy
-/// รองรับ Tooltip เมื่อนำเมาส์ไปชี้การ์ด Minion และ Enemy ครับ
+/// รองรับ Tooltip เมื่อนำเมาส์ไปชี้การ์ด Minion และ Enemy (ข้อมูลจาก MinionData และ EnemyStatsSO)
 /// </summary>
 public class ShopItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -90,12 +90,12 @@ public class ShopItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (itemType == ShopItemType.Minion && minionData != null)
         {
             string content = BuildMinionTooltip(minionData);
-            TooltipUI.Instance.Show(minionData.minionName, content);
+            TooltipUI.Instance.Show(minionData.minionName, content, TooltipUI.TooltipSize.Large);
         }
         else if (itemType == ShopItemType.Enemy && enemyData != null)
         {
             string content = BuildEnemyTooltip(enemyData);
-            TooltipUI.Instance.Show(enemyData.enemyName, content);
+            TooltipUI.Instance.Show(enemyData.enemyName, content, TooltipUI.TooltipSize.Large);
         }
     }
 
@@ -113,9 +113,9 @@ public class ShopItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         string levelLabel = data.IsMaxLevel ? "MAX" : $"Lv {data.CurrentLevel}";
         string upgradeInfo = data.IsMaxLevel
             ? ""
-            : $"\n<b>Upgrade Cost:</b> {data.GetUpgradeCost()} Orb";
+            : $"\n<b><color=#00BDFA>Upgrade Cost:</b> {data.GetUpgradeCost()} Orb</color>";
 
-        return $"<b>Cost:</b> {data.cost}  <i>({levelLabel})</i>\n" +
+        return $"<b><color=#FFDD44>Cost:</b> {data.cost}  <i>({levelLabel})</i> </color>\n" +
                $"<b>HP:</b> {data.GetHP():F0}\n" +
                $"<b>ATK:</b> {data.GetDamage():F1}\n" +
                $"<b>DEF:</b> {data.GetDefense():F1}\n" +
@@ -132,7 +132,7 @@ public class ShopItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                $"<b>ATK:</b> {data.GetDamage():F1}\n" +
                $"<b>DEF:</b> {data.GetDefense():F1}\n" +
                $"<b>Speed:</b> {data.GetSpeed():F2}\n" +
-               $"<b>Orb Drop:</b> {data.orbDrop}";
+               $"<b>Orb Drop:</b> {data.orbDrop}";  
     }
 
     // ─────────────────────────────────────────────
