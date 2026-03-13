@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
   enemyName: Imp
   prefab: {fileID: 7969264364928350748, guid: 7c39fbdbeb10ba64e9a36bef2a92c5a5, type: 3}
-  icon: {fileID: -1265361500, guid: cdbdba6152284b3498045e0898913945, type: 3}
+  icon: {fileID: 21300000, guid: 1ec9a403a4205d84bb6dfefc1dd0f97a, type: 3}
   cost: 20
   orbDrop: 0
   attackRange: 21

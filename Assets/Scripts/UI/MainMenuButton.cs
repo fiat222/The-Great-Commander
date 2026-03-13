@@ -12,7 +12,7 @@ public class MainMenuButton : MonoBehaviour
 
         if (NetworkManager.Singleton == null)
         {
-            SceneManager.LoadScene("MenuScene");
+            SceneManager.LoadScene("MenuSceneTest");
             return;
         }
 
@@ -34,6 +34,6 @@ public class MainMenuButton : MonoBehaviour
     private IEnumerator LoadMenuAfterShutdown()
     {
         yield return new WaitForSeconds(0.5f);
-        SceneManager.LoadScene("MenuScene");
+        SceneManager.LoadScene("MenuSceneTest");
     }
 }

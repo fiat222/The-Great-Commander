@@ -51,16 +51,15 @@ public class GameManager : NetworkBehaviour
     public TextMeshProUGUI nextPhaseButtonText; // ลาก Text ในปุ่ม Next Phase มาใส่ครับ
 
     [Header("PvE System Wave")]
-    public MinionData[] systemEnemyPool; // สุ่มจาก List นี้ครับ
+    // ✅ เปลี่ยนจาก MinionData[] เป็น EnemyStatsSO[] เพื่อให้ Pool และ Stats อยู่ในที่เดียวกันครับ
+    public EnemyStatsSO[] systemEnemyPool;
     // เก็บข้อมูลเวฟที่สุ่มได้ในรูปแบบ "index:count|index:count"
     public NetworkVariable<FixedString512Bytes> systemWaveDraft = new NetworkVariable<FixedString512Bytes>(
         new FixedString512Bytes(""), 
         NetworkVariableReadPermission.Everyone, 
         NetworkVariableWritePermission.Server);
 
-    [Header("Enemy Stats SOs")]
-    [Tooltip("ลาก EnemyStatsSO ให้ตรงลำดับกับ systemEnemyPool ทุกตัวครับ")]
-    public EnemyStatsSO[] enemyStatsSOs;
+    // ✅ ลบ enemyStatsSOs ออกแล้ว เพราะ systemEnemyPool เป็น EnemyStatsSO[] แล้วครับ
 
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
@@ -69,7 +68,7 @@ public class GameManager : NetworkBehaviour
     public NetworkList<int> p0SentCounts; // Player 0 (Host)
     public NetworkList<int> p1SentCounts; // Player 1 (Client)
 
-    // Economy Settings ย้ายไปอยู่ใน MinionData แล้วครับ
+    // Economy Settings ย้ายไปอยู่ใน EnemyStatsSO แล้วครับ
 
     // Crosshair + Skill UI สำหรับปิด/เปิด ในแต่ละเฟส
     [SerializeField] private GameObject crosshairObject;
@@ -123,7 +122,6 @@ public class GameManager : NetworkBehaviour
         if (globalSpawner != null) Debug.Log("<color=green>[GameManager]</color> Global Spawner Linked.");
 
         displayPhase = currentPhase.Value;
-        // currentPhase.OnValueChanged += OnPhaseChanged; // ย้ายไป OnEnable แล้ว
         
         // ผูก Event ให้ UI อัปเดตเมื่อค่าใน List เปลี่ยนครับ
         p0SentCounts.OnListChanged += (changeEvent) => UpdatePhaseUI(currentPhase.Value);
@@ -232,7 +230,7 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.Shutdown();
             
         yield return new WaitForSeconds(0.5f);
-        SceneManager.LoadScene("MenuScene");
+        SceneManager.LoadScene("MenuSceneTest");
     }
 
     public void ForceUnlockCursor()
@@ -260,9 +258,9 @@ public class GameManager : NetworkBehaviour
             {
                 currentWave.Value++;
 
-                // ⭐ Notify EnemyStatsSOs ด้วย (ก่อน GenerateSystemWave)
-                if (enemyStatsSOs != null)
-                    foreach (var so in enemyStatsSOs)
+                // ✅ ดึง SetWave จาก systemEnemyPool โดยตรง (ไม่ต้องมี enemyStatsSOs แยกต่างหากแล้ว)
+                if (systemEnemyPool != null)
+                    foreach (var so in systemEnemyPool)
                         if (so != null) so.SetWave(currentWave.Value);
 
                 p0Dead.Value = false;
@@ -497,20 +495,20 @@ private void UpdatePhaseUI(GamePhase phase)
         systemWaveDraft.Value = new FixedString512Bytes(draft);
         Debug.Log($"<color=orange>[GameManager]</color> Generated Wave {currentWave.Value}: {draft} (Total: {totalToSpawn})");
 
-        if (enemyStatsSOs != null)
+        // ✅ ดึง SetWave จาก systemEnemyPool โดยตรง
+        if (systemEnemyPool != null)
         {
-            foreach (var so in enemyStatsSOs)
+            foreach (var so in systemEnemyPool)
             {
                 if (so != null) so.SetWave(currentWave.Value);
             }
         }
-
     }
 
     // แก้ฟังก์ชันนี้ให้รับ parameter เพื่อรู้ว่ากดปุ่มไหนมาครับ
     public void RequestBuyEnemy(int typeIndex)
     {
-        // 1. เช็คว่า Index ถูกต้องและดึงราคาจาก MinionData โดยตรงครับ
+        // ✅ ดึงราคาจาก EnemyStatsSO โดยตรง (ไม่ต้องผ่าน MinionData แล้ว)
         if (systemEnemyPool == null || typeIndex >= systemEnemyPool.Length) return;
         int cost = systemEnemyPool[typeIndex].cost;
 

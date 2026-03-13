@@ -28,6 +28,7 @@ public class SoloGameManager : MonoBehaviour
     private bool currentModeWantsLock = false;
 
     public int ExpectedEnemyCount { get; private set; }
+    public string systemWaveDraft { get; private set; } = "";
 
     [Header("Enemy Pool")]
     public EnemyStatsSO[] enemyStatsSOs;
@@ -51,6 +52,7 @@ public class SoloGameManager : MonoBehaviour
     {
         globalSpawner = FindFirstObjectByType<EnemySpawner_Single>();
         planningTimer = planningDuration;
+        GenerateSystemWaveDraft(); // ⭐ สร้างเวฟเตรียมไว้เลยตั้งแต่รอบ Planning
         UpdateWaveUI();
         UpdatePhaseUI();
         OnPhaseChangedGlobal?.Invoke(currentPhase);
@@ -155,6 +157,7 @@ public class SoloGameManager : MonoBehaviour
         currentWave++;
         planningTimer = planningDuration;
         CleanupEnemies();
+        GenerateSystemWaveDraft(); // ⭐ สุ่มเวฟใหม่ไว้ล่วงหน้า
         UpdateWaveUI();
         UpdatePhaseUI();
         OnPhaseChangedGlobal?.Invoke(currentPhase);
@@ -162,19 +165,49 @@ public class SoloGameManager : MonoBehaviour
 
     // ================= WAVE =================
 
-    void SpawnWave()
+    private void GenerateSystemWaveDraft()
     {
-        if (globalSpawner == null || enemyStatsSOs == null || enemyStatsSOs.Length == 0) return;
+        if (enemyStatsSOs == null || enemyStatsSOs.Length == 0) return;
 
-        // อัปเดต wave ให้ EnemyStatsSO ทุกตัวก่อน
+        int totalToSpawn = 1 + (currentWave - 1) * 2;
+        ExpectedEnemyCount = totalToSpawn; // บันทึกเพื่อให้ Tracker ดึงไปใช้
+        int[] counts = new int[enemyStatsSOs.Length];
+
+        // สุ่มแจกจ่ายจำนวนให้ครบ totalToSpawn
+        for (int i = 0; i < totalToSpawn; i++)
+        {
+            int randIndex = UnityEngine.Random.Range(0, enemyStatsSOs.Length);
+            counts[randIndex]++;
+        }
+
+        // แปลงเป็น String: "0:3|1:2"
+        string draft = "";
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] > 0)
+            {
+                if (draft != "") draft += "|";
+                draft += $"{i}:{counts[i]}";
+            }
+        }
+
+        systemWaveDraft = draft;
+        Debug.Log($"<color=orange>[SoloGameManager]</color> Generated Wave {currentWave}: {draft} (Total: {totalToSpawn})");
+
+        // แจ้งเตือนมอนสเตอร์ให้อัปเดต Stats ตามคลื่นปัจจุบัน
         foreach (var so in enemyStatsSOs)
             if (so != null) so.SetWave(currentWave);
-
-        int total = 1 + (currentWave - 1) * 2;
-        ExpectedEnemyCount = total; // บันทึกเพื่อให้ Tracker ดึงไปใช้
-
-        globalSpawner.SpawnWaveBatch(enemyStatsSOs, total);
     }
+
+    void SpawnWave()
+    {
+        if (globalSpawner == null || string.IsNullOrEmpty(systemWaveDraft)) return;
+
+        globalSpawner.SpawnWaveFromDraft(systemWaveDraft, enemyStatsSOs);
+    }
+
+    // ================= ENEMY SHOP (Solo) =================
+    // Solo Mode ไม่มีระบบส่ง Enemy ครับ — Tab Enemy ใน Shop ถูกซ่อนไว้แล้ว
 
     // ================= CLEANUP =================
 
@@ -231,7 +264,7 @@ public class SoloGameManager : MonoBehaviour
         Cursor.visible = true;
     }
 
-    public void ReturnToMenu() => SceneManager.LoadScene("MenuScene");
+    public void ReturnToMenu() => SceneManager.LoadScene("MenuSceneTest");
 
     // ================= UTIL =================
 

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Unity.Cinemachine;
 using UnityEngine.UI;
 using PlayerAudio;
@@ -82,7 +82,8 @@ public class Archer : MonoBehaviour
     // ==================== Ground Check ====================
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundDistance = 0.6f;
+    public float groundDistance = 0.2f;
+    public float groundCheckRadius = 0.4f;
     public LayerMask groundMask;
 
     // ==================== Health UI ====================
@@ -160,6 +161,8 @@ public class Archer : MonoBehaviour
     {
         if (stats != null)
         {
+            int oldMaxHP = maxHP;  // เก็บค่าเดิมก่อน
+
             maxHP = stats.GetHP();
             moveSpeed = stats.GetSpeed();
             aimMoveSpeed = stats.GetSpeed();
@@ -170,19 +173,30 @@ public class Archer : MonoBehaviour
             maxDamage = Mathf.RoundToInt(AttackDamage * 2f);
             quickShotDamage = Mathf.RoundToInt(AttackDamage);
 
-            // อัพเดต Skill Icons อัตโนมัติจาก Tag
             ApplySkillIcons();
+
+            // เพิ่ม currentHP ตาม diff ที่ max เพิ่มขึ้น
+            if (!isFirstInit && oldMaxHP > 0)
+            {
+                int diff = maxHP - oldMaxHP;
+                currentHP = Mathf.Min(currentHP + diff, maxHP);
+            }
         }
 
         if (isFirstInit)
         {
             currentHP = maxHP;
             if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
+            return;
         }
 
-        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} " +
-                  $"| HP:{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} " +
-                  $"MinDmg:{minDamage} MaxDmg:{maxDamage}");
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHP;
+            healthBar.value = currentHP;
+        }
+
+        Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{currentHP}/{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
     /// <summary>
@@ -282,8 +296,7 @@ public class Archer : MonoBehaviour
 
     private void ApplyGravityOnly()
     {
-        if (groundCheck != null)
-            isGrounded = controller.isGrounded;
+        UpdateGroundedStatus();
         if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
         else verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
@@ -291,8 +304,7 @@ public class Archer : MonoBehaviour
 
     private void ApplyGravityDuringDodge()
     {
-        if (groundCheck != null)
-            isGrounded = controller.isGrounded;
+        UpdateGroundedStatus();
 
         if (isGrounded && verticalVelocity.y < 0)
             verticalVelocity.y = -2f;
@@ -369,6 +381,13 @@ public class Archer : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, lockRange);
+
+        if (groundCheck != null)
+        {
+            Gizmos.color = isGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+            Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * groundDistance);
+        }
     }
 
     // ==================== Roll ====================
@@ -709,8 +728,7 @@ public class Archer : MonoBehaviour
         bool isLocked = isRolling || isHit || isDead ||
                         (animator != null && animator.IsInTransition(0) && nInfo.IsTag("Roll"));
 
-        if (groundCheck != null)
-            isGrounded = controller.isGrounded;
+        UpdateGroundedStatus();
         if (isGrounded && verticalVelocity.y < 0) verticalVelocity.y = -2f;
 
         float h = Input.GetAxisRaw("Horizontal");
@@ -769,6 +787,17 @@ public class Archer : MonoBehaviour
         verticalVelocity.y += gravity * Time.deltaTime;
         finalMove += verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
+    }
+
+    private void UpdateGroundedStatus()
+    {
+        if (groundCheck == null) return;
+
+        float castRadius = groundCheckRadius;
+        float castDistance = groundDistance;
+        Vector3 origin = groundCheck.position + Vector3.up * castRadius;
+
+        isGrounded = Physics.SphereCast(origin, castRadius, Vector3.down, out _, castDistance, groundMask);
     }
 
     // ==================== Animation Events ====================

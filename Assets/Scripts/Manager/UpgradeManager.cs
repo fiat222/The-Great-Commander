@@ -1,10 +1,5 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// UpgradeManager — จัดการระบบ Upgrade
-/// ใช้ PlacementManager.Money เป็นสกุลเงินเดียว (Orb = Money)
-/// ไม่มีระบบเงินของตัวเอง
-/// </summary>
 public class UpgradeManager : MonoBehaviour
 {
     public static UpgradeManager Instance { get; private set; }
@@ -20,13 +15,13 @@ public class UpgradeManager : MonoBehaviour
     public MinionData[] minionStats;
 
     // ==================== Shortcut ====================
+
     private int CurrentMoney =>
         PlacementManager.Instance != null ? PlacementManager.Instance.Money : 0;
 
     private void SpendMoney(int amount)
     {
         if (PlacementManager.Instance == null) return;
-
         PlacementManager.Instance.Money -= amount;
         PlacementManager.Instance.OnMoneyChanged?.Invoke(PlacementManager.Instance.Money);
     }
@@ -41,59 +36,118 @@ public class UpgradeManager : MonoBehaviour
 
     // ==================== Player Upgrade ====================
 
-    /// <summary>
-    /// กดปุ่มเดียว → อัพทั้ง Warrior และ Archer พร้อมกัน
-    /// หักเงินจาก PlacementManager.Money ครั้งเดียว
-    /// </summary>
-    public void UpgradePlayer()
+    /// <summary>อัพตาม StatsSO ที่ส่งมาตรงๆ — รองรับทั้ง Solo และ Duo</summary>
+    public void UpgradePlayerByStats(PlayerStatsSO stats)
     {
-        PlayerStatsSO reference = warriorStats != null ? warriorStats : archerStats;
-        if (reference == null)
+        if (stats == null)
         {
-            Debug.LogWarning("[UpgradeManager] ไม่มี PlayerStatsSO!");
+            Debug.LogWarning("[UpgradeManager] ไม่มี stats!");
             return;
         }
 
-        if (reference.IsMaxLevel)
+        if (stats.IsMaxLevel)
         {
             Debug.Log("[UpgradeManager] Player อยู่ระดับสูงสุดแล้ว!");
             return;
         }
 
-        int cost = reference.GetUpgradeCost();
+        int cost = stats.GetUpgradeCost();
         if (CurrentMoney < cost)
         {
             Debug.LogWarning($"[UpgradeManager] เงินไม่พอ! ต้องการ {cost} มีแค่ {CurrentMoney}");
             return;
         }
 
-        // หักเงินครั้งเดียว แล้วอัพทั้งสอง SO
         SpendMoney(cost);
-        warriorStats?.Upgrade();
-        archerStats?.Upgrade();
+        stats.Upgrade();
 
-        // แจ้ง PlayerController และ Archer ทุกตัวในซีนให้ refresh stat
         foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
             pc.ApplyStats();
 
         foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
             ac.ApplyStats();
 
-        // เล่นเสียงอัปเกรด
         if (AudioManager.Instance != null)
-        {
             AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+
+        Debug.Log($"[UpgradeManager] Player Upgraded! Lv{stats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
+    }
+
+    /// <summary>Legacy — ยังเผื่อไว้ถ้ามีที่เรียกใช้</summary>
+    public void UpgradePlayer()
+    {
+        UpgradeWarrior();
+        UpgradeArcher();
+    }
+
+    public void UpgradeWarrior()
+    {
+        if (warriorStats == null)
+        {
+            Debug.LogWarning("[UpgradeManager] ไม่มี warriorStats!");
+            return;
         }
 
-        Debug.Log($"[UpgradeManager] Player Upgraded! Warrior Lv{warriorStats?.CurrentLevel} / Archer Lv{archerStats?.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
+        if (warriorStats.IsMaxLevel)
+        {
+            Debug.Log("[UpgradeManager] Warrior อยู่ระดับสูงสุดแล้ว!");
+            return;
+        }
+
+        int cost = warriorStats.GetUpgradeCost();
+        if (CurrentMoney < cost)
+        {
+            Debug.LogWarning($"[UpgradeManager] เงินไม่พอ! Warrior ต้องการ {cost} มีแค่ {CurrentMoney}");
+            return;
+        }
+
+        SpendMoney(cost);
+        warriorStats.Upgrade();
+
+        foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            pc.ApplyStats();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+
+        Debug.Log($"[UpgradeManager] Warrior Upgraded! Lv{warriorStats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
+    }
+
+    public void UpgradeArcher()
+    {
+        if (archerStats == null)
+        {
+            Debug.LogWarning("[UpgradeManager] ไม่มี archerStats!");
+            return;
+        }
+
+        if (archerStats.IsMaxLevel)
+        {
+            Debug.Log("[UpgradeManager] Archer อยู่ระดับสูงสุดแล้ว!");
+            return;
+        }
+
+        int cost = archerStats.GetUpgradeCost();
+        if (CurrentMoney < cost)
+        {
+            Debug.LogWarning($"[UpgradeManager] เงินไม่พอ! Archer ต้องการ {cost} มีแค่ {CurrentMoney}");
+            return;
+        }
+
+        SpendMoney(cost);
+        archerStats.Upgrade();
+
+        foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
+            ac.ApplyStats();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+
+        Debug.Log($"[UpgradeManager] Archer Upgraded! Lv{archerStats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
     // ==================== Minion Upgrade ====================
 
-    /// <summary>
-    /// อัพ Minion ชนิดที่ระบุ index
-    /// MinionData.OnMinionUpgraded จะ fire → MinionAI refresh ทุกตัวเอง
-    /// </summary>
     public void UpgradeMinion(int minionIndex)
     {
         if (minionStats == null || minionIndex >= minionStats.Length) return;
@@ -114,20 +168,14 @@ public class UpgradeManager : MonoBehaviour
         }
 
         SpendMoney(cost);
-        data.Upgrade(); // → fire OnMinionUpgraded → MinionAI refresh
+        data.Upgrade();
 
-        // เล่นเสียงอัปเกรด มินเนี่ยน
         if (AudioManager.Instance != null)
-        {
             AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
-        }
 
         Debug.Log($"[UpgradeManager] {data.minionName} Upgraded! Lv{data.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
-    /// <summary>
-    /// Overload รับ MinionData โดยตรง (UI ส่ง SO มาตรงๆ)
-    /// </summary>
     public void UpgradeMinion(MinionData data)
     {
         if (data == null || minionStats == null) return;

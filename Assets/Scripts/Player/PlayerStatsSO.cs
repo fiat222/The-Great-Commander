@@ -20,6 +20,8 @@ public class PlayerStatsSO : ScriptableObject
     [Header("Character Info")]
     public string characterName = "Character";
 
+    [Header("Icons")]
+    public Sprite icon; // ไอคอนหลักของ Player (ใช้ใน UpgradePlayerCard)
     [Header("Skill Icons")]
     [Tooltip("Icon สำหรับ Skill — ใช้กับ Image ที่ Tag 'SkillIcon'")]
     public Sprite skillIcon;
