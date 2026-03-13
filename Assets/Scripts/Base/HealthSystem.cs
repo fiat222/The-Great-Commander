@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using TMPro;
 
 [DisallowMultipleComponent]
 public class HealthSystem : MonoBehaviour
@@ -18,6 +19,10 @@ public class HealthSystem : MonoBehaviour
     public Image healthBarFill;
     public Image healthBarSmooth;
     public float smoothSpeed = 5f;
+    
+    [Header("HP Text (Optional)")]
+    [Tooltip("TextMeshPro สำหรับแสดงเลข HP (เช่น 150/150)")]
+    public TextMeshProUGUI healthText;
 
     [Header("Events")]
     public UnityEvent OnTakeDamage;
@@ -120,6 +125,9 @@ public class HealthSystem : MonoBehaviour
                 ApplyBarValue(smoothRect, normalizedHealth);
             }
         }
+        
+        // อัปเดตข้อความ HP
+        UpdateHealthText();
     }
 
     private void SyncUIInstant()
@@ -195,6 +203,26 @@ public class HealthSystem : MonoBehaviour
                 return;
 
             Destroy(gameObject, 0.5f);
+        }
+    }
+    
+    private void UpdateHealthText()
+    {
+        if (healthText == null) return;
+        
+        // จัดรูปแบบข้อความ: current/max
+        string formattedText = $"{Mathf.RoundToInt(currentHealth)}/{Mathf.RoundToInt(maxHealth)}";
+        healthText.text = formattedText;
+        
+        // เปลี่ยนสีตาม HP
+        float normalizedHealth = GetNormalizedHealth();
+        if (normalizedHealth <= 0.25f)
+        {
+            healthText.color = Color.red;
+        }
+        else
+        {
+            healthText.color = Color.white;
         }
     }
 }
