@@ -68,7 +68,7 @@ MonoBehaviour:
   m_text: Main Menu
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
-  m_sharedMaterial: {fileID: 9149373824985936175, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
+  m_sharedMaterial: {fileID: -5412851672052785038, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 8206706129297116737}
   - component: {fileID: 182516527783089544}
   - component: {fileID: 8434849926954006327}
+  - component: {fileID: 1095083464100415684}
   m_Layer: 5
   m_Name: YouWin
   m_TagString: Untagged
@@ -174,7 +175,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 900, y: 400}
+  m_SizeDelta: {x: 1240.193, y: 551.197}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &182516527783089544
 CanvasRenderer:
@@ -214,6 +215,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1095083464100415684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4689356006685124841}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6d3f4b57c1558940afa58cb859bef15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIPopAnimation
+  duration: 0.9
+  rotateDegrees: 360
+  overshoot: 1.70158
 --- !u!1 &6034456826698244475
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,8 +264,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 66}
-  m_SizeDelta: {x: 781.5303, y: 322.9673}
+  m_AnchoredPosition: {x: 0, y: 79}
+  m_SizeDelta: {x: 1081.869, y: 447.0823}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5812709820516813791
 CanvasRenderer:
@@ -326,8 +342,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -143}
-  m_SizeDelta: {x: 270.7269, y: 60}
+  m_AnchoredPosition: {x: 0, y: -210.3178}
+  m_SizeDelta: {x: 374.7661, y: 83.0577}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7633209438409399890
 CanvasRenderer:
