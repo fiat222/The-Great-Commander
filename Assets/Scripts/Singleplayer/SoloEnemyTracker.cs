@@ -41,6 +41,7 @@ public class SoloEnemyTracker : MonoBehaviour
     private int  _remainingEnemies    = 0;
     private bool _hasCountedStart     = false;
     private bool _phaseChangeQueued   = false;
+    private bool _gameResultShown     = false;  
     private Coroutine _activeCoroutine;
 
     // ─────────────────────────────────────────────────────────────────
@@ -74,23 +75,23 @@ public class SoloEnemyTracker : MonoBehaviour
     //  PHASE CHANGED
     // ─────────────────────────────────────────────────────────────────
     private void HandlePhaseChanged(GamePhase newPhase)
+{
+    if (newPhase == GamePhase.Combat)
     {
-        if (newPhase == GamePhase.Combat)
-        {
-            // รีเซ็ต state แล้วนับ Enemy ใหม่
-            _phaseChangeQueued = false;
-            CalculateTotalEnemies();
-        }
-        else
-        {
-            // กลับ Planning: รีเซ็ตทุกอย่าง
-            _hasCountedStart   = false;
-            _remainingEnemies  = 0;
-            _phaseChangeQueued = false;
-            SetUI(centerPanel, false);
-            UpdateCounterUI();
-        }
+        _phaseChangeQueued = false;
+        _gameResultShown = false; // รีเซ็ตเมื่อเริ่มสู้ใหม่ (ถ้าเกมมีหลายรอบ)
+        CalculateTotalEnemies();
     }
+    else
+    {
+        _hasCountedStart   = false;
+        _remainingEnemies  = 0;
+        _phaseChangeQueued = false;
+        _gameResultShown   = false; // รีเซ็ตเมื่อกลับไปวางแผน
+        SetUI(centerPanel, false);
+        UpdateCounterUI();
+    }
+}
 
     // ─────────────────────────────────────────────────────────────────
     //  ENEMY COUNT
@@ -163,6 +164,10 @@ public class SoloEnemyTracker : MonoBehaviour
     /// <summary>เรียกจากภายนอก (เช่น PlayerController) เมื่อ Player ตาย</summary>
     public void NotifyPlayerDied()
     {
+        // ตรวจสอบว่าเคยแสดงผลไปหรือยัง ถ้าเคยแล้วให้ Return ออกไปเลย ไม่ต้องเล่นเสียงซ้ำ
+        if (_gameResultShown) return; 
+        _gameResultShown = true; 
+
         if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
         StopAllCoroutines();
 
@@ -170,14 +175,18 @@ public class SoloEnemyTracker : MonoBehaviour
         SetUI(youLostUI,   true);
         SetUI(youWinUI,    false);
 
-        AudioManager.Instance?.PlayLose();
+        // เสียงจะถูกเรียกเพียงครั้งเดียวแน่นอน
+        AudioManager.Instance?.PlayLose(); 
         SoloGameManager.Instance?.OnGameEnded();
-        Debug.Log("[SoloEnemyTracker] Player died — You Lose!");
     }
 
     /// <summary>เรียกเพื่อแสดง Win UI (เช่น ผ่านครบ Wave ที่กำหนด)</summary>
     public void ShowWin()
     {
+        // ตรวจสอบว่าเคยแสดงผลไปหรือยัง
+        if (_gameResultShown) return; 
+        _gameResultShown = true;
+
         if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
         StopAllCoroutines();
 
@@ -185,9 +194,9 @@ public class SoloEnemyTracker : MonoBehaviour
         SetUI(youWinUI,    true);
         SetUI(youLostUI,   false);
 
+        // เสียงจะถูกเรียกเพียงครั้งเดียวแน่นอน
         AudioManager.Instance?.PlayWin();
         SoloGameManager.Instance?.OnGameEnded();
-        Debug.Log("[SoloEnemyTracker] You Win!");
     }
 
     // ─────────────────────────────────────────────────────────────────
