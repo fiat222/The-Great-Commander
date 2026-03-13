@@ -170,6 +170,7 @@ public class SoloEnemyTracker : MonoBehaviour
         SetUI(youLostUI,   true);
         SetUI(youWinUI,    false);
 
+        AudioManager.Instance?.PlayLose();
         SoloGameManager.Instance?.OnGameEnded();
         Debug.Log("[SoloEnemyTracker] Player died — You Lose!");
     }
@@ -184,6 +185,7 @@ public class SoloEnemyTracker : MonoBehaviour
         SetUI(youWinUI,    true);
         SetUI(youLostUI,   false);
 
+        AudioManager.Instance?.PlayWin();
         SoloGameManager.Instance?.OnGameEnded();
         Debug.Log("[SoloEnemyTracker] You Win!");
     }

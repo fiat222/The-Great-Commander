@@ -941,112 +941,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000008684691, y: -0.033888668, z: 5.3900847}
     m_Extent: {x: 1.5134801, y: 0.28540534, z: 2.0546532}
   m_DirtyAABB: 0
---- !u!1001 &171775069
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 17.322021
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -35.19268
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: bgmSource
-      value: 
-      objectReference: {fileID: 171775070}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: bgmVolume
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[0].clip
-      value: 
-      objectReference: {fileID: 8300000, guid: f03ee688941f5be4b8086750d02cf8c7, type: 3}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[1].clip
-      value: 
-      objectReference: {fileID: 8300000, guid: d98e57a73c4476441a9b766eac3369fb, type: 3}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[2].clip
-      value: 
-      objectReference: {fileID: 8300000, guid: e268cd1c3242fd44ba5d7b2f0e2ecfae, type: 3}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[3].clip
-      value: 
-      objectReference: {fileID: 8300000, guid: 77c366d4686b95e4e9d21cd656eb4bde, type: 3}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[0].soundType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[1].soundType
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[2].soundType
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: sfxLibrary.Array.data[3].soundType
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 4822172691947115199, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-      propertyPath: m_Name
-      value: AudioManager
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
---- !u!82 &171775070 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 861801803307480897, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
-  m_PrefabInstance: {fileID: 171775069}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &172686518
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8806,7 +8700,7 @@ MonoBehaviour:
   m_text: Player
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
-  m_sharedMaterial: {fileID: 9149373824985936175, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
+  m_sharedMaterial: {fileID: -5412851672052785038, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9599,5 +9493,4 @@ SceneRoots:
   - {fileID: 427267452}
   - {fileID: 1325694660}
   - {fileID: 737749883}
-  - {fileID: 171775069}
   - {fileID: 949810848}

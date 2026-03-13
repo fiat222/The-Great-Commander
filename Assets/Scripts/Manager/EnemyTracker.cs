@@ -391,6 +391,10 @@ public class EnemyTracker : NetworkBehaviour
         if (centerPanel != null)        centerPanel.SetActive(false);
         if (killOpponentButton != null) killOpponentButton.SetActive(false);
         GameManager.Instance?.OnGameEnded();
+
+        // เล่นเสียงชนะ/แพ้
+        if (iWon) AudioManager.Instance?.PlayWin();
+        else      AudioManager.Instance?.PlayLose();
     }
 
     [ClientRpc]

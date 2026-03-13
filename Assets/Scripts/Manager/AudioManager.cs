@@ -21,6 +21,10 @@ public class AudioManager : MonoBehaviour
     public AudioClip planningBGM;
     public AudioClip combatBGM;
 
+    [Header("Win / Lose SFX")]
+    public AudioClip winClip;
+    public AudioClip loseClip;
+
     [Header("BGM Settings")]
     [Range(0f, 1f)] public float bgmVolume = 0.8f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
@@ -103,13 +107,15 @@ public class AudioManager : MonoBehaviour
 
     void OnEnable()
     {
-        GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
+        GameManager.OnPhaseChangedGlobal     += HandlePhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal += HandlePhaseChanged; // ✅ Solo mode
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnDisable()
     {
-        GameManager.OnPhaseChangedGlobal -= HandlePhaseChanged;
+        GameManager.OnPhaseChangedGlobal     -= HandlePhaseChanged;
+        SoloGameManager.OnPhaseChangedGlobal -= HandlePhaseChanged; // ✅ Solo mode
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -138,9 +144,9 @@ public class AudioManager : MonoBehaviour
         {
             PlayBGM(mainMenuBGM);
         }
-        else if (scene.name == "GameScene")
+        else if (scene.name == "GameScene" || scene.name == "SoloGameScene")
         {
-            PlayBGM(planningBGM); // GameScene เริ่มต้นที่ดาวน์/Planning
+            PlayBGM(planningBGM); // เริ่ม Planning ก่อนเสมอ
         }
     }
 
@@ -200,6 +206,11 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    /// <summary>เล่นเสียงชนะ</summary>
+    public void PlayWin()  { if (winClip  != null) PlaySFX2D(winClip,  sfxVolume); }
+    /// <summary>เล่นเสียงแพ้</summary>
+    public void PlayLose() { if (loseClip != null) PlaySFX2D(loseClip, sfxVolume); }
+
     // ─────────────────────────────────────────
     //  Volume Control (เรียกจาก AudioSettingsUI)
     // ─────────────────────────────────────────
@@ -226,7 +237,7 @@ public class AudioManager : MonoBehaviour
     {
         if (src == null) return;
         src.loop         = true;
-        src.spatialBlend = 0f;  // 2D เสียง BGM ได้ยินเหมือนกันทุกจุด
+        src.spatialBlend = 0f;
         src.playOnAwake  = false;
         src.volume       = bgmVolume;
     }
