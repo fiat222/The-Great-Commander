@@ -1027,6 +1027,32 @@ MonoBehaviour:
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
   buttonText: {fileID: 0}
+--- !u!1 &80933656 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4822172691947115199, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+  m_PrefabInstance: {fileID: 955998613}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &80933658 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 941739529492828290, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+  m_PrefabInstance: {fileID: 955998613}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &80933659 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 861801803307480897, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+  m_PrefabInstance: {fileID: 955998613}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &80933660 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+  m_PrefabInstance: {fileID: 955998613}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 80933656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb0835e84cc2f4c4ba12d5c536acbbcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
 --- !u!1 &82057272
 GameObject:
   m_ObjectHideFlags: 0
@@ -11546,6 +11572,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 861801803307480897, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: OutputAudioMixerGroup
+      value: 
+      objectReference: {fileID: -8098550483958657203, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
+    - target: {fileID: 941739529492828290, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: OutputAudioMixerGroup
+      value: 
+      objectReference: {fileID: -4183349420087247356, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
     - target: {fileID: 1412049122962571993, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.31526
@@ -11586,11 +11620,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: bgmSource
+      value: 
+      objectReference: {fileID: 80933658}
+    - target: {fileID: 3964677285929549193, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
+      propertyPath: sfxSource
+      value: 
+      objectReference: {fileID: 80933659}
     - target: {fileID: 4822172691947115199, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
       propertyPath: m_Name
       value: AudioManager
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7561475302096660250, guid: 0cd4ecf74029e3d40a03f6a61976da39, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -12650,7 +12693,19 @@ MonoBehaviour:
   m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 80933660}
+        m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+        m_MethodName: SetSFXVolume
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1070891881
 GameObject:
   m_ObjectHideFlags: 0
@@ -16390,7 +16445,19 @@ MonoBehaviour:
   m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 80933660}
+        m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+        m_MethodName: SetBGMVolume
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1287256806
 GameObject:
   m_ObjectHideFlags: 0
@@ -17231,7 +17298,19 @@ MonoBehaviour:
   m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 80933656}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &1322950694
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19616,7 +19695,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 59.670532, y: -28.209595}
+  m_AnchoredPosition: {x: 59.67041, y: -28.209595}
   m_SizeDelta: {x: 119.341064, y: 212.69312}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1460327884

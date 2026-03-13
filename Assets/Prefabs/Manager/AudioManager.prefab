@@ -47,6 +47,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb0835e84cc2f4c4ba12d5c536acbbcc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  mainMixer: {fileID: 24100000, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
+  sfxMixerGroup: {fileID: -8098550483958657203, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
   mainMenuBGM: {fileID: 8300000, guid: 71aabd34b1b72464187ece3b0c2a1bbd, type: 3}
   planningBGM: {fileID: 8300000, guid: 06ab132ccd808694faeab09ab70c99ca, type: 3}
   combatBGM: {fileID: 8300000, guid: 4333898aed76e00429b8549e6ee7ec08, type: 3}
@@ -55,6 +57,7 @@ MonoBehaviour:
   bgmVolume: 1
   sfxVolume: 1
   sfxSource: {fileID: 7561475302096660250}
+  bgmSource: {fileID: 861801803307480897}
   sfxLibrary:
   - soundType: 1
     clip: {fileID: 8300000, guid: f03ee688941f5be4b8086750d02cf8c7, type: 3}
@@ -64,7 +67,6 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: e268cd1c3242fd44ba5d7b2f0e2ecfae, type: 3}
   - soundType: 4
     clip: {fileID: 8300000, guid: 77c366d4686b95e4e9d21cd656eb4bde, type: 3}
-  bgmSource: {fileID: 861801803307480897}
 --- !u!82 &861801803307480897
 AudioSource:
   m_ObjectHideFlags: 0
