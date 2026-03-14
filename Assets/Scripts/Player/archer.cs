@@ -3,6 +3,7 @@ using Unity.Cinemachine;
 using UnityEngine.UI;
 using PlayerAudio;
 using Unity.Netcode;
+using TMPro;
 
 public class Archer : MonoBehaviour
 {
@@ -88,8 +89,18 @@ public class Archer : MonoBehaviour
 
     // ==================== Health UI ====================
     [Header("Health UI")]
-    public int maxHP = 100;
     public Slider healthBar;
+    private int maxHP => stats != null ? stats.GetHP() : 100;
+
+    [Tooltip("TextMeshPro แสดงเลข HP เช่น 100/100 (ถ้าไม่ลากจะหาจาก Tag 'HPText' อัตโนมัติ)")]
+    public TextMeshProUGUI hpText;
+
+    // ==================== Player Identity UI ====================
+    [Header("Player Identity UI (Auto-resolved by Tag)")]
+    [Tooltip("Image สำหรับแสดง Icon ผู้เล่น (Tag: PlayerIcon) — ไม่ต้องลากก็ได้")]
+    public Image playerIconImage;
+    [Tooltip("TMP Text สำหรับแสดงชื่อผู้เล่น (Tag: PlayerName) — ไม่ต้องลากก็ได้")]
+    public TextMeshProUGUI playerNameText;
 
     // ==================== Runtime Stats ====================
     public float AttackDamage { get; private set; } = 15f;
@@ -116,7 +127,7 @@ public class Archer : MonoBehaviour
     private bool isChargeModeActive;
     public bool IsChargeModeActive => isChargeModeActive;
     private bool pendingQuickShot;
-    private bool bufferedShot; // ⭐ สำหรับเก็บ Input คลิกซ้ายตอนกำลังกลิ้ง
+    private bool bufferedShot;
 
     private bool inputEnabled = true;
     private bool mouseEnabled => Cursor.lockState == CursorLockMode.Locked;
@@ -146,6 +157,27 @@ public class Archer : MonoBehaviour
                 Debug.LogWarning("[Archer] ไม่พบ GameObject ที่มี Tag 'HPBar'");
         }
 
+        if (hpText == null)
+        {
+            var obj = GameObject.FindWithTag("HPText");
+            if (obj != null) hpText = obj.GetComponent<TextMeshProUGUI>();
+        }
+
+        // --- Auto-resolve Player Identity UI ---
+        if (playerIconImage == null)
+        {
+            var obj = GameObject.FindWithTag("PlayerIcon");
+            if (obj != null) playerIconImage = obj.GetComponent<Image>();
+            else Debug.LogWarning("[Archer] ไม่พบ Tag 'PlayerIcon'");
+        }
+
+        if (playerNameText == null)
+        {
+            var obj = GameObject.FindWithTag("PlayerName");
+            if (obj != null) playerNameText = obj.GetComponent<TextMeshProUGUI>();
+            else Debug.LogWarning("[Archer] ไม่พบ Tag 'PlayerName'");
+        }
+
         ApplyStats(isFirstInit: true);
 
         if (crosshair == null)
@@ -161,9 +193,8 @@ public class Archer : MonoBehaviour
     {
         if (stats != null)
         {
-            int oldMaxHP = maxHP;  // เก็บค่าเดิมก่อน
+            int oldMaxHP = maxHP;
 
-            maxHP = stats.GetHP();
             moveSpeed = stats.GetSpeed();
             aimMoveSpeed = stats.GetSpeed();
             AttackDamage = stats.GetDamage();
@@ -175,34 +206,45 @@ public class Archer : MonoBehaviour
 
             ApplySkillIcons();
 
-            // เพิ่ม currentHP ตาม diff ที่ max เพิ่มขึ้น
             if (!isFirstInit && oldMaxHP > 0)
             {
                 int diff = maxHP - oldMaxHP;
                 currentHP = Mathf.Min(currentHP + diff, maxHP);
             }
+
+            // --- ใส่ชื่อและ icon จาก SO ---
+            if (playerNameText != null && !string.IsNullOrEmpty(stats.characterName))
+                playerNameText.text = stats.characterName;
+
+            if (playerIconImage != null && stats.icon != null)
+                playerIconImage.sprite = stats.icon;
         }
 
         if (isFirstInit)
-        {
             currentHP = maxHP;
-            if (healthBar != null) { healthBar.maxValue = maxHP; healthBar.value = maxHP; }
-            return;
-        }
 
         if (healthBar != null)
         {
+            healthBar.minValue = 0;
             healthBar.maxValue = maxHP;
-            healthBar.value = currentHP;
+            healthBar.value    = currentHP;
         }
+
+        UpdateHPText();
+
+        if (isFirstInit) return;
+
+        UpdateHPText();
 
         Debug.Log($"[Archer] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{currentHP}/{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} MinDmg:{minDamage} MaxDmg:{maxDamage}");
     }
 
-    /// <summary>
-    /// หา Image ที่ติด Tag "SkillNormal" และ "SkillSpecial" แล้วใส่ icon จาก SO อัตโนมัติ
-    /// Tag ให้ติดที่ Image component บน NormalAtk/SpecialAtk ใน Hierarchy
-    /// </summary>
+    private void UpdateHPText()
+    {
+        if (hpText != null)
+            hpText.text = $"{currentHP}/{maxHP}";
+    }
+
     private void ApplySkillIcons()
     {
         if (stats == null) return;
@@ -210,7 +252,6 @@ public class Archer : MonoBehaviour
         SetIconByTag("SkillNormal",  stats.normalAttackIcon);
         SetIconByTag("SkillSpecial", stats.specialAttackIcon);
 
-        // แจ้ง ArcherSkill ให้รีเฟรช icon ด้วยเมื่อ character เปลี่ยน
         GetComponent<ArcherSkill>()?.ApplySkillIconFromSO();
     }
 
@@ -260,14 +301,10 @@ public class Archer : MonoBehaviour
             inputEnabled = (SoloGameManager.Instance.CurrentPhase == GamePhase.Combat);
 
         if (CameraManager.Instance != null)
-        {
             CameraManager.Instance.RegisterPlayerCameras(freelookCamera, targetLockCamera);
-        }
 
         if (crosshair != null)
-        {
             crosshair.SetQuickShotMode(!isChargeModeActive);
-        }
     }
 
     private void Update()
@@ -462,11 +499,8 @@ public class Archer : MonoBehaviour
         bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
         bool isHit = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Hit") || animator.GetNextAnimatorStateInfo(0).IsTag("Hit"));
         bool isTransitioning = animator != null && animator.IsInTransition(0);
-        
-        // isBusy จะใช้สำหรับกันการ "เริ่ม" ท่าทางใหม่เท่านั้น
         bool isBusy = isPlayingRoll || isPlayingAttack || isHit || isTransitioning;
 
-        // --- 🖱️ ระบบสลับโหมด (ชาร์จ / ยิงเร็ว) ---
         if (Input.GetMouseButtonDown(1))
         {
             if (isAiming) StopAiming();
@@ -475,10 +509,9 @@ public class Archer : MonoBehaviour
             Debug.Log($"<color=yellow>[Archer]</color> โหมด: {(isChargeModeActive ? "ชาร์จ" : "ยิงเร็ว")}");
         }
 
-        // --- 🏹 ระบบ Input Buffering ---
         if (Input.GetMouseButtonDown(0) && isBusy)
         {
-            if (isHit) return; // ⭐ ห้ามกดยิง/จองท่าตอนกำลังติด Hit (ชะงัก) เด็ดขาด
+            if (isHit) return;
 
             bufferedShot = true;
             animator.SetBool("hasBuffer", true);
@@ -487,7 +520,6 @@ public class Archer : MonoBehaviour
             {
                 if (isChargeModeActive) 
                 {
-                    // ⭐ เริ่มระบบ logic การชาร์จทันที (วงจะได้บีบเเละเริ่มนับค่าพลัง)
                     animator.SetTrigger("DrawArrow");
                     StartAiming();
                 }
@@ -495,9 +527,6 @@ public class Archer : MonoBehaviour
             }
         }
 
-        // --- 🎯 ระบบควบคุมการทำงาน (Logic) ---
-        
-        // 1. จัดการเรื่อง Buffer เมื่อหายกลิ้ง (เปลี่ยนจาก isBusy เป็น !isPlayingRoll เพื่อความแม่นยำ)
         if (!isPlayingRoll && bufferedShot)
         {
             bufferedShot = false;
@@ -515,21 +544,15 @@ public class Archer : MonoBehaviour
             }
         }
 
-        // 2. จัดการการยิง/ง้าง (แยกออกจาก isBusy เพื่อให้ปล่อยเมาส์ได้ทุกเมื่อ)
         if (isChargeModeActive)
         {
-            // การ "เริ่ม" ง้าง ต้องว่างก่อน
             if (!isBusy && Input.GetMouseButton(0) && !isAiming && !bufferedShot)
-            {
                 StartAiming();
-            }
 
-            // การ "ปล่อย" หรือ "ชาร์จ" ต้องทำได้ตลอดถ้า isAiming เป็น true
             if (isAiming)
             {
                 if (Input.GetMouseButtonUp(0))
                 {
-                    // ⭐ [เเก้ไข] ถ้ายังกลิ้งอยู่ ห้ามยิงเด็ดขาด (ป้องกันการยิงดาเมจ 0)
                     if (!isPlayingRoll)
                     {
                         if (!hasFiredThisAim) Shoot();
@@ -538,12 +561,10 @@ public class Archer : MonoBehaviour
                 }
             }
 
-            // ระบบความปลอดภัย: หยุดง้างถ้ากลิ้ง (ยกเว้นตอนกำลังจองท่า)
             if (isAiming && isPlayingRoll && !bufferedShot) StopAiming();
         }
         else
         {
-            // โหมดยิงเร็ว: ต้องว่างถึงจะยิงได้
             if (!isBusy && Input.GetMouseButtonDown(0))
             {
                 pendingQuickShot = true;
@@ -554,42 +575,31 @@ public class Archer : MonoBehaviour
 
         if (!isPlayingRoll && (isAiming || isPlayingAttack)) { UpdateAimBlendTree(); FaceCamera(); }
 
-        // --- ระบบสปาวน์ Charging & Full Charge VFX ---
         if (isAiming && !isQuickShotModeActive() && !isHit && !isPlayingRoll)
         {
             float acc = crosshair != null ? crosshair.GetAccuracy() : 0f;
             
             if (acc >= 1f)
             {
-                // เข้าสู่สถานะชาร์จเต็ม
                 if (activeFullChargeVFX == null && fullChargeVFXPrefab != null)
-                {
                     activeFullChargeVFX = Instantiate(fullChargeVFXPrefab, arrowSpawnPoint);
-                }
                 if (activeChargingVFX != null) Destroy(activeChargingVFX);
             }
-            else if (acc > 0.1f) // เริ่มแสดงผลเมื่อมีการชาร์จไปสักพัก (เลี่ยงแวบๆ ตอนคลิกไว)
+            else if (acc > 0.1f)
             {
-                // กำลังชาร์จ
                 if (activeChargingVFX == null && chargingVFXPrefab != null)
-                {
                     activeChargingVFX = Instantiate(chargingVFXPrefab, arrowSpawnPoint);
-                }
                 if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
             }
         }
         else if (isHit || isPlayingRoll)
         {
-            // ทำลายทิ้งกรณีชะงักตอนกำลังชาร์จอยู่
             if (activeChargingVFX != null) Destroy(activeChargingVFX);
             if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
         }
     }
 
-    private bool isQuickShotModeActive()
-    {
-        return !isChargeModeActive;
-    }
+    private bool isQuickShotModeActive() => !isChargeModeActive;
 
     private void StartAiming()
     {
@@ -624,7 +634,6 @@ public class Archer : MonoBehaviour
 
         if (animator != null) animator.SetTrigger("Shoot");
 
-        // --- ระบบสปาวน์ Shoot VFX ---
         if (shootVFXPrefab != null && arrowSpawnPoint != null && lastAccuracy >= 1f)
         {
             GameObject vfx = Instantiate(shootVFXPrefab, arrowSpawnPoint.position, transform.rotation);
@@ -847,6 +856,7 @@ public class Archer : MonoBehaviour
         {
             currentHP = 0;
             if (healthBar != null) healthBar.value = 0;
+            UpdateHPText();
             Debug.Log("<color=red>[Archer]</color> โดนสั่งตายทันที (System Kill)!");
             Die();
             return;
@@ -881,6 +891,7 @@ public class Archer : MonoBehaviour
         int actual = Mathf.Max(1, Mathf.RoundToInt(rawDmg - Defense));
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
 
         Debug.Log($"<color=orange>[Archer]</color> {gameObject.name} took {actual} damage. HP: {currentHP}/{maxHP}");
         if (currentHP <= 0) Die();
@@ -891,6 +902,7 @@ public class Archer : MonoBehaviour
         if (isDead) return;
         currentHP = Mathf.Min(currentHP + amount, maxHP);
         if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
         Debug.Log($"<color=lime>[Archer]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
     }
 
@@ -903,7 +915,6 @@ public class Archer : MonoBehaviour
 
         SpectatorController.Instance?.EnterSpectate(transform);
 
-        // แจ้งการตายไปยังส่วนกลาง (GameManager)
         if (GameManager.Instance != null && NetworkManager.Singleton != null)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;

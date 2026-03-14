@@ -24,6 +24,9 @@ TagManager:
   - SkillSpecialOverlay
   - SkillIcon
   - Indicator
+  - PlayerIcon
+  - PlayerName
+  - HPText
   layers:
   - Default
   - TransparentFX

@@ -9,7 +9,7 @@ public class StatBarUI : MonoBehaviour
     public Image fillBar;              // Image Type = Filled, Fill Method = Horizontal
     public TextMeshProUGUI valueText;  // "800", "60" etc.
 
-    public void Setup(string label, float value, float maxValue)
+    public void Setup(string label, float value, float maxValue = 120f)
     {
         if (labelText != null) labelText.text = label;
         if (valueText != null) valueText.text = Mathf.RoundToInt(value).ToString();
