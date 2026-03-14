@@ -66,6 +66,7 @@ public class PlayerController : MonoBehaviour
     public Transform parryVFXSpawnPoint;
     public GameObject hitVFXPrefab;
     public Transform hitVFXSpawnPoint;
+    public GameObject parryAuraVFX;
 
     [Header("Player Cameras")]
     public CinemachineCamera freelookCamera;
@@ -129,6 +130,8 @@ public class PlayerController : MonoBehaviour
             else
                 Debug.LogWarning("[PlayerController] ไม่พบ GameObject ที่มี Tag 'HPBar'");
         }
+
+        if (parryAuraVFX != null) parryAuraVFX.SetActive(false);
 
         ApplyStats(isFirstInit: true);
     }
@@ -230,7 +233,14 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
 
         if (dodgeCooldownTimer > 0) dodgeCooldownTimer -= Time.deltaTime;
-        if (flinchImmunityTimer > 0) flinchImmunityTimer -= Time.deltaTime;
+        if (flinchImmunityTimer > 0)
+        {
+            flinchImmunityTimer -= Time.deltaTime;
+            if (flinchImmunityTimer <= 0 && parryAuraVFX != null)
+            {
+                parryAuraVFX.SetActive(false);
+            }
+        }
 
         if (!inputEnabled || isChatOpen)
         {
@@ -260,7 +270,7 @@ public class PlayerController : MonoBehaviour
         {
             if (isPlayingRoll)
             {
-                // ถ้ากลิ้งอยู่ ให้รอช่วงท้าย (70%+) ค่อย Resolve ท่าแรกออกไป
+                // ถ้ากลิ้งอยู่ ให้รอช่วงท้ายสุด (85%+) ค่อย Resolve ท่าแรกออกไป เพื่อให้หันหน้าให้เป๊ะขึ้น
                 if (sInfo.normalizedTime % 1f > 0.7f)
                 {
                     ResolveBufferedAction();
@@ -850,6 +860,7 @@ public class PlayerController : MonoBehaviour
 
             // ⭐ ให้บัฟกันชะงัก 3 วินาที
             flinchImmunityTimer = 3f;
+            if (parryAuraVFX != null) parryAuraVFX.SetActive(true);
             Debug.Log("<color=cyan>[Player]</color> ได้รับบัฟกันชะงัก (Flinch Immunity) 3 วินาที!");
 
             return;
@@ -921,10 +932,20 @@ public class PlayerController : MonoBehaviour
         if (currentHP <= 0) Die();
     }
 
+    public void Heal(int amount)
+    {
+        if (isDead) return;
+        currentHP = Mathf.Min(currentHP + amount, maxHP);
+        if (healthBar != null) healthBar.value = currentHP;
+        Debug.Log($"<color=lime>[Player]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
+    }
+
     public void Die()
     {
         if (isDead) return;
         isDead = true;
+        
+        if (parryAuraVFX != null) parryAuraVFX.SetActive(false);
         Debug.Log($"<color=red>[Player]</color> {gameObject.name} Die() called! IsOwner={GetComponent<NetworkObject>()?.IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
         
         if (animator != null) animator.SetTrigger("Die");
