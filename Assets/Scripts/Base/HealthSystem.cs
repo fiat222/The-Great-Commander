@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using TMPro;
+using System.Collections;
 
 [DisallowMultipleComponent]
 public class HealthSystem : MonoBehaviour
@@ -12,6 +13,22 @@ public class HealthSystem : MonoBehaviour
     
     [Tooltip("ติ๊กถูกถ้าตัวนี้คือฐานแม่ (ป้อมหลัก) ถ้าตายแล้วเกมจบ")]
     public bool isMainBase = false;
+
+    [Header("Death Presentation (Main Base)")]
+    [Tooltip("เอฟเฟกต์ตอนฐาน/ป้อมหลักถูกทำลาย (เช่น ระเบิด, พัง)")]
+    public GameObject deathVfxPrefab;
+    [Tooltip("เวลาที่ให้เอฟเฟกต์อยู่บนจอก่อนถูกลบออก")]
+    public float deathVfxDuration = 2f;
+    [Tooltip("ดีเลย์ก่อนแสดง Game Over หลังฐานหลักตาย")]
+    public float gameOverDelay = 2.5f;
+    [Tooltip("ติ๊กถูกถ้าฐานหลักนี้ควรทำให้เกมจบเมื่อ HP หมด")]
+    public bool triggerGameOverOnDeath = true;
+    [Tooltip("ถ้าติ๊ก ป้อมจะค่อย ๆ จมลงตอนถูกทำลาย (เอฟเฟกต์พัง)")]
+    public bool sinkOnDeath = true;
+    [Tooltip("ระยะที่ป้อมจะจมลง (หน่วยเป็นเมตร)")]
+    public float sinkDistance = 4f;
+    [Tooltip("เวลาที่ใช้ให้ป้อมจมลงครบระยะ")]
+    public float sinkDuration = 2f;
 
     [Header("UI (Optional - ไม่ใส่ก็ได้)")]
     [Tooltip("ใส่ Canvas ของหลอดเลือดที่นี่ (ถ้าไม่มี มันจะไม่พยายามวาด UI)")]
@@ -35,6 +52,7 @@ public class HealthSystem : MonoBehaviour
     private RectTransform fillRect;
     private RectTransform smoothRect;
     private float displayedSmoothHealth = 1f;
+    private bool mainBaseDeathSequenceStarted = false;
 
     private void Awake()
     {
@@ -191,19 +209,22 @@ public class HealthSystem : MonoBehaviour
 
         Debug.Log($"<color=red>[Dead]</color> {gameObject.name} ถูกทำลายแล้ว!");
 
-        if (isMainBase)
+        // กรณีฐานหลัก (main base): ใช้ sequence แบบ Cinematic + Spectator + GameOver
+        if (isMainBase && triggerGameOverOnDeath)
         {
-            Debug.LogError("‼️ ฐานหลักพังแล้ว! จบเกม (Game Over) ‼️");
+            if (!mainBaseDeathSequenceStarted)
+            {
+                mainBaseDeathSequenceStarted = true;
+                StartCoroutine(MainBaseDeathSequence());
+            }
+            return;
         }
-        else
-        {
-            // ถ้ามี EnemyAI หรือ ImpAI ให้ AI จัดการ Destroy เอง (มี animation + PowerBall)
-            // HealthSystem ไม่ต้อง Destroy ซ้ำ
-            if (GetComponent<EnemyAI>() != null || GetComponent<ImpAI>() != null)
-                return;
 
-            Destroy(gameObject, 0.5f);
-        }
+        // กรณีทั่วไป: ปล่อยให้ AI หรือระบบอื่นจัดการ Destroy เหมือนเดิม
+        if (GetComponent<EnemyAI>() != null || GetComponent<ImpAI>() != null)
+            return;
+
+        Destroy(gameObject, 0.5f);
     }
     
     private void UpdateHealthText()
@@ -223,6 +244,70 @@ public class HealthSystem : MonoBehaviour
         else
         {
             healthText.color = Color.white;
+        }
+    }
+
+    /// <summary>
+    /// ลำดับตอนฐานหลักตาย:
+    /// 1) เล่นเอฟเฟกต์ระเบิด/พัง
+    /// 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก และล็อคมุมกล้อง
+    /// 3) รอให้ผู้เล่นชมฉากสักพัก
+    /// 4) เรียก Game Over ผ่านระบบที่มีอยู่ (Solo / Network)
+    /// </summary>
+    private IEnumerator MainBaseDeathSequence()
+    {
+        // 1) เอฟเฟกต์ทำลายฐานหลัก
+        if (deathVfxPrefab != null)
+        {
+            GameObject vfxInstance = Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
+            if (deathVfxDuration > 0f)
+            {
+                Destroy(vfxInstance, deathVfxDuration);
+            }
+        }
+
+        // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก (ถ้ามี CameraManager)
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.FocusSpectator(transform);
+        }
+
+        // 3) ทำเอฟเฟกต์ให้ป้อมค่อย ๆ จมลง (เหมือนพังลง) ถ้าถูกเปิดใช้งาน
+        if (sinkOnDeath && sinkDuration > 0f && Mathf.Abs(sinkDistance) > 0.01f)
+        {
+            Vector3 startPos = transform.position;
+            Vector3 endPos   = startPos + Vector3.down * sinkDistance;
+            float elapsed    = 0f;
+
+            while (elapsed < sinkDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / sinkDuration);
+                transform.position = Vector3.Lerp(startPos, endPos, t);
+                yield return null;
+            }
+        }
+
+        // 4) รอให้ผู้เล่นชมฉากสักพักก่อนจบเกม (ดีเลย์ Game Over)
+        if (gameOverDelay > 0f)
+        {
+            yield return new WaitForSeconds(gameOverDelay);
+        }
+
+        // 5) แจ้งระบบ Game Over ตามโหมดที่ใช้งานอยู่
+        // Solo Mode
+        if (SoloEnemyTracker.Instance != null)
+        {
+            SoloEnemyTracker.Instance.NotifyPlayerDied();
+        }
+        else if (SoloGameManager.Instance != null)
+        {
+            SoloGameManager.Instance.OnGameEnded();
+        }
+        // Network / PvP Mode: ให้ GameManager + EnemyTracker จัดการ UI/Result ต่อ
+        else if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameEnded();
         }
     }
 }
