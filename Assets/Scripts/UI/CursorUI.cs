@@ -80,21 +80,28 @@ public class CursorUI : MonoBehaviour
     private void SpawnClickVFX()
     {
         GameObject vfx = null;
-        Vector3 spawnPos = Input.mousePosition;
+        // 1. นี่คือพิกัดเริ่มต้น (พิกัดเmaเมาส์)
+        Vector3 screenPos = Input.mousePosition;
 
-        // ในกรณี DontDestroyOnLoad ถ้า vfxParent (Canvas) ถูกทำลายไปในซีนเก่า 
-        // เราต้องเช็ค null และอาจจะต้องหา Canvas ใหม่ในซีนปัจจุบัน
+        // 2. คุณสามารถเพิ่ม Offset ตรงนี้ได้เลย
+        // เช่น อยากให้ขยับไปทางขวา 10 และขึ้นบน 5
+        Vector3 offset = new Vector3(20f, -5f, 0f);
+        Vector3 finalPos = screenPos + offset;
+
         if (vfxParent != null)
         {
-            vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity, vfxParent);
+            // ถ้าเป็น UI ให้ใช้พิกัดที่บวก Offset แล้ว
+            vfx = Instantiate(clickVFXPrefab, finalPos, Quaternion.identity, vfxParent);
         }
         else
         {
-            // ถ้าไม่มี Parent หรือ Parent หายไป ให้หา Main Camera ในซีนนั้นๆ
             if (Camera.main != null)
-                spawnPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10f));
-
-            vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity);
+            {
+                // ถ้าเป็น World Space (3D) อย่าลืมเช็คค่า Z (ความลึก)
+                // เลข 10f คือระยะจากหน้ากล้อง ถ้า VFX เล็กไปหรือมองไม่เห็น ลองปรับเลขนี้ดูครับ
+                Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(finalPos.x, finalPos.y, 10f));
+                vfx = Instantiate(clickVFXPrefab, worldPos, Quaternion.identity);
+            }
         }
 
         if (vfx != null) Destroy(vfx, 1.5f);
