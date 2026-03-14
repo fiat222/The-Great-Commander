@@ -311,7 +311,25 @@ public class EnemyTracker : NetworkBehaviour
         ulong myId = NetworkManager.Singleton.LocalClientId;
         StopAllCoroutines();
         bool iWon = (myId != loserClientId);
+        
+        if (iWon)
+        {
+            // ฝั่งชนะ: ขึ้น Victory ทันที ไม่ต้องรอคัตซีนป้อมพัง
+            ShowResultUI(true);
+            Debug.Log($"<color=cyan>[EnemyTracker]</color> Game Result Shown. I Won: {iWon}");
+        }
+        else
+        {
+            // ฝั่งแพ้: เล่นคัตซีนป้อมพังก่อนแล้วค่อยขึ้น Game Over
+            activeCoroutine = StartCoroutine(PlayLoseCinematicThenUI());
+        }
+    }
 
+    /// <summary>
+    /// แสดงผลลัพธ์ Win/Lose, ปิด UI อื่น, แจ้ง GameManager และเล่นเสียง
+    /// </summary>
+    private void ShowResultUI(bool iWon)
+    {
         if (youWinUI != null) youWinUI.SetActive(iWon);
         if (youLostUI != null) youLostUI.SetActive(!iWon);
         if (centerPanel != null) centerPanel.SetActive(false);
@@ -319,11 +337,106 @@ public class EnemyTracker : NetworkBehaviour
 
         GameManager.Instance?.OnGameEnded();
 
-        // ✅ เล่นเสียงเพียงครั้งเดียว
         if (iWon) AudioManager.Instance?.PlayWin();
         else AudioManager.Instance?.PlayLose();
+    }
 
-        Debug.Log($"<color=cyan>[EnemyTracker]</color> Game Result Shown. I Won: {iWon}");
+    /// <summary>
+    /// สำหรับฝั่งที่แพ้: โฟกัสกล้องไปที่ฐานของตัวเอง, เล่นเอฟเฟกต์จมป้อม (ถ้ามี) แล้วค่อยขึ้น Game Over
+    /// </summary>
+    private IEnumerator PlayLoseCinematicThenUI()
+    {
+        // หา BaseHealth ที่เป็นฐานของฝั่งเรา (เลือกตัวที่อยู่ใกล้ Player ของเรามากที่สุด)
+        BaseHealth myBase = null;
+        var bases = Object.FindObjectsByType<BaseHealth>(FindObjectsSortMode.None);
+        if (bases != null && bases.Length > 0)
+        {
+            // หา Player ของเรา
+            Transform myPlayer = null;
+            var players = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var p in players)
+            {
+                var netObj = p.GetComponent<NetworkObject>();
+                if (netObj != null && netObj.OwnerClientId == NetworkManager.Singleton.LocalClientId)
+                {
+                    myPlayer = p.transform;
+                    break;
+                }
+            }
+
+            if (myPlayer != null)
+            {
+                float bestDist = float.MaxValue;
+                foreach (var b in bases)
+                {
+                    float d = Vector3.Distance(myPlayer.position, b.transform.position);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        myBase = b;
+                    }
+                }
+            }
+            else
+            {
+                // ถ้าไม่เจอ Player ให้เลือก Base ตัวแรกเป็นค่าเริ่มต้น
+                myBase = bases[0];
+            }
+        }
+
+        HealthSystem baseHealthSystem = null;
+        if (myBase != null)
+        {
+            baseHealthSystem = myBase.GetComponentInChildren<HealthSystem>();
+
+            // 1) สร้างเอฟเฟกต์ระเบิด/พังถ้ามี Prefab
+            if (baseHealthSystem != null && baseHealthSystem.deathVfxPrefab != null)
+            {
+                GameObject vfxInstance = Instantiate(
+                    baseHealthSystem.deathVfxPrefab,
+                    myBase.transform.position,
+                    Quaternion.identity
+                );
+
+                if (baseHealthSystem.deathVfxDuration > 0f)
+                {
+                    Destroy(vfxInstance, baseHealthSystem.deathVfxDuration);
+                }
+            }
+
+            // 2) โฟกัสกล้องไปที่ฐานของเรา
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.FocusSpectator(myBase.transform);
+            }
+
+            // 3) ถ้ามี HealthSystem และเปิด sinkOnDeath ให้เล่นอนิเมชันจมลง
+            if (baseHealthSystem != null && baseHealthSystem.sinkOnDeath &&
+                baseHealthSystem.sinkDuration > 0f && Mathf.Abs(baseHealthSystem.sinkDistance) > 0.01f)
+            {
+                Vector3 startPos = myBase.transform.position;
+                Vector3 endPos   = startPos + Vector3.down * baseHealthSystem.sinkDistance;
+                float elapsed    = 0f;
+
+                while (elapsed < baseHealthSystem.sinkDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / baseHealthSystem.sinkDuration);
+                    myBase.transform.position = Vector3.Lerp(startPos, endPos, t);
+                    yield return null;
+                }
+            }
+
+            // 4) ดีเลย์ก่อนขึ้น Game Over ตามที่ตั้งใน HealthSystem
+            if (baseHealthSystem != null && baseHealthSystem.gameOverDelay > 0f)
+            {
+                yield return new WaitForSeconds(baseHealthSystem.gameOverDelay);
+            }
+        }
+
+        // แสดงผลแพ้พร้อมเล่นเสียง/ล็อคเกม
+        ShowResultUI(false);
+        Debug.Log("<color=cyan>[EnemyTracker]</color> Game Result Shown with Lose Cinematic.");
     }
 
     [ClientRpc]
