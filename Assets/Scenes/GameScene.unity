@@ -17495,13 +17495,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1690342871}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5.68, z: 0}
+  m_LocalRotation: {x: 0, y: 0.98555607, z: -0.16934954, w: 0}
+  m_LocalPosition: {x: 18.35, y: 16.37, z: -30.52}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 19.5, y: 180, z: 0}
 --- !u!1001 &1706466640
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17916,6 +17916,10 @@ PrefabInstance:
       value: 2973884678
       objectReference: {fileID: 0}
     - target: {fileID: 7306427562441635072, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
+      propertyPath: healthUI
+      value: 
+      objectReference: {fileID: 1726876117}
+    - target: {fileID: 7306427562441635072, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
       propertyPath: healthBarFill
       value: 
       objectReference: {fileID: 0}
@@ -17974,6 +17978,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1878320753386832747, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1726876117}
+    - targetCorrespondingSourceObject: {fileID: 1878320753386832747, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1726876118}
   m_SourcePrefab: {fileID: 100100000, guid: 62ff3f495918f32479415b19f45efef8, type: 3}
 --- !u!4 &1726876115 stripped
 Transform:
@@ -17998,7 +18005,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
   maxHealth: 100
-  isMainBase: 0
+  isMainBase: 1
+  deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
+  deathVfxDuration: 5
+  gameOverDelay: 5
+  triggerGameOverOnDeath: 1
+  sinkOnDeath: 1
+  sinkDistance: 4
+  sinkDuration: 2
   healthCanvas: {fileID: 524748464}
   healthBarFill: {fileID: 0}
   healthBarSmooth: {fileID: 1337467781}
@@ -18008,6 +18022,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnDie:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1726876118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726876116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d22c4a3429d3a9e47b9a513e5dc8a612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerHealth
+  maxHealth: 1000
+  healthCanvas: {fileID: 0}
+  healthBarFill: {fileID: 0}
+  healthBarSmooth: {fileID: 0}
+  smoothSpeed: 5
+  deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
+  deathVfxDuration: 5
+  gameOverDelay: 5
+  triggerGameOverOnDeath: 1
+  OnTakeDamage:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTowerDestroyed:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &1728924132
