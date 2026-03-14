@@ -264,7 +264,7 @@ public class SoloGameManager : MonoBehaviour
         Cursor.visible = true;
     }
 
-    public void ReturnToMenu() => SceneManager.LoadScene("MenuScene");
+    public void ReturnToMenu() => SceneManager.LoadScene("MenuSceneTest");
 
     // ================= UTIL =================
 
