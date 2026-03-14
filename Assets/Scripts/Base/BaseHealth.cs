@@ -17,6 +17,11 @@ public class BaseHealth : NetworkBehaviour
 
     private int currentHealth;
     private bool isSubscribed;
+    private bool deathSequenceStarted;
+
+    [Header("Death Settings")]
+    [Tooltip("ถ้าติ๊ก ป้อมหลักจะถูกลบออกจากซีนหลังจากจบคัตซีน Game Over แล้ว")]
+    public bool destroyOnDeath = true;
 
     private void Awake()
     {
@@ -131,10 +136,11 @@ public class BaseHealth : NetworkBehaviour
 
             Debug.Log($"<color=green>[Base Singleplayer]</color> HP : {currentHealth}/{maxHealth}");
 
-            if (currentHealth <= 0)
+            if (currentHealth <= 0 && !deathSequenceStarted)
             {
                 Debug.LogError("ฐานพังแล้ว! จบเกม (Solo)");
-                SoloEnemyTracker.Instance?.NotifyPlayerDied();
+                deathSequenceStarted = true;
+                StartCoroutine(PlayBaseDeathSequence(true, ulong.MaxValue));
             }
 
             return;
@@ -154,7 +160,7 @@ public class BaseHealth : NetworkBehaviour
 
         Debug.Log($"<color=green>[Base]</color> HP : {networkHealth.Value}/{maxHealth}");
 
-        if (networkHealth.Value <= 0)
+        if (networkHealth.Value <= 0 && !deathSequenceStarted)
         {
             Debug.LogError("ฐานพังแล้ว! จบเกม");
 
@@ -163,12 +169,83 @@ public class BaseHealth : NetworkBehaviour
                 : senderClientId;
 
             Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
-            EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
+            deathSequenceStarted = true;
+            StartCoroutine(PlayBaseDeathSequence(false, loserClientId));
         }
     }
 
     private static bool IsUsingNetworkGameplay()
     {
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    /// <summary>
+    /// ลำดับตอนฐานหลักตาย:
+    /// 1) เล่นเอฟเฟกต์ระเบิด/พัง (ถ้ามีตั้งใน HealthSystem)
+    /// 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก
+    /// 3) รอให้ผู้เล่นชมฉากสักพัก
+    /// 4) เรียก Game Over ตามโหมด (Solo / Network)
+    /// </summary>
+    private System.Collections.IEnumerator PlayBaseDeathSequence(bool isSolo, ulong loserClientId)
+    {
+        // 1) เอฟเฟกต์ทำลายฐานหลัก (ดึงค่าจาก HealthSystem ถ้ามี)
+        float delay = 0f;
+        if (healthUI != null)
+        {
+            if (healthUI.deathVfxPrefab != null)
+            {
+                GameObject vfxInstance = Instantiate(
+                    healthUI.deathVfxPrefab,
+                    transform.position,
+                    Quaternion.identity
+                );
+
+                if (healthUI.deathVfxDuration > 0f)
+                {
+                    Destroy(vfxInstance, healthUI.deathVfxDuration);
+                }
+            }
+
+            // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.FocusSpectator(transform);
+            }
+
+            // 3) รอให้ผู้เล่นชมฉากก่อน (ใช้ค่า delay จาก HealthSystem ถ้ามี)
+            if (healthUI.gameOverDelay > 0f)
+            {
+                delay = healthUI.gameOverDelay;
+            }
+        }
+
+        if (delay > 0f)
+        {
+            yield return new WaitForSeconds(delay);
+        }
+
+        // 4) เรียก Game Over ตามโหมดที่ใช้อยู่
+        if (isSolo)
+        {
+            SoloEnemyTracker.Instance?.NotifyPlayerDied();
+        }
+        else
+        {
+            // PvP / Network Mode ใช้ EnemyTracker แสดงผลแพ้ชนะปกติ
+            if (EnemyTracker.Instance != null)
+            {
+                EnemyTracker.Instance.ShowGameResultClientRpc(loserClientId);
+            }
+        }
+
+        // 5) ลบป้อมออกจากซีนหลังจากจบคัตซีน (เฉพาะฝั่ง Server ในโหมด Network หรือโหมด Solo ปกติ)
+        if (destroyOnDeath)
+        {
+            // ในโหมด Network ให้ให้ Server เป็นคน Destroy เพื่อให้ NetworkObject Despawn ถูกต้อง
+            if (!IsUsingNetworkGameplay() || IsServer)
+            {
+                Destroy(gameObject);
+            }
+        }
     }
 }

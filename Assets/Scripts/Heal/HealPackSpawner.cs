@@ -1,5 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class HealPackSpawner : MonoBehaviour
 {
@@ -7,9 +8,24 @@ public class HealPackSpawner : MonoBehaviour
     public GameObject healPackPrefab;
     public float cooldown = 30f;
 
+    [Header("UI")]
+    public GameObject cooldownCanvas;
+    public TextMeshProUGUI cooldownText;
+    public float floatAmplitude = 0.2f;
+    public float floatSpeed = 2f;
+
     private bool isOnCooldown = false;
     private float cooldownTimer = 0f;
-    private int lastShownSecond = -1;
+    private Vector3 initialCanvasLocalPos;
+
+    private void Awake()
+    {
+        if (cooldownCanvas != null)
+        {
+            initialCanvasLocalPos = cooldownCanvas.transform.localPosition;
+            cooldownCanvas.SetActive(false);
+        }
+    }
 
     private void Start()
     {
@@ -18,21 +34,33 @@ public class HealPackSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (!isOnCooldown) return;
+        if (!isOnCooldown)
+        {
+            if (cooldownCanvas != null && cooldownCanvas.activeSelf) cooldownCanvas.SetActive(false);
+            return;
+        }
+
+        if (cooldownCanvas != null && !cooldownCanvas.activeSelf) cooldownCanvas.SetActive(true);
 
         cooldownTimer -= Time.deltaTime;
 
-        // แสดงตัวเลข cooldown ลอยขึ้นทุก 1 วินาที เหมือน damage number
-        int currentSecond = Mathf.CeilToInt(cooldownTimer);
-        if (currentSecond != lastShownSecond && currentSecond > 0)
+        // อัปเดตตัวเลข
+        if (cooldownText != null)
         {
-            lastShownSecond = currentSecond;
-            DamageNumberSpawner.Show(currentSecond, transform.position + Vector3.up);
+            cooldownText.text = Mathf.CeilToInt(cooldownTimer).ToString();
+        }
+
+        // อนิเมชั่นลอยขึ้นลง
+        if (cooldownCanvas != null)
+        {
+            float newY = initialCanvasLocalPos.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
+            cooldownCanvas.transform.localPosition = new Vector3(initialCanvasLocalPos.x, newY, initialCanvasLocalPos.z);
         }
 
         if (cooldownTimer <= 0f)
         {
             isOnCooldown = false;
+            if (cooldownCanvas != null) cooldownCanvas.SetActive(false);
             SpawnPack();
         }
     }
@@ -41,7 +69,7 @@ public class HealPackSpawner : MonoBehaviour
     {
         isOnCooldown = true;
         cooldownTimer = cooldown;
-        lastShownSecond = -1;
+        if (cooldownCanvas != null) cooldownCanvas.SetActive(true);
         Debug.Log($"<color=yellow>[HealPackSpawner]</color> Cooldown {cooldown}s");
     }
 
