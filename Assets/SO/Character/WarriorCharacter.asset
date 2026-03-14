@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: WarriorCharacter
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   characterName: Lancelot
-  portrait: {fileID: 21300000, guid: 7847d39cd110e8e42af7720545cf8fbb, type: 3}
-  icon: {fileID: 1593917029, guid: 5f8f58ead8f0a6c45a0cebc7cb7b7cbe, type: 3}
+  portrait: {fileID: 21300000, guid: 1cf180c42a8c4af41bf6741704d58169, type: 3}
+  icon: {fileID: 21300000, guid: 1cf180c42a8c4af41bf6741704d58169, type: 3}
   playerPrefab: {fileID: 7711133326226633498, guid: 41daf370bf51aa34a9d25040e5666463, type: 3}
   playablePrefab: {fileID: 7711133326226633498, guid: 26e2778ce1722fc4e8e0193a3079224e, type: 3}
   statsSO: {fileID: 11400000, guid: 0d5f05283bf903d409d8186ce6bc0316, type: 2}

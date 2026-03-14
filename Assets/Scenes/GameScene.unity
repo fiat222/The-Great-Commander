@@ -18007,12 +18007,12 @@ MonoBehaviour:
   maxHealth: 100
   isMainBase: 1
   deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
-  deathVfxDuration: 5
-  gameOverDelay: 5
+  deathVfxDuration: 3
+  gameOverDelay: 3
   triggerGameOverOnDeath: 1
   sinkOnDeath: 1
-  sinkDistance: 4
-  sinkDuration: 2
+  sinkDistance: 17
+  sinkDuration: 4
   healthCanvas: {fileID: 524748464}
   healthBarFill: {fileID: 0}
   healthBarSmooth: {fileID: 1337467781}
@@ -18042,8 +18042,8 @@ MonoBehaviour:
   healthBarSmooth: {fileID: 0}
   smoothSpeed: 5
   deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
-  deathVfxDuration: 5
-  gameOverDelay: 5
+  deathVfxDuration: 3
+  gameOverDelay: 3
   triggerGameOverOnDeath: 1
   OnTakeDamage:
     m_PersistentCalls:

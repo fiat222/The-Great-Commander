@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ArcherCharacter
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   characterName: Mockingjay
-  portrait: {fileID: 21300000, guid: c7ad16c728ad64442a1ac3b01b86557e, type: 3}
-  icon: {fileID: 246377832, guid: cd78162952d198b48a39d642d50ca309, type: 3}
+  portrait: {fileID: 21300000, guid: 83167d1f2bb6fee439e9097bc3b66715, type: 3}
+  icon: {fileID: 21300000, guid: 83167d1f2bb6fee439e9097bc3b66715, type: 3}
   playerPrefab: {fileID: 244403281665110954, guid: 73551a9e48f0f7444ab32e3b45a64651, type: 3}
   playablePrefab: {fileID: 244403281665110954, guid: db226a518eb48a647a65012a1ddb3daf, type: 3}
   statsSO: {fileID: 11400000, guid: cbae5f884a15e7c4dab15085c8b9c39a, type: 2}
