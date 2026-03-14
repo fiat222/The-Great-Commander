@@ -160,17 +160,17 @@ public class BaseHealth : NetworkBehaviour
 
         Debug.Log($"<color=green>[Base]</color> HP : {networkHealth.Value}/{maxHealth}");
 
-        if (networkHealth.Value <= 0 && !deathSequenceStarted)
+        // โหมด Network / PvP: ไม่ต้องเล่นคัตซีนป้อมพัง ให้ EnemyTracker จัดการผลแพ้ชนะทันที
+        if (networkHealth.Value <= 0)
         {
-            Debug.LogError("ฐานพังแล้ว! จบเกม");
+            Debug.LogError("ฐานพังแล้ว! จบเกม (Network)");
 
             ulong loserClientId = senderClientId == ulong.MaxValue
                 ? NetworkManager.Singleton.LocalClientId
                 : senderClientId;
 
             Debug.Log($"[BaseHealth] loserClientId={loserClientId}");
-            deathSequenceStarted = true;
-            StartCoroutine(PlayBaseDeathSequence(false, loserClientId));
+            EnemyTracker.Instance?.ShowGameResultClientRpc(loserClientId);
         }
     }
 
