@@ -108,6 +108,30 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// โฟกัสกล้อง Spectator ไปที่เป้าหมาย แล้วเปิดใช้งานด้วย Priority สูงสุด
+    /// ใช้สำหรับตอนป้อมพัง / จบเกม เพื่อให้กล้องล็อคมุมมองแบบ Cinematic
+    /// </summary>
+    /// <param name="target">Transform ของวัตถุที่ต้องการให้กล้องโฟกัส</param>
+    public void FocusSpectator(Transform target)
+    {
+        if (spectatorCamera == null)
+        {
+            Debug.LogWarning("[CameraManager] FocusSpectator ถูกเรียก แต่ยังไม่ได้เซ็ต spectatorCamera");
+            return;
+        }
+
+        if (target == null)
+        {
+            Debug.LogWarning("[CameraManager] FocusSpectator ถูกเรียก แต่ target เป็น null");
+            return;
+        }
+
+        spectatorCamera.Follow = target;
+        spectatorCamera.LookAt = target;
+        SetSpectatorActive(true);
+    }
+
     public void SetPhaseCamera(GamePhase phase)
     {
         ResetAllPriorities();
