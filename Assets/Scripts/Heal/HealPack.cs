@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class HealPack : MonoBehaviour
 {
@@ -26,13 +26,19 @@ public class HealPack : MonoBehaviour
         if (collected) return;
         if (!other.CompareTag("Player")) return;
 
+        // ดักจับทันทีเพื่อป้องกัน Collider อื่นๆ ของผู้เล่นเข้าซ้ำในจังหวะเดียวกัน
         collected = true;
 
         // ฮีล
         bool healed = TryHeal<Archer>(other, healAmount)
                    || TryHeal<PlayerController>(other, healAmount);
+
         if (!healed)
+        {
             Debug.LogWarning("[HealPack] ไม่พบ Archer/PlayerController!");
+            collected = false; // ถ้าฮีลไม่ได้จริงๆ ค่อยเปิดให้กดใหม่ (หรือจะปล่อยให้หายไปเลยก็ได้)
+            return;
+        }
 
         // แสดงตัวเลข
         DamageNumberSpawner.Show(healAmount, transform.position + Vector3.up);

@@ -30,7 +30,7 @@ MonoBehaviour:
   deathVolume: 1
   minHearDistance: 3
   maxHearDistance: 30
-  baseDamage: 6
+  baseDamage: 10
   baseDefense: 4
   baseSpeed: 3
   baseHP: 60
