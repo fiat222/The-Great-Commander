@@ -28,8 +28,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4822172691947115199}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 17.32205, y: 0, z: -35.19268}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 17.322021, y: 0, z: -35.19268}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -47,14 +47,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb0835e84cc2f4c4ba12d5c536acbbcc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  mainMixer: {fileID: 24100000, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
+  sfxMixerGroup: {fileID: -8098550483958657203, guid: 8222abeb3e4b1fb4ea4b25b4e4a6f3fa, type: 2}
+  mainMenuBGM: {fileID: 8300000, guid: 71aabd34b1b72464187ece3b0c2a1bbd, type: 3}
   planningBGM: {fileID: 8300000, guid: 06ab132ccd808694faeab09ab70c99ca, type: 3}
   combatBGM: {fileID: 8300000, guid: 4333898aed76e00429b8549e6ee7ec08, type: 3}
-  bgmVolume: 0.479
-  crossfadeDuration: 1.5
+  winClip: {fileID: 8300000, guid: 81149bce621f2b149925c490b65c71c6, type: 3}
+  loseClip: {fileID: 8300000, guid: a9e63f769d23e7a41954523626e3f543, type: 3}
+  bgmVolume: 1
+  sfxVolume: 1
   sfxSource: {fileID: 7561475302096660250}
-  sfxLibrary: []
-  bgmSourceA: {fileID: 861801803307480897}
-  bgmSourceB: {fileID: 941739529492828290}
+  bgmSource: {fileID: 861801803307480897}
+  sfxLibrary:
+  - soundType: 1
+    clip: {fileID: 8300000, guid: f03ee688941f5be4b8086750d02cf8c7, type: 3}
+  - soundType: 2
+    clip: {fileID: 8300000, guid: d98e57a73c4476441a9b766eac3369fb, type: 3}
+  - soundType: 3
+    clip: {fileID: 8300000, guid: e268cd1c3242fd44ba5d7b2f0e2ecfae, type: 3}
+  - soundType: 4
+    clip: {fileID: 8300000, guid: 77c366d4686b95e4e9d21cd656eb4bde, type: 3}
 --- !u!82 &861801803307480897
 AudioSource:
   m_ObjectHideFlags: 0
