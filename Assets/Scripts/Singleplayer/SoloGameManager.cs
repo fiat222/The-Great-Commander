@@ -60,7 +60,7 @@ public class SoloGameManager : MonoBehaviour
 
     void Update()
     {
-        if (isGameEnded) return;
+        if (isGameEnded) return; // ⭐ เมื่อจบเกม/ยอมแพ้ Update จะหยุดทำงานทันที ทำให้เล่นต่อไม่ได้
 
         HandleCursorToggle();
         HandleClickToRelockCursor();
@@ -75,9 +75,6 @@ public class SoloGameManager : MonoBehaviour
             if (countdownText != null)
                 countdownText.text = Mathf.CeilToInt(planningTimer) + " S";
         }
-
-        // (ลบการเช็ค Enemy.Length == 0 ออก เพราะ Spawner ทยอยเสก จะบั๊กถ้าเช็คทันที)
-        // ให้ SoloEnemyTracker เป็นตัวนับจำนวนแทน
     }
 
     // ================= INPUT =================
@@ -206,9 +203,6 @@ public class SoloGameManager : MonoBehaviour
         globalSpawner.SpawnWaveFromDraft(systemWaveDraft, enemyStatsSOs);
     }
 
-    // ================= ENEMY SHOP (Solo) =================
-    // Solo Mode ไม่มีระบบส่ง Enemy ครับ — Tab Enemy ใน Shop ถูกซ่อนไว้แล้ว
-
     // ================= CLEANUP =================
 
     void CleanupEnemies()
@@ -231,7 +225,7 @@ public class SoloGameManager : MonoBehaviour
         SafeSetActive(crosshairObject, !isPlanning);
         SafeSetActive(skillUI, !isPlanning);
         SafeSetActive(nextPhaseButton, isPlanning);
-        
+
         if (countdownText != null) SafeSetActive(countdownText.gameObject, isPlanning);
         if (waveText != null) SafeSetActive(waveText.gameObject, isPlanning);
 
@@ -247,7 +241,7 @@ public class SoloGameManager : MonoBehaviour
         if (SingleShopManager.Instance != null)
         {
             if (isPlanning) SingleShopManager.Instance.OpenShop();
-            else            SingleShopManager.Instance.CloseShop();
+            else SingleShopManager.Instance.CloseShop();
         }
 
         // --- Minimap ---
@@ -255,13 +249,40 @@ public class SoloGameManager : MonoBehaviour
             MinimapUI.Instance.SetVisible(!isPlanning); // Minimap เปิดตอน Combat
     }
 
-    // ================= GAME END =================
+    // ================= GAME END & SURRENDER =================
+
+    /// <summary>
+    /// ⭐ ฟังก์ชันกดยอมแพ้: สั่งงานผ่าน SoloEnemyTracker เพื่อแสดง UI และจบเกม
+    /// </summary>
+    public void GiveUp()
+    {
+        if (isGameEnded) return;
+
+        // สั่งให้ Tracker แสดงหน้าจอแพ้ (ซึ่ง Tracker จะมาเรียก OnGameEnded ในนี้อีกที)
+        if (SoloEnemyTracker.Instance != null)
+        {
+            SoloEnemyTracker.Instance.GiveUp();
+        }
+        else
+        {
+            // Fallback กรณีหา Tracker ไม่เจอ
+            OnGameEnded();
+        }
+    }
 
     public void OnGameEnded()
     {
         isGameEnded = true;
+
+        // ปลดล็อกเมาส์ถาวรเพื่อให้กดปุ่มเมนูได้
+        isManualUnlock = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // ซ่อน UI พื้นฐานที่ใช้เล่น
+        SafeSetActive(crosshairObject, false);
+        SafeSetActive(skillUI, false);
+        SafeSetActive(nextPhaseButton, false);
     }
 
     public void ReturnToMenu() => SceneManager.LoadScene("MenuSceneTest");

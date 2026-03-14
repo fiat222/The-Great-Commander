@@ -4,80 +4,106 @@ using System.Collections.Generic;
 
 public class CursorUI : MonoBehaviour
 {
+    // ⭐ Singleton Pattern เพื่อให้เรียกใช้ง่ายและป้องกันตัวซ้ำ
+    public static CursorUI Instance { get; private set; }
+
     [Header("Custom Cursor Settings")]
-    [Tooltip("ใส่รูปเมาส์ที่ต้องการเปลี่ยนตรงนี้ (อย่าลืมปรับ Texture Type เป็น Cursor ใน Inspector)")]
-    public Texture2D customCursor;
-    
-    [Tooltip("จุดศูนย์กลางของการคลิก (0,0 คือมุมซ้ายบนของรูปภาพ)")]
+    public Texture2D defaultCursor;
+    public Texture2D hoverCursor;
     public Vector2 hotSpot = Vector2.zero;
-    
     public CursorMode cursorMode = CursorMode.Auto;
 
     [Header("Click VFX Settings")]
-    [Tooltip("Prefab ของ VFX หน้าจอเวลาคลิก (เช่น Particle System หรือ Animation UI)")]
     public GameObject clickVFXPrefab;
-    [Tooltip("ให้ลาก Canvas หน้าจอหลักมาใส่ (ถ้า VFX เป็น UI) หรือปล่อยว่างไว้ถ้า VFX เป็น 3D")]
     public Transform vfxParent;
+
+    private bool _isHovering = false;
+
+    void Awake()
+    {
+        // ⭐ ระบบจัดการ DontDestroyOnLoad และป้องกันตัวซ้ำ
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // สั่งให้ไม่ถูกทำลายเมื่อเปลี่ยนซีน
+        }
+        else
+        {
+            Destroy(gameObject); // ถ้ามีตัวเดิมอยู่แล้ว ให้ทำลายตัวใหม่ที่เพิ่งเกิดทิ้ง
+            return;
+        }
+    }
 
     void Start()
     {
-        ApplyCustomCursor();
+        ApplyDefaultCursor();
     }
 
     void Update()
     {
-        // เล่นเสียงเมื่อคลิกซ้าย
+        HandleCursorVisuals();
+
         if (Input.GetMouseButtonDown(0))
         {
-            // เช็คว่าคลิกโดนปุ่ม UI หรือไม่ ก่อนเล่นเสียงคลิก
             if (AudioManager.Instance != null && IsPointerOverUIButton())
             {
                 AudioManager.Instance.PlaySound(AudioManager.SoundType.Click);
             }
 
-            // แจ้งเตือน/เล่น VFX ถ้าไม่ได้อยู่ใน Combat Phase
-            bool canPlayVFX = GameManager.Instance == null || GameManager.Instance.CurrentPhase != GamePhase.Combat;
-            
+            // เช็คสถานะ Phase (ใส่ null check ไว้แล้ว ปลอดภัยแม้ในหน้าเมนูที่ไม่มี Manager)
+            bool isMultiplayerCombat = (GameManager.Instance != null && GameManager.Instance.CurrentPhase == GamePhase.Combat);
+            bool isSoloCombat = (SoloGameManager.Instance != null && SoloGameManager.Instance.CurrentPhase == GamePhase.Combat);
+
+            bool canPlayVFX = !isMultiplayerCombat && !isSoloCombat;
+
             if (canPlayVFX && clickVFXPrefab != null)
             {
-                GameObject vfx = null;
-                Vector3 spawnPos = Input.mousePosition;
-
-                if (vfxParent != null)
-                {
-                    vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity, vfxParent);
-                }
-                else
-                {
-                    if (Camera.main != null)
-                    {
-                        spawnPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10f));
-                    }
-                    vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity);
-                }
-
-                // สั่งลบ VFX ทิ้งอัตโนมัติ 1.5 วินาทีหลังเกิด เพื่อไม่ให้รก Memory
-                if (vfx != null) Destroy(vfx, 1.5f);
+                SpawnClickVFX();
             }
         }
     }
 
-    public void ApplyCustomCursor()
+    private void HandleCursorVisuals()
     {
-        if (customCursor != null)
+        bool currentlyOverButton = IsPointerOverUIButton();
+
+        if (currentlyOverButton != _isHovering)
         {
-            Cursor.SetCursor(customCursor, hotSpot, cursorMode);
-        }
-        else
-        {
-            Debug.LogWarning("[CursorUI] Custom Cursor is missing! Please assign a Texture2D.");
+            _isHovering = currentlyOverButton;
+            if (_isHovering && hoverCursor != null)
+                Cursor.SetCursor(hoverCursor, hotSpot, cursorMode);
+            else
+                ApplyDefaultCursor();
         }
     }
 
-    public void ResetToDefaultCursor()
+    private void SpawnClickVFX()
     {
-        // รีเซ็ตเมาส์กลับเป็นแบบปกติของระบบ
-        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        GameObject vfx = null;
+        Vector3 spawnPos = Input.mousePosition;
+
+        // ในกรณี DontDestroyOnLoad ถ้า vfxParent (Canvas) ถูกทำลายไปในซีนเก่า 
+        // เราต้องเช็ค null และอาจจะต้องหา Canvas ใหม่ในซีนปัจจุบัน
+        if (vfxParent != null)
+        {
+            vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity, vfxParent);
+        }
+        else
+        {
+            // ถ้าไม่มี Parent หรือ Parent หายไป ให้หา Main Camera ในซีนนั้นๆ
+            if (Camera.main != null)
+                spawnPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10f));
+
+            vfx = Instantiate(clickVFXPrefab, spawnPos, Quaternion.identity);
+        }
+
+        if (vfx != null) Destroy(vfx, 1.5f);
+    }
+
+    public void ApplyDefaultCursor()
+    {
+        if (defaultCursor != null)
+            Cursor.SetCursor(defaultCursor, hotSpot, cursorMode);
     }
 
     private bool IsPointerOverUIButton()
@@ -92,11 +118,8 @@ public class CursorUI : MonoBehaviour
 
         foreach (RaycastResult result in results)
         {
-            // ตรวจสอบว่า GameObject ที่โดนคลิกมี Component Button (หรืออยู่ในปุ่ม) หรือไม่
             if (result.gameObject.GetComponentInParent<UnityEngine.UI.Button>() != null)
-            {
                 return true;
-            }
         }
         return false;
     }
