@@ -460,10 +460,11 @@ public class Archer : MonoBehaviour
     {
         bool isPlayingRoll = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Roll") || animator.GetNextAnimatorStateInfo(0).IsTag("Roll"));
         bool isPlayingAttack = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Attack") || animator.GetNextAnimatorStateInfo(0).IsTag("Attack"));
+        bool isHit = animator != null && (animator.GetCurrentAnimatorStateInfo(0).IsTag("Hit") || animator.GetNextAnimatorStateInfo(0).IsTag("Hit"));
         bool isTransitioning = animator != null && animator.IsInTransition(0);
         
         // isBusy จะใช้สำหรับกันการ "เริ่ม" ท่าทางใหม่เท่านั้น
-        bool isBusy = isPlayingRoll || isPlayingAttack || isTransitioning;
+        bool isBusy = isPlayingRoll || isPlayingAttack || isHit || isTransitioning;
 
         // --- 🖱️ ระบบสลับโหมด (ชาร์จ / ยิงเร็ว) ---
         if (Input.GetMouseButtonDown(1))
@@ -477,6 +478,8 @@ public class Archer : MonoBehaviour
         // --- 🏹 ระบบ Input Buffering ---
         if (Input.GetMouseButtonDown(0) && isBusy)
         {
+            if (isHit) return; // ⭐ ห้ามกดยิง/จองท่าตอนกำลังติด Hit (ชะงัก) เด็ดขาด
+
             bufferedShot = true;
             animator.SetBool("hasBuffer", true);
 
@@ -484,7 +487,7 @@ public class Archer : MonoBehaviour
             {
                 if (isChargeModeActive) 
                 {
-                    // ⭐ [เเก้ไข] เริ่มระบบ logic การชาร์จทันที (วงจะได้บีบเเละเริ่มนับค่าพลัง)
+                    // ⭐ เริ่มระบบ logic การชาร์จทันที (วงจะได้บีบเเละเริ่มนับค่าพลัง)
                     animator.SetTrigger("DrawArrow");
                     StartAiming();
                 }
@@ -549,10 +552,10 @@ public class Archer : MonoBehaviour
             }
         }
 
-        if (isAiming || isPlayingAttack) { UpdateAimBlendTree(); FaceCamera(); }
+        if (!isPlayingRoll && (isAiming || isPlayingAttack)) { UpdateAimBlendTree(); FaceCamera(); }
 
         // --- ระบบสปาวน์ Charging & Full Charge VFX ---
-        if (isAiming && !isQuickShotModeActive())
+        if (isAiming && !isQuickShotModeActive() && !isHit && !isPlayingRoll)
         {
             float acc = crosshair != null ? crosshair.GetAccuracy() : 0f;
             
@@ -574,6 +577,12 @@ public class Archer : MonoBehaviour
                 }
                 if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
             }
+        }
+        else if (isHit || isPlayingRoll)
+        {
+            // ทำลายทิ้งกรณีชะงักตอนกำลังชาร์จอยู่
+            if (activeChargingVFX != null) Destroy(activeChargingVFX);
+            if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
         }
     }
 
@@ -616,7 +625,7 @@ public class Archer : MonoBehaviour
         if (animator != null) animator.SetTrigger("Shoot");
 
         // --- ระบบสปาวน์ Shoot VFX ---
-        if (shootVFXPrefab != null && arrowSpawnPoint != null)
+        if (shootVFXPrefab != null && arrowSpawnPoint != null && lastAccuracy >= 1f)
         {
             GameObject vfx = Instantiate(shootVFXPrefab, arrowSpawnPoint.position, transform.rotation);
             Destroy(vfx, 2f);
@@ -847,6 +856,8 @@ public class Archer : MonoBehaviour
         if (animator != null) animator.SetTrigger("Damage");
 
         StopAiming();
+        if (activeChargingVFX != null) Destroy(activeChargingVFX);
+        if (activeFullChargeVFX != null) Destroy(activeFullChargeVFX);
 
         Vector3 knockbackDir = -transform.forward;
         if (attackerPosition != default)
