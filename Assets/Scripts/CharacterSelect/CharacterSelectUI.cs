@@ -34,7 +34,7 @@ public class CharacterSelectUI : MonoBehaviour
     [Header("Bottom UI")]
     public Button readyButton;
     public TextMeshProUGUI readyButtonText;
-    public TextMeshProUGUI countdownText;
+    public CountdownUI countdownController;
 
     private CharacterCardUI[] cardInstances;
 
@@ -56,7 +56,8 @@ public class CharacterSelectUI : MonoBehaviour
     {
         SetupCards();
         readyButton.onClick.AddListener(() => CharacterSelectManager.Instance?.ToggleReady());
-        if (countdownText != null) countdownText.gameObject.SetActive(false);
+        // สั่งปิดผ่าน Controller
+        if (countdownController != null) countdownController.gameObject.SetActive(false);
     }
 
     private void SetupCards()
@@ -151,6 +152,12 @@ public class CharacterSelectUI : MonoBehaviour
             readyButtonText.text = myReady ? "Cancel" : "Ready!";
 
         UpdateCardInteractable(!myReady);
+
+        // --- เพิ่มเติม: ถ้าใครกดยกเลิก ให้สั่งหยุดนับถอยหลัง ---
+        if (!mgr.p1Ready.Value || !mgr.p2Ready.Value)
+        {
+            if (countdownController != null) countdownController.CancelCountdown();
+        }
     }
 
     private void UpdateCardHighlights()
@@ -173,10 +180,10 @@ public class CharacterSelectUI : MonoBehaviour
 
     private void ShowCountdown()
     {
-        if (countdownText != null)
+        // เรียกใช้งานผ่าน Controller แทนการเขียน Logic เอง
+        if (countdownController != null)
         {
-            countdownText.gameObject.SetActive(true);
-            countdownText.text = "Game Start In 3...";
+            countdownController.StartCountdown(3);
         }
     }
 }

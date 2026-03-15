@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections; // เพิ่มเพื่อให้ใช้งาน IEnumerator ได้
 
 /// <summary>
 /// UI สำหรับ Character Select (Single Player)
@@ -123,6 +124,13 @@ public class SingleCharacterSelectUI : MonoBehaviour
         if (readyButtonText != null)
             readyButtonText.text = mgr.IsReady ? "Cancel" : "Ready!";
 
+        // เช็กการยกเลิก: ถ้าผู้เล่นกด Cancel ให้หยุดการนับถอยหลังทันที
+        if (!mgr.IsReady)
+        {
+            StopAllCoroutines();
+            if (countdownText != null) countdownText.gameObject.SetActive(false);
+        }
+
         // ถ้า Ready แล้ว ปิด Card ทั้งหมด
         SetCardsInteractable(!mgr.IsReady);
     }
@@ -151,12 +159,33 @@ public class SingleCharacterSelectUI : MonoBehaviour
             card.SetInteractable(interactable);
     }
 
+    // ==================== Countdown Logic ====================
+
     private void ShowCountdown()
     {
         if (countdownText != null)
         {
-            countdownText.gameObject.SetActive(true);
-            countdownText.text = "Game Start In 3...";
+            StopAllCoroutines(); // เคลียร์เผื่อมีการเรียกซ้ำ
+            StartCoroutine(CountdownRoutine());
         }
+    }
+
+    private IEnumerator CountdownRoutine()
+    {
+        countdownText.gameObject.SetActive(true);
+        int timer = 3;
+
+        while (timer > 0)
+        {
+            countdownText.text = $"Game Start In {timer}...";
+            // ใช้ Realtime เพื่อให้ชัวร์ว่าเวลานับแม่นยำแม้จะมีการ Pause เกม
+            yield return new WaitForSecondsRealtime(1f);
+            timer--;
+        }
+
+        countdownText.text = "GO!";
+        yield return new WaitForSecondsRealtime(0.5f);
+
+        // ตรงนี้คุณสามารถใส่คำสั่งเริ่มเกม เช่น SceneManager.LoadScene ได้เลย
     }
 }
