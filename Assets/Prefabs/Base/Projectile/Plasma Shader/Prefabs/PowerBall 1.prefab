@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 7859028043917143100}
   - component: {fileID: 9179636194231710610}
   - component: {fileID: 8505041608961247992}
+  - component: {fileID: -7167341533688297728}
   m_Layer: 0
-  m_Name: Plasma Sphere (1)
+  m_Name: PowerBall 1
   m_TagString: Weapon
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 8.0633, y: 4.2, z: -6.8}
-  m_LocalScale: {x: 3.8478293, y: 3.8478293, z: 3.8478293}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8060734659563333374}
@@ -113,6 +114,30 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-7167341533688297728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1957592409648599577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9dfc7744c7c5d4449b13feccdce4638, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PowerBallPickup
+  value: 1
+  lifetime: 15
+  autoCollectTime: 3
+  launchUpSpeed: 9
+  launchSideSpeed: 3
+  gravity: 20
+  floatAmplitude: 0.5
+  floatSpeed: 2
+  attractRadius: 3
+  attractSpeed: 8
+  autoCollectSpeed: 14
+  collectHeight: 1
 --- !u!1 &4990437007848177757
 GameObject:
   m_ObjectHideFlags: 0
