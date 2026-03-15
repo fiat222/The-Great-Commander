@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using Unity.Cinemachine;
@@ -542,7 +542,7 @@ private void UpdatePhaseUI(GamePhase phase)
         if (!IsServer) return;
         if (systemEnemyPool == null || systemEnemyPool.Length == 0) return;
 
-        int totalToSpawn = 1 + (currentWave.Value - 1) * 2;
+        int totalToSpawn = 4 + (currentWave.Value - 1) * 2;
         int[] counts = new int[systemEnemyPool.Length];
 
         // สุ่มแจกจ่ายจำนวนให้ครบ totalToSpawn

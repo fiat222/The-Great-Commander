@@ -332,8 +332,10 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 64
-  maxHP: 100
   healthBar: {fileID: 0}
+  hpText: {fileID: 0}
+  playerIconImage: {fileID: 0}
+  playerNameText: {fileID: 0}
 --- !u!136 &8189086302731242032
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -369,8 +371,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98c1000bb406f514692c534b33df0839, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcherSkill
-  cooldown: 10
-  damageMultiplier: 2.5
+  cooldown: 30
+  damageMultiplier: 3
   arrowCount: 50
   aoeRadius: 15
   arrowSpeed: 50
@@ -378,8 +380,8 @@ MonoBehaviour:
   fireInterval: 0.05
   rainArrowPrefab: {fileID: 4812697048415514114, guid: 0653c15a752909646a96efcaf31e8aa3, type: 3}
   burningZonePrefab: {fileID: 5879912481012635610, guid: a87273a577bf3db4b9333ac969379a25, type: 3}
-  burnDelay: 1
-  burnDamagePerSecond: 10
+  burnDelay: 0.5
+  burnDamagePerSecond: 20
   burnDuration: 5
   aoeIndicatorPrefab: {fileID: 5879912481012635610, guid: e4c80b9c07fd4a1499f7787af6688a03, type: 3}
   groundLayer:
@@ -391,9 +393,9 @@ MonoBehaviour:
   skillOverlayTag: SkillActiveOverlay
   specialOverlayTag: SkillSpecialOverlay
   colorReady: {r: 1, g: 1, b: 1, a: 1}
-  colorActive: {r: 0.7056604, g: 0.6912278, b: 0.6750374, a: 0.77254903}
+  colorActive: {r: 0.09803922, g: 0.09803922, b: 0.09803922, a: 0.49019608}
   colorCooldown: {r: 0.35, g: 0.35, b: 0.35, a: 1}
-  colorOverlay: {r: 1, g: 1, b: 1, a: 0.35}
+  colorOverlay: {r: 0.09803922, g: 0.09803922, b: 0.09803922, a: 0.49019608}
   hintUI: {fileID: 0}
 --- !u!114 &4236291882602653678
 MonoBehaviour:
@@ -517,7 +519,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3811231902
+  GlobalObjectIdHash: 2323391265
   InScenePlacedSourceGlobalObjectIdHash: 2323391265
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1422,7 +1424,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3813345238951539526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.061151396, y: -0.029023055, z: 0.0017788832, w: 0.9977049}
+  m_LocalRotation: {x: 0.061151396, y: -0.029023092, z: 0.0017788854, w: 0.9977049}
   m_LocalPosition: {x: 0.83384776, y: 1.9327086, z: -3.394822}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0

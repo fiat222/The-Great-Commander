@@ -245,7 +245,7 @@ public class SoloGameManager : MonoBehaviour
     {
         if (enemyStatsSOs == null || enemyStatsSOs.Length == 0) return;
 
-        int totalToSpawn = 1 + (currentWave - 1) * 2;
+        int totalToSpawn = 4 + (currentWave - 1) * 2;
         ExpectedEnemyCount = totalToSpawn; // บันทึกเพื่อให้ Tracker ดึงไปใช้
         int[] counts = new int[enemyStatsSOs.Length];
 

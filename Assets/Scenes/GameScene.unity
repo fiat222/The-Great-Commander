@@ -15113,6 +15113,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 4153184737181971386}
     - target: {fileID: 182821179214527725, guid: 6136a922450ef28478502286ef7129fb, type: 3}
+      propertyPath: startingMoney
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 182821179214527725, guid: 6136a922450ef28478502286ef7129fb, type: 3}
       propertyPath: crosshairObject
       value: 
       objectReference: {fileID: 1875619806826910935}

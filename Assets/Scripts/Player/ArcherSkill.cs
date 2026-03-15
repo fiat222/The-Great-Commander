@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
@@ -155,9 +155,13 @@ public class ArcherSkill : MonoBehaviour
         if (!uiResolved) TryResolveUI();
         if (skillIconBg == null) return;
 
-        // ArcherSkill ใช้ specialAttackIcon (slot R)
+        // ArcherSkill ใช้ skillIcon (slot R)
         if (archer.stats.skillIcon != null)
+        {
             skillIconBg.sprite = archer.stats.skillIcon;
+            if (cooldownFillImage != null)
+                cooldownFillImage.sprite = archer.stats.skillIcon;
+        }
     }
 
     // ==================== Input ====================
@@ -213,13 +217,13 @@ public class ArcherSkill : MonoBehaviour
         isSkillActive = false;
         DestroyIndicator();
         if (hintUI != null) hintUI.HideHint();
+        StartCooldown(); // เริ่มคูลดาวน์ทันทีที่กดคลิกยิง
         StartCoroutine(SpawnBurningZoneDelayed(aoeTargetPos));
         if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.Skill1);
 
         if (rainArrowPrefab == null)
         {
             Debug.LogWarning("[ArcherSkill] ไม่มี rainArrowPrefab!");
-            StartCooldown();
             yield break;
         }
 
@@ -239,7 +243,6 @@ public class ArcherSkill : MonoBehaviour
             yield return new WaitForSeconds(fireInterval);
         }
 
-        StartCooldown();
         Debug.Log($"<color=cyan>[ArcherSkill]</color> ยิงฝนธนู {arrowCount} ลูก! Dmg/ลูก: {dmg}");
     }
 
