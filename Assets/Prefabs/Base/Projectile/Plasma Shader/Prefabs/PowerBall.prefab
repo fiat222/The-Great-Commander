@@ -227,3 +227,4 @@ MonoBehaviour:
   attractRadius: 3
   attractSpeed: 8
   autoCollectSpeed: 14
+  collectHeight: 1
