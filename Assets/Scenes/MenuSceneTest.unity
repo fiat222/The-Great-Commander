@@ -955,9 +955,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1393857546}
-        m_TargetAssemblyTypeName: MainMenuUI, Assembly-CSharp
-        m_MethodName: OnAudioClicked
+      - m_Target: {fileID: 1393857547}
+        m_TargetAssemblyTypeName: SettingsUIController, Assembly-CSharp
+        m_MethodName: OpenSettings
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -18319,6 +18319,9 @@ MonoBehaviour:
   pageControls: {fileID: 169904527}
   pageAudio: {fileID: 82057272}
   pageBrightness: {fileID: 1323412680}
+  btnControls: {fileID: 480543090}
+  btnAudio: {fileID: 436734918}
+  btnBrightness: {fileID: 732629813}
   masterVolumeSlider: {fileID: 1322793980}
   bgmVolumeSlider: {fileID: 1280789941}
   sfxVolumeSlider: {fileID: 1067270180}

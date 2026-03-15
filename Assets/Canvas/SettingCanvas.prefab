@@ -5661,6 +5661,9 @@ MonoBehaviour:
   pageControls: {fileID: 6051627527041455264}
   pageAudio: {fileID: 1820050369045914748}
   pageBrightness: {fileID: 203600768168402853}
+  btnControls: {fileID: 7916007200846225009}
+  btnAudio: {fileID: 1450485215897082775}
+  btnBrightness: {fileID: 3548657526347641291}
   masterVolumeSlider: {fileID: 9132316783160663625}
   bgmVolumeSlider: {fileID: 3272736696371001543}
   sfxVolumeSlider: {fileID: 3604984557609714376}

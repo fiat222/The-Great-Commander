@@ -13,6 +13,11 @@ public class SettingsUIController : MonoBehaviour
     public GameObject pageAudio;
     public GameObject pageBrightness;
 
+    [Header("Tab Buttons (MenuButtonHover)")]
+    public MenuButtonHover btnControls;
+    public MenuButtonHover btnAudio;
+    public MenuButtonHover btnBrightness;
+
     [Header("Audio Sliders")]
     public Slider masterVolumeSlider;
     public Slider bgmVolumeSlider;
@@ -88,8 +93,8 @@ public class SettingsUIController : MonoBehaviour
         // ใช้ค่าที่เซฟไว้แสดงผล
         ApplySettings(savedMaster, savedBgm, savedSfx, savedBrightness);
         
-        // ซ่อนหน้าฝั่งขวาทั้งหมดไว้ก่อน (รอผู้เล่นกดหัวข้อฝั่งซ้ายก่อนค่อยแสดงทีละหน้า)
-        HideAllPages();
+        // แสดงหน้า Controls เป็นหน้าแรกเสมอ
+        ShowPageControls();
     }
 
     /// <summary>ปุ่ม "ตกลง" (Confirm / Apply)</summary>
@@ -204,23 +209,31 @@ public class SettingsUIController : MonoBehaviour
         if (pageControls) pageControls.SetActive(false);
         if (pageAudio) pageAudio.SetActive(false);
         if (pageBrightness) pageBrightness.SetActive(false);
+
+        // ยกเลิกสถานะ Selected ของปุ่มทั้งหมด
+        if (btnControls) btnControls.SetSelected(false);
+        if (btnAudio) btnAudio.SetSelected(false);
+        if (btnBrightness) btnBrightness.SetSelected(false);
     }
 
     public void ShowPageControls()
     {
         HideAllPages();
         if (pageControls) pageControls.SetActive(true);
+        if (btnControls) btnControls.SetSelected(true);
     }
 
     public void ShowPageAudio()
     {
         HideAllPages();
         if (pageAudio) pageAudio.SetActive(true);
+        if (btnAudio) btnAudio.SetSelected(true);
     }
 
     public void ShowPageBrightness()
     {
         HideAllPages();
         if (pageBrightness) pageBrightness.SetActive(true);
+        if (btnBrightness) btnBrightness.SetSelected(true);
     }
 }
