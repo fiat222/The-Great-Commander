@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class UpgradeManager : MonoBehaviour
 {
@@ -32,6 +32,25 @@ public class UpgradeManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+
+        // Reset stats when the manager is first created in a scene
+        ResetAllStats();
+    }
+
+    public void ResetAllStats()
+    {
+        if (warriorStats != null) warriorStats.ResetLevel();
+        if (archerStats != null) archerStats.ResetLevel();
+        
+        if (minionStats != null)
+        {
+            foreach (var data in minionStats)
+            {
+                if (data != null) data.ResetLevel();
+            }
+        }
+        
+        Debug.Log("<color=green>[UpgradeManager]</color> All stats have been reset to Level 0.");
     }
 
     // ==================== Player Upgrade ====================
@@ -155,12 +174,8 @@ public class UpgradeManager : MonoBehaviour
         Debug.Log($"[UpgradeManager] Archer Upgraded! Lv{archerStats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
-    // ==================== Minion Upgrade ====================
-
-    public void UpgradeMinion(int minionIndex)
+    public void UpgradeMinion(MinionData data)
     {
-        if (minionStats == null || minionIndex >= minionStats.Length) return;
-        MinionData data = minionStats[minionIndex];
         if (data == null) return;
 
         if (data.IsMaxLevel)
@@ -185,18 +200,10 @@ public class UpgradeManager : MonoBehaviour
         Debug.Log($"[UpgradeManager] {data.minionName} Upgraded! Lv{data.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
-    public void UpgradeMinion(MinionData data)
+    public void UpgradeMinion(int minionIndex)
     {
-        if (data == null || minionStats == null) return;
-
-        for (int i = 0; i < minionStats.Length; i++)
-        {
-            if (minionStats[i] == data)
-            {
-                UpgradeMinion(i);
-                return;
-            }
-        }
+        if (minionStats == null || minionIndex >= minionStats.Length) return;
+        UpgradeMinion(minionStats[minionIndex]);
     }
 
     // ==================== ⭐ Heal Utility ====================

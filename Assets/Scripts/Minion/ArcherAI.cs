@@ -25,24 +25,59 @@ public class ArcherAI : MonoBehaviour
 
     void Start()
     {
+        InitializeStats();
+        SetAttack(false);
+        SetRunning(false);
+    }
+
+    private void OnEnable()
+    {
+        MinionData.OnMinionUpgraded += HandleMinionUpgraded;
+    }
+
+    private void OnDisable()
+    {
+        MinionData.OnMinionUpgraded -= HandleMinionUpgraded;
+    }
+
+    private void InitializeStats()
+    {
         if (data != null)
         {
-            agent.speed = data.speed;
-            currentHP = data.hp;
+            agent.speed = data.GetSpeed();
+            currentHP = data.GetHP();
+            
+            if (healthBar != null)
+            {
+                healthBar.maxValue = currentHP;
+                healthBar.value = currentHP;
+            }
         }
         else
         {
-            currentHP = 100f; // ค่า default ถ้าไม่มี MinionData
+            currentHP = 100f;
         }
+    }
 
-        if (healthBar != null)
+    private void HandleMinionUpgraded(MinionData upgradedData)
+    {
+        if (upgradedData == data)
         {
-            healthBar.maxValue = currentHP;
-            healthBar.value = currentHP;
+            float oldMaxHP = healthBar != null ? healthBar.maxValue : 100f;
+            float newMaxHP = data.GetHP();
+            
+            float hpDiff = newMaxHP - oldMaxHP;
+            if (hpDiff > 0) currentHP += hpDiff;
+            
+            if (healthBar != null)
+            {
+                healthBar.maxValue = newMaxHP;
+                healthBar.value = currentHP;
+            }
+            
+            agent.speed = data.GetSpeed();
+            Debug.Log($"<color=cyan>[ArcherAI]</color> {gameObject.name} stats refreshed!");
         }
-
-        SetAttack(false);
-        SetRunning(false);
     }
 
     void Update()
@@ -136,7 +171,7 @@ public class ArcherAI : MonoBehaviour
         Vector3 direction = (targetPos - shootPoint.position).normalized;
 
         GameObject arrow = Instantiate(arrowPrefab, shootPoint.position, Quaternion.LookRotation(direction));
-        float dmg = data != null ? data.damage : 1f;
+        float dmg = data != null ? data.GetDamage() : 1f;
         arrow.GetComponent<ArrowProjectile>()?.Launch(direction, arrowSpeed, (int)dmg);
     }
 
@@ -148,7 +183,7 @@ public class ArcherAI : MonoBehaviour
         if (isDead) return;
 
         // คำนวณ Damage หลังจาก Defense
-        float defense = data != null ? data.defense : 0f;
+        float defense = data != null ? data.GetDefense() : 0f;
         float actualDamage = Mathf.Max(1f, dmg - defense);
 
         currentHP -= actualDamage;

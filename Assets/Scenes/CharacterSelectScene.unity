@@ -8452,6 +8452,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: SettingCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1754295212}
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Surrender
+      objectReference: {fileID: 0}
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SettingsUIController, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 7356345468350013663, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -8562,6 +8574,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8774314136509114684, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
   m_PrefabInstance: {fileID: 1754295210}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1754295212 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5652530046869603717, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+  m_PrefabInstance: {fileID: 1754295210}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d6cedecc09a5b646b8c03364d0cec7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SettingsUIController
 --- !u!1001 &1755876385
 PrefabInstance:
   m_ObjectHideFlags: 0

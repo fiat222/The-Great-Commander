@@ -94,16 +94,18 @@ public class EnemyTracker : NetworkBehaviour
 
         GameManager.OnPhaseChangedGlobal += HandlePhaseChanged;
         GameManager.OnSystemEnemyDied += HandleLocalEnemyDied;
-    }
 
-    public void Start()
-    {
         if (GameManager.Instance != null)
         {
             GameManager.Instance.p0Dead.OnValueChanged += (_, __) => EvaluatePlayerDeathUI();
             GameManager.Instance.p1Dead.OnValueChanged += (_, __) => EvaluatePlayerDeathUI();
+            
+            // ⭐ เช็คสถานะปัจจุบันทันที เผื่อว่าพังไปก่อนที่ลูกเรือจะขึ้นเรือมาฟังครับ
+            EvaluatePlayerDeathUI();
         }
     }
+
+    public void Start() { }
 
     public override void OnNetworkDespawn()
     {
@@ -249,38 +251,31 @@ public class EnemyTracker : NetworkBehaviour
         ulong myId = NetworkManager.Singleton.LocalClientId;
         if (GameManager.Instance == null) return;
         
-        bool opponentDead = (myId == 0) ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
         bool iAmDead = (myId == 0) ? GameManager.Instance.p0Dead.Value : GameManager.Instance.p1Dead.Value;
+        bool opponentDead = (myId == 0) ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
         
-        Debug.Log($"<color=cyan>[EnemyTracker]</color> EvaluatePlayerDeathUI - MyID: {myId}, ImDead: {iAmDead}, OpponentDead: {opponentDead}");
+        Debug.Log($"<color=cyan>[EnemyTracker]</color> Evaluation: MyID={myId}, iAmDead={iAmDead}, opponentDead={opponentDead} (p0Dead={GameManager.Instance.p0Dead.Value}, p1Dead={GameManager.Instance.p1Dead.Value})");
         
         if (opponentDead && killOpponentButton != null) 
         {
             SetUI(killOpponentButton, false);
         }
         
-        // ⭐ ตรวจสอบเงื่อนไขจบเกม
-        // ถ้าตัวเองตาย → แสดง Lose UI
-        if (iAmDead && !opponentDead)
+        // ⭐ ลำดับความสำคัญ: ถ้าเราตาย (iAmDead) คือแพ้แน่นอน
+        if (iAmDead)
         {
-            Debug.Log("<color=red>[EnemyTracker]</color> I am dead and opponent alive! → LOSE");
-            if (!_gameResultShown)
-            {
-                _gameResultShown = true;
-                StopAllCoroutines();
-                ShowResultUI(false); // FALSE = Show Lose UI
-            }
+            Debug.Log("<color=red>[EnemyTracker]</color> Result: I am DEAD -> LOSE");
+            _gameResultShown = true;
+            StopAllCoroutines();
+            ShowResultUI(false); 
         }
-        // ถ้าฝ่ายตรงข้ามตาย (และตัวเองยังไม่ตาย) → แสดง Win UI
-        else if (!iAmDead && opponentDead)
+        // ถ้าเรายังไม่ตาย แต่ฝ่ายตรงข้ามตายแล้ว คือชนะ
+        else if (opponentDead)
         {
-            Debug.Log("<color=green>[EnemyTracker]</color> Opponent dead and I'm alive! → WIN");
-            if (!_gameResultShown)
-            {
-                _gameResultShown = true;
-                StopAllCoroutines();
-                ShowResultUI(true); // TRUE = Show Win UI
-            }
+            Debug.Log("<color=green>[EnemyTracker]</color> Result: OPPONENT dead -> WIN");
+            _gameResultShown = true;
+            StopAllCoroutines();
+            ShowResultUI(true); 
         }
     }
 
@@ -503,6 +498,10 @@ public class EnemyTracker : NetworkBehaviour
     {
         if (centerPanel != null) centerPanel.SetActive(true);
         if (centerText != null) centerText.text = "Host has disconnected...";
+        
+        // ⭐ ปลดล็อคเมาส์เพื่อให้ใช้งานในหน้าเมนูได้ทันที
+        GameManager.Instance?.ForceUnlockCursor();
+        
         yield return new WaitForSeconds(1.5f);
         NetworkManager.Singleton.Shutdown();
         yield return new WaitForSeconds(0.3f);

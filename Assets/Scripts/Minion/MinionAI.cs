@@ -29,23 +29,57 @@ public class MinionAI : MonoBehaviour
 
     void Start()
     {
+        InitializeStats();
+        SetWalk(false);
+    }
+
+    private void OnEnable()
+    {
+        MinionData.OnMinionUpgraded += HandleMinionUpgraded;
+    }
+
+    private void OnDisable()
+    {
+        MinionData.OnMinionUpgraded -= HandleMinionUpgraded;
+    }
+
+    private void InitializeStats()
+    {
         if (data != null)
         {
-            agent.speed = data.speed;
-            currentHP = data.hp;
+            agent.speed = data.GetSpeed();
+            
+            // Initialize HP with current upgraded values
+            currentHP = data.GetHP();
+            
+            if (healthBar != null)
+            {
+                healthBar.maxValue = currentHP;
+                healthBar.value = currentHP;
+            }
         }
-        else
-        {
-            currentHP = 100f;
-        }
+    }
 
-        if (healthBar != null)
+    private void HandleMinionUpgraded(MinionData upgradedData)
+    {
+        if (upgradedData == data)
         {
-            healthBar.maxValue = currentHP;
-            healthBar.value = currentHP;
+            float oldMaxHP = healthBar != null ? healthBar.maxValue : 100f; // Fallback
+            float newMaxHP = data.GetHP();
+            
+            // Add HP difference to current HP
+            float hpDiff = newMaxHP - oldMaxHP;
+            if (hpDiff > 0) currentHP += hpDiff;
+            
+            if (healthBar != null)
+            {
+                healthBar.maxValue = newMaxHP;
+                healthBar.value = currentHP;
+            }
+            
+            agent.speed = data.GetSpeed();
+            Debug.Log($"<color=cyan>[MinionAI]</color> {gameObject.name} stats refreshed! New MaxHP: {newMaxHP}");
         }
-
-        SetWalk(false);
     }
 
     void Update()
@@ -137,7 +171,7 @@ public class MinionAI : MonoBehaviour
         float range = data != null ? data.attackrange : 2f;
         if (flat.magnitude > range * 1.2f) return;
 
-        float dmg = data != null ? data.damage : 1f;
+        float dmg = data != null ? data.GetDamage() : 1f;
         // TODO: currentTarget.GetComponent<BaseHealth>()?.TakeDamage((int)dmg);
         Debug.Log($"<color=red>[MinionAI]</color> Hit! Damage: {dmg}");
     }
@@ -192,7 +226,7 @@ public class MinionAI : MonoBehaviour
         if (isDead) return;
 
         // คำนวณ Damage หลังจาก Defense
-        float defense = data != null ? data.defense : 0f;
+        float defense = data != null ? data.GetDefense() : 0f;
         float actualDamage = Mathf.Max(1f, dmg - defense);
 
         currentHP -= actualDamage;

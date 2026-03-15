@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class BaseHealth : MonoBehaviour
+public class BaseHealth : NetworkBehaviour
 {
     [Header("Health Settings")]
     public int maxHealth = 100;
@@ -12,7 +12,6 @@ public class BaseHealth : MonoBehaviour
     private int currentHealth;
     private bool deathSequenceStarted;
     
-    /// <summary>true = Host/Player0, false = Client/Player1</summary>
     [SerializeField] private bool isHostBase = true;
 
     [Header("Death Settings")]
@@ -29,6 +28,18 @@ public class BaseHealth : MonoBehaviour
 
     private void Start()
     {
+        // ⭐ NETWORK-BASED: เนื่องจาก 1 Scene มี 1 ป้อม เราจึงเช็คจาก "คนเล่น" แทนพิกัด
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            // ถ้าเราเป็น Host ป้อมในเครื่องเราคือ P0(Host), ถ้าเราเป็น Client ป้อมในเครื่องเราคือ P1(Client)
+            isHostBase = NetworkManager.Singleton.IsHost;
+        }
+
+        Debug.Log($"<color=cyan>[BaseHealth]</color> <b>{gameObject.name}</b> ถูกระบุเป็นทีม: <b>{(isHostBase ? "P0 (Host)" : "P1 (Client)")}</b> (IsHost: {NetworkManager.Singleton?.IsHost})");
+        
+        // เปลี่ยนชื่อให้ดูง่ายใน Hierarchy
+        gameObject.name = $"{(isHostBase ? "[P0]" : "[P1]")} {gameObject.name}";
+        
         RefreshUIVisibility();
         UpdateUI(currentHealth);
     }
@@ -61,6 +72,9 @@ public class BaseHealth : MonoBehaviour
     private void Update()
     {
         if (!Input.GetKeyDown(KeyCode.P)) return;
+
+        // ในเมื่อ 1 Scene มี 1 ป้อม และเราเซ็ต ID ถูกต้องแล้ว กด P ก็ให้พังป้อมใน Scene นี้ได้เลย
+        Debug.Log($"<color=red>[Debug]</color> กด P สั่งพังป้อมในเครื่องนี้ (Owner ID: {(isHostBase ? "0" : "1")})");
         TakeDamage(999);
     }
 
@@ -81,21 +95,14 @@ public class BaseHealth : MonoBehaviour
 
         if (currentHealth <= 0 && !deathSequenceStarted)
         {
-            Debug.Log($"<color=yellow>[Base]</color> ฐาน {gameObject.name} พังแล้ว! ประกาศให้ทั้งสองฝั่งรู้");
             deathSequenceStarted = true;
             
-            // ส่งให้ GameManager บอกทั้งสองฝั่งว่า base ตาย
             ulong clientId = isHostBase ? 0UL : 1UL;
-            Debug.Log($"<color=yellow>[BaseHealth]</color> Notifying GameManager of death - ClientID: {clientId}, isHostBase: {isHostBase}");
+            Debug.Log($"<color=yellow>[BaseHealth]</color> ฐานแตก! (Owner: Player {clientId}, isHostBase: {isHostBase}) -> แจ้ง Server");
             
             if (GameManager.Instance != null)
             {
-                Debug.Log($"<color=yellow>[BaseHealth]</color> GameManager found, calling NotifyPlayerDiedServerRpc");
                 GameManager.Instance.NotifyPlayerDiedServerRpc(clientId);
-            }
-            else
-            {
-                Debug.LogError("<color=red>[BaseHealth ERROR]</color> GameManager.Instance is NULL!");
             }
             
             StartCoroutine(PlayBaseDeathSequence());
