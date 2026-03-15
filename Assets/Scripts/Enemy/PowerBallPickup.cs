@@ -100,6 +100,17 @@ public class PowerBallPickup : MonoBehaviour
         // จุดเป้าหมายที่กึ่งกลางตัวผู้เล่น (ไม่ใช่ที่เท้า)
         Vector3 collectTarget = playerTransform.position + Vector3.up * collectHeight;
 
+        // เช็คว่าผู้เล่นตายหรือยัง ถ้าตายแล้วให้ Powerball หายไป
+        bool playerIsDead = false;
+        if (playerTransform.TryGetComponent<PlayerController>(out var pc)) playerIsDead = pc.IsDead;
+        else if (playerTransform.TryGetComponent<Archer>(out var archer)) playerIsDead = archer.IsDead;
+
+        if (playerIsDead)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (isAutoCollecting)
         {
             transform.position = Vector3.MoveTowards(
