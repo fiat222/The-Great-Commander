@@ -389,7 +389,20 @@ public class EnemyTracker : NetworkBehaviour
         {
             baseHealthSystem = myBase.GetComponentInChildren<HealthSystem>();
 
-            // 1) สร้างเอฟเฟกต์ระเบิด/พังถ้ามี Prefab
+            // 1) โฟกัสกล้องไปที่มุมมองเริ่มต้น (หุ่นนริศ) ก่อนเป็นอันดับแรก
+            if (CameraManager.Instance != null)
+            {
+                CameraManager.Instance.FocusInitialView();
+            }
+
+            // 2) รอกล้องแพนไปถึง
+            float arriveDelay = (baseHealthSystem != null) ? baseHealthSystem.cameraArriveDelay : 0.8f;
+            if (arriveDelay > 0f)
+            {
+                yield return new WaitForSeconds(arriveDelay);
+            }
+
+            // 3) สร้างเอฟเฟกต์ระเบิด/พังหลังจากกล้องมาถึงแล้ว
             if (baseHealthSystem != null && baseHealthSystem.deathVfxPrefab != null)
             {
                 GameObject vfxInstance = Instantiate(
@@ -404,28 +417,8 @@ public class EnemyTracker : NetworkBehaviour
                 }
             }
 
-            // 2) โฟกัสกล้องไปที่มุมมองเริ่มต้น (หุ่นนริศ)
-            if (CameraManager.Instance != null)
-            {
-                CameraManager.Instance.FocusInitialView();
-            }
-
             // 3) ถ้ามี HealthSystem และเปิด sinkOnDeath ให้เล่นอนิเมชันจมลง
-            if (baseHealthSystem != null && baseHealthSystem.sinkOnDeath &&
-                baseHealthSystem.sinkDuration > 0f && Mathf.Abs(baseHealthSystem.sinkDistance) > 0.01f)
-            {
-                Vector3 startPos = myBase.transform.position;
-                Vector3 endPos   = startPos + Vector3.down * baseHealthSystem.sinkDistance;
-                float elapsed    = 0f;
-
-                while (elapsed < baseHealthSystem.sinkDuration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(elapsed / baseHealthSystem.sinkDuration);
-                    myBase.transform.position = Vector3.Lerp(startPos, endPos, t);
-                    yield return null;
-                }
-            }
+            yield return baseHealthSystem.ExecuteSinkAnimation(myBase.transform);
 
             // 4) ดีเลย์ก่อนขึ้น Game Over ตามที่ตั้งใน HealthSystem
             if (baseHealthSystem != null && baseHealthSystem.gameOverDelay > 0f)
