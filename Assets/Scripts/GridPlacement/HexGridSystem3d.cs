@@ -188,12 +188,12 @@ namespace DT.GridSystem
 			}
 		}
 
+#if UNITY_EDITOR
 		/// <summary>
 		/// Visualizes the hex grid using Unity Gizmos, including cell centers and outlines.
 		/// </summary>
 		public override void OnDrawGizmos()
 		{
-#if UNITY_EDITOR
 			if (!drawGizmos) return;
 			sqrt3 = Mathf.Sqrt(3f);
 			sqrt3Over2 = sqrt3 / 2f;
@@ -212,8 +212,8 @@ namespace DT.GridSystem
 				}
 			}
 			    
-#endif
 		}
+#endif
 
 		/// <summary>
 		/// Draws the outline of a single hexagon for debugging in the Unity editor.
