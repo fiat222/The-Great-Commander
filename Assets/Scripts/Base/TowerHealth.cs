@@ -120,10 +120,10 @@ public class TowerHealth : MonoBehaviour
             }
         }
 
-        // 2) โฟกัสกล้อง Spectator เข้าที่ป้อม
+        // 2) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ)
         if (CameraManager.Instance != null)
         {
-            CameraManager.Instance.FocusSpectator(transform);
+            CameraManager.Instance.FocusInitialView();
         }
 
         // 3) รอให้ผู้เล่นชมฉากป้อมพังก่อน

@@ -217,10 +217,10 @@ public class BaseHealth : NetworkBehaviour
             delay = DefaultGameOverDelaySolo;
         }
 
-        // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก — ทำเสมอใน Solo (และใน Network ฝั่งแพ้จะทำที่ EnemyTracker)
+        // 2) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ) — ทำเสมอใน Solo (และใน Network ฝั่งแพ้จะทำที่ EnemyTracker)
         if (CameraManager.Instance != null)
         {
-            CameraManager.Instance.FocusSpectator(transform);
+            CameraManager.Instance.FocusInitialView();
         }
         else if (isSolo)
         {

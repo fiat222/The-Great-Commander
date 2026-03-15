@@ -266,10 +266,10 @@ public class HealthSystem : MonoBehaviour
             }
         }
 
-        // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก (ถ้ามี CameraManager)
+        // 2) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ)
         if (CameraManager.Instance != null)
         {
-            CameraManager.Instance.FocusSpectator(transform);
+            CameraManager.Instance.FocusInitialView();
         }
 
         // 3) ทำเอฟเฟกต์ให้ป้อมค่อย ๆ จมลง (เหมือนพังลง) ถ้าถูกเปิดใช้งาน

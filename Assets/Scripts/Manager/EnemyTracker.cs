@@ -404,10 +404,10 @@ public class EnemyTracker : NetworkBehaviour
                 }
             }
 
-            // 2) โฟกัสกล้องไปที่ฐานของเรา
+            // 2) โฟกัสกล้องไปที่มุมมองเริ่มต้น (หุ่นนริศ)
             if (CameraManager.Instance != null)
             {
-                CameraManager.Instance.FocusSpectator(myBase.transform);
+                CameraManager.Instance.FocusInitialView();
             }
 
             // 3) ถ้ามี HealthSystem และเปิด sinkOnDeath ให้เล่นอนิเมชันจมลง
