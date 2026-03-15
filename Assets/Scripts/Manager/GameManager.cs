@@ -699,11 +699,21 @@ public void SetPlayerReadyServerRpc(bool ready, RpcParams rpcParams = default)
     [Rpc(SendTo.Server, RequireOwnership = false)]
     public void NotifyPlayerDiedServerRpc(ulong clientId)
     {
-        Debug.Log($"<color=cyan>[GameManager]</color> NotifyPlayerDiedServerRpc called for ClientID: {clientId}");
-        if (clientId == 0) p0Dead.Value = true;
-        else p1Dead.Value = true;
+        Debug.Log($"<color=cyan>[GameManager]</color> ======= NotifyPlayerDiedServerRpc called for ClientID: {clientId} =======");
+        Debug.Log($"  IsServer: {IsServer}, LocalClientId: {NetworkManager.Singleton.LocalClientId}");
         
-        Debug.Log($"<color=cyan>[GameManager]</color> p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
+        if (clientId == 0) 
+        {
+            p0Dead.Value = true;
+            Debug.Log($"<color=red>[GameManager]</color> Player 0 DIED! p0Dead=TRUE");
+        }
+        else 
+        {
+            p1Dead.Value = true;
+            Debug.Log($"<color=red>[GameManager]</color> Player 1 DIED! p1Dead=TRUE");
+        }
+        
+        Debug.Log($"<color=cyan>[GameManager]</color> Current State: p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
     }
 
     // ==================== [Safety Utility] ====================

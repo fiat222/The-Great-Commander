@@ -10,12 +10,12 @@ public class HealthSystem : MonoBehaviour
     [Header("Main Settings")]
     public float maxHealth = 100f;
     private float currentHealth;
-    
+
     [Tooltip("ติ๊กถูกถ้าตัวนี้คือฐานแม่ (ป้อมหลัก) ถ้าตายแล้วเกมจบ")]
     public bool isMainBase = false;
 
     [Header("Death Presentation (Main Base)")]
-    [Tooltip("เอฟเฟกต์ตอนฐาน/ป้อมหลักถูกทำลาย (เช่น ระเบิด, พัง)")]
+    [Tooltip("เอฟเฟกต์ตอนฐาน/ป้อมหลักถูกทำลาย")]
     public GameObject deathVfxPrefab;
     [Tooltip("เวลาที่ให้เอฟเฟกต์อยู่บนจอก่อนถูกลบออก")]
     public float deathVfxDuration = 2f;
@@ -25,20 +25,20 @@ public class HealthSystem : MonoBehaviour
     public float cameraArriveDelay = 0.8f;
     [Tooltip("ติ๊กถูกถ้าฐานหลักนี้ควรทำให้เกมจบเมื่อ HP หมด")]
     public bool triggerGameOverOnDeath = true;
-    [Tooltip("ถ้าติ๊ก ป้อมจะค่อย ๆ จมลงตอนถูกทำลาย (เอฟเฟกต์พัง)")]
+    [Tooltip("ถ้าติ๊ก ป้อมจะค่อยๆ จมลงตอนถูกทำลาย")]
     public bool sinkOnDeath = true;
     [Tooltip("ระยะที่ป้อมจะจมลง (หน่วยเป็นเมตร)")]
     public float sinkDistance = 4f;
     [Tooltip("เวลาที่ใช้ให้ป้อมจมลงครบระยะ")]
     public float sinkDuration = 2f;
 
-    [Header("UI (Optional - ไม่ใส่ก็ได้)")]
-    [Tooltip("ใส่ Canvas ของหลอดเลือดที่นี่ (ถ้าไม่มี มันจะไม่พยายามวาด UI)")]
+    [Header("UI (Optional)")]
+    [Tooltip("ใส่ Canvas ของหลอดเลือดที่นี่")]
     public Canvas healthCanvas;
     public Image healthBarFill;
     public Image healthBarSmooth;
     public float smoothSpeed = 5f;
-    
+
     [Header("HP Text (Optional)")]
     [Tooltip("TextMeshPro สำหรับแสดงเลข HP (เช่น 150/150)")]
     public TextMeshProUGUI healthText;
@@ -73,25 +73,17 @@ public class HealthSystem : MonoBehaviour
         if (mainCamera == null)
             mainCamera = Camera.main;
 
-        // 1. หมุนป้ายเลือดให้หันเข้าหากล้องเสมอ (ถ้ามี UI)
         if (healthCanvas != null && mainCamera != null)
-        {
             healthCanvas.transform.rotation = mainCamera.transform.rotation;
-        }
 
-        // 2. จัดการเรื่องหลอดเลือดไหลแบบ Smooth (ถ้ามี UI)
         if (smoothRect != null && fillRect != null)
         {
-            float targetNormalizedHealth = GetNormalizedHealth();
+            float target = GetNormalizedHealth();
 
-            if (displayedSmoothHealth > targetNormalizedHealth)
-            {
-                displayedSmoothHealth = Mathf.Lerp(displayedSmoothHealth, targetNormalizedHealth, Time.deltaTime * smoothSpeed);
-            }
+            if (displayedSmoothHealth > target)
+                displayedSmoothHealth = Mathf.Lerp(displayedSmoothHealth, target, Time.deltaTime * smoothSpeed);
             else
-            {
-                displayedSmoothHealth = targetNormalizedHealth;
-            }
+                displayedSmoothHealth = target;
 
             ApplyBarValue(smoothRect, displayedSmoothHealth);
         }
@@ -115,110 +107,86 @@ public class HealthSystem : MonoBehaviour
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
-        // แสดงผลผ่าน Console (แทน BaseHealth เดิม)
         Debug.Log($"<color=orange>[HP]</color> {gameObject.name} โดนตี! เลือดเหลือ {currentHealth}/{maxHealth}");
 
         UpdateHealthUI(syncSmoothImmediately: false);
         OnTakeDamage?.Invoke();
 
         if (currentHealth <= 0)
-        {
             Die();
-        }
     }
 
     private void UpdateHealthUI(bool syncSmoothImmediately)
     {
-        float normalizedHealth = GetNormalizedHealth();
+        float normalized = GetNormalizedHealth();
 
         if (fillRect != null)
-        {
-            ApplyBarValue(fillRect, normalizedHealth);
-        }
+            ApplyBarValue(fillRect, normalized);
 
         if (syncSmoothImmediately)
         {
-            displayedSmoothHealth = normalizedHealth;
-
+            displayedSmoothHealth = normalized;
             if (smoothRect != null)
-            {
-                ApplyBarValue(smoothRect, normalizedHealth);
-            }
+                ApplyBarValue(smoothRect, normalized);
         }
-        
-        // อัปเดตข้อความ HP
+
         UpdateHealthText();
     }
 
-    private void SyncUIInstant()
-    {
-        UpdateHealthUI(syncSmoothImmediately: true);
-    }
+    private void SyncUIInstant() => UpdateHealthUI(syncSmoothImmediately: true);
 
     private float GetNormalizedHealth()
-    {
-        return Mathf.Approximately(maxHealth, 0f)
-            ? 0f
-            : Mathf.Clamp01(currentHealth / maxHealth);
-    }
+        => Mathf.Approximately(maxHealth, 0f) ? 0f : Mathf.Clamp01(currentHealth / maxHealth);
 
     private void CacheBarRects()
     {
-        fillRect = healthBarFill != null ? healthBarFill.rectTransform : null;
+        fillRect   = healthBarFill   != null ? healthBarFill.rectTransform   : null;
         smoothRect = healthBarSmooth != null ? healthBarSmooth.rectTransform : null;
     }
 
-    private static void ConfigureBarRect(RectTransform barRect)
+    private static void ConfigureBarRect(RectTransform r)
     {
-        if (barRect == null)
-            return;
-
-        barRect.anchorMin = new Vector2(0f, 0f);
-        barRect.anchorMax = new Vector2(1f, 1f);
-        barRect.pivot = new Vector2(0f, 0.5f);
-        barRect.anchoredPosition = Vector2.zero;
+        if (r == null) return;
+        r.anchorMin        = new Vector2(0f, 0f);
+        r.anchorMax        = new Vector2(1f, 1f);
+        r.pivot            = new Vector2(0f, 0.5f);
+        r.anchoredPosition = Vector2.zero;
     }
 
-    private static void ApplyBarValue(RectTransform barRect, float normalizedHealth)
+    private static void ApplyBarValue(RectTransform r, float normalized)
     {
-        if (barRect == null)
-            return;
-
-        Vector3 scale = barRect.localScale;
-        scale.x = Mathf.Clamp01(normalizedHealth);
-        scale.y = 1f;
-        scale.z = 1f;
-        barRect.localScale = scale;
+        if (r == null) return;
+        Vector3 s = r.localScale;
+        s.x = Mathf.Clamp01(normalized);
+        s.y = 1f;
+        s.z = 1f;
+        r.localScale = s;
     }
 
-    /// <summary>
-    /// ให้ภายนอก (เช่น BaseHealth) สั่งเซ็ตเลือดตรงๆ โดยไม่ต้องผ่าน TakeDamage
-    /// HealthSystem จะจัดการ UI, Billboard, Smooth ให้ทั้งหมด
-    /// </summary>
     public void ForceSetHealth(float current, float max)
     {
-        maxHealth = Mathf.Max(1f, max);
+        maxHealth     = Mathf.Max(1f, max);
         currentHealth = Mathf.Clamp(current, 0, max);
         SyncUIInstant();
     }
 
     /// <summary>
-    /// เล่นแอนิเมชันจมลงของวัตถุที่กำหนด (Best Practice: แยก Logic ออกมาให้เรียกใช้ได้จากหลายที่)
+    /// เล่นแอนิเมชันจมลงของวัตถุที่กำหนด
+    /// เรียกใช้ได้จากทั้ง HealthSystem และ BaseHealth
     /// </summary>
     public IEnumerator ExecuteSinkAnimation(Transform target)
     {
         if (target == null || !sinkOnDeath || sinkDuration <= 0f || Mathf.Abs(sinkDistance) <= 0.01f)
             yield break;
 
-        Vector3 startPos = target.position;
-        Vector3 endPos   = startPos + Vector3.down * sinkDistance;
-        float elapsed    = 0f;
+        Vector3 start   = target.position;
+        Vector3 end     = start + Vector3.down * sinkDistance;
+        float   elapsed = 0f;
 
         while (elapsed < sinkDuration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / sinkDuration);
-            target.position = Vector3.Lerp(startPos, endPos, t);
+            target.position = Vector3.Lerp(start, end, Mathf.Clamp01(elapsed / sinkDuration));
             yield return null;
         }
     }
@@ -227,12 +195,10 @@ public class HealthSystem : MonoBehaviour
     {
         isDead = true;
         OnDie?.Invoke();
-        
-        if (healthCanvas != null) healthCanvas.gameObject.SetActive(false);
 
+        if (healthCanvas != null) healthCanvas.gameObject.SetActive(false);
         Debug.Log($"<color=red>[Dead]</color> {gameObject.name} ถูกทำลายแล้ว!");
 
-        // กรณีฐานหลัก (main base): ใช้ sequence แบบ Cinematic + Spectator + GameOver
         if (isMainBase && triggerGameOverOnDeath)
         {
             if (!mainBaseDeathSequenceStarted)
@@ -243,87 +209,51 @@ public class HealthSystem : MonoBehaviour
             return;
         }
 
-        // กรณีทั่วไป: ปล่อยให้ AI หรือระบบอื่นจัดการ Destroy เหมือนเดิม
         if (GetComponent<EnemyAI>() != null || GetComponent<ImpAI>() != null)
             return;
 
         Destroy(gameObject, 0.5f);
     }
-    
+
     private void UpdateHealthText()
     {
         if (healthText == null) return;
-        
-        // จัดรูปแบบข้อความ: current/max
-        string formattedText = $"{Mathf.RoundToInt(currentHealth)}/{Mathf.RoundToInt(maxHealth)}";
-        healthText.text = formattedText;
-        
-        // เปลี่ยนสีตาม HP
-        float normalizedHealth = GetNormalizedHealth();
-        if (normalizedHealth <= 0.25f)
-        {
-            healthText.color = Color.red;
-        }
-        else
-        {
-            healthText.color = Color.white;
-        }
+        healthText.text  = $"{Mathf.RoundToInt(currentHealth)}/{Mathf.RoundToInt(maxHealth)}";
+        healthText.color = GetNormalizedHealth() <= 0.25f ? Color.red : Color.white;
     }
 
-    /// <summary>
-    /// ลำดับตอนฐานหลักตาย:
-    /// 1) เล่นเอฟเฟกต์ระเบิด/พัง
-    /// 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก และล็อคมุมกล้อง
-    /// 3) รอให้ผู้เล่นชมฉากสักพัก
-    /// 4) เรียก Game Over ผ่านระบบที่มีอยู่ (Solo / Network)
-    /// </summary>
     private IEnumerator MainBaseDeathSequence()
     {
-        // 1) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ) ก่อนเป็นอันดับแรก
+        // 1) กล้องก่อน
         if (CameraManager.Instance != null)
-        {
             CameraManager.Instance.FocusInitialView();
-        }
 
-        // 2) รอกล้องแพนไปถึงจุดหมาย (Cinematic Feel)
+        // 2) รอกล้องแพนไปถึง
         if (cameraArriveDelay > 0f)
-        {
             yield return new WaitForSeconds(cameraArriveDelay);
-        }
 
-        // 3) เล่นเอฟเฟกต์ทำลายฐานหลัก (ระเบิดหลังจากกล้องมาถึงแล้ว)
+        // 3) VFX ระเบิด
         if (deathVfxPrefab != null)
         {
-            GameObject vfxInstance = Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
-            if (deathVfxDuration > 0f)
-            {
-                Destroy(vfxInstance, deathVfxDuration);
-            }
+            GameObject vfx = Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
+            if (deathVfxDuration > 0f) Destroy(vfx, deathVfxDuration);
         }
 
-        // 3) ทำเอฟเฟกต์ให้ป้อมค่อย ๆ จมลง (เหมือนพังลง) ถ้าถูกเปิดใช้งาน
+        // 4) ป้อมจม
         yield return ExecuteSinkAnimation(transform);
 
-        // 4) รอให้ผู้เล่นชมฉากสักพักก่อนจบเกม (ดีเลย์ Game Over)
+        // 5) delay ก่อน Game Over
         if (gameOverDelay > 0f)
-        {
             yield return new WaitForSeconds(gameOverDelay);
-        }
 
-        // 5) แจ้งระบบ Game Over ตามโหมดที่ใช้งานอยู่
-        // Solo Mode
+        // 6) Game Over ตามโหมด
         if (SoloEnemyTracker.Instance != null)
-        {
             SoloEnemyTracker.Instance.NotifyPlayerDied();
-        }
         else if (SoloGameManager.Instance != null)
-        {
             SoloGameManager.Instance.OnGameEnded();
-        }
-        // Network / PvP Mode: ให้ GameManager + EnemyTracker จัดการ UI/Result ต่อ
         else if (GameManager.Instance != null)
-        {
             GameManager.Instance.OnGameEnded();
-        }
+        else if (EnemyTracker.Instance != null)
+            EnemyTracker.Instance.ShowGameResultClientRpc(0); // ส่ง 0 เป็นค่า default
     }
 }

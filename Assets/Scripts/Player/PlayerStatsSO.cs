@@ -44,10 +44,10 @@ public class PlayerStatsSO : ScriptableObject
     [Range(1f, 2f)] public float hpMultiplier = 1.30f;
     [Range(1f, 2f)] public float speedMultiplier = 1.15f;
     [Range(1f, 2f)] public float defenseMultiplier = 1.30f;
-    [Range(1f, 2f)] public float damageMultiplier = 1.20f;
+    [Range(1f, 2f)] public float damageMultiplier = 1.30f;
 
     [Header("Cost Escalation")]
-    [Range(1f, 3f)] public float costEscalation = 1.5f;
+    [Range(1f, 3f)] public float costEscalation = 2f;
 
     public int maxLevel = 5;
 

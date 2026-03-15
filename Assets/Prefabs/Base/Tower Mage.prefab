@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 7734917166540654247}
   - component: {fileID: 7903259616555390202}
-  - component: {fileID: 2912456600999082829}
   - component: {fileID: 8310766046990976130}
   - component: {fileID: 7306427562441635072}
   - component: {fileID: 5864872777342100785}
   - component: {fileID: 5533581080255780543}
+  - component: {fileID: 4062174737086773495}
   m_Layer: 0
   m_Name: Tower Mage
   m_TagString: Base
@@ -65,31 +65,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2912456600999082829
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1878320753386832747}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2973884678
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &8310766046990976130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,7 +79,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerAttack
   range: 33
   fireRate: 0.8
-  damage: 30
+  damage: 40
   projectileVFXPrefab: {fileID: 8128879338007810308, guid: 3c4021cf136e78e4d8e6f170bf0c8253, type: 3}
   muzzleFlashVFXPrefab: {fileID: 0}
   rangeVFXPrefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
@@ -123,7 +98,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87ef8336b9ca12649bb9e70af2125470, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
-  health: 100
+  maxHealth: 1000
+  healthUI: {fileID: 4062174737086773495}
+  isHostBase: 1
+  destroyOnDeath: 1
 --- !u!136 &5864872777342100785
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -257,6 +235,39 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &4062174737086773495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1878320753386832747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c2a260481eab2499fe99c90f123b63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
+  maxHealth: 1000
+  isMainBase: 1
+  deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
+  deathVfxDuration: 3
+  gameOverDelay: 3
+  cameraArriveDelay: 0.8
+  triggerGameOverOnDeath: 1
+  sinkOnDeath: 1
+  sinkDistance: 17
+  sinkDuration: 4
+  healthCanvas: {fileID: 0}
+  healthBarFill: {fileID: 0}
+  healthBarSmooth: {fileID: 0}
+  smoothSpeed: 5
+  healthText: {fileID: 0}
+  OnTakeDamage:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDie:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &2957136993702639793
 GameObject:
   m_ObjectHideFlags: 0
