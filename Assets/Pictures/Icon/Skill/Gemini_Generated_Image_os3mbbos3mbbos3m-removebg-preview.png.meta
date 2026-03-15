@@ -97,7 +97,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_0
+      name: Ultimate_Archer
       rect:
         serializedVersion: 2
         x: 19
@@ -125,7 +125,7 @@ TextureImporter:
         x: 175
         y: 319
         width: 151
-        height: 154
+        height: 151
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -163,13 +163,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_3
+      name: Ultimate_Warrior
       rect:
         serializedVersion: 2
-        x: 15
-        y: 67
-        width: 150
-        height: 157
+        x: 17
+        y: 69
+        width: 146
+        height: 153
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -244,12 +244,12 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_0: -825539773
       Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_1: -6983139
       Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_2: -891153528
-      Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_3: 1409485720
       Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_4: -859518793
       Gemini_Generated_Image_os3mbbos3mbbos3m-removebg-preview_5: -357228385
+      Ultimate_Archer: -825539773
+      Ultimate_Warrior: 1409485720
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

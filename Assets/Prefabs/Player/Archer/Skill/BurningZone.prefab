@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8746378467122916103}
   - component: {fileID: 165942683729719542}
   - component: {fileID: 7254064602263631813}
+  - component: {fileID: 3064861232181189847}
   m_Layer: 6
   m_Name: BurningZone
   m_TagString: Untagged
@@ -112,7 +113,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -132,6 +133,27 @@ MonoBehaviour:
   radius: 6
   damagePerSecond: 10
   duration: 5
+--- !u!65 &3064861232181189847
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5879912481012635610}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 3.826917, z: 10}
+  m_Center: {x: 0, y: 1.0481242, z: 0}
 --- !u!1001 &7140765416190094593
 PrefabInstance:
   m_ObjectHideFlags: 0

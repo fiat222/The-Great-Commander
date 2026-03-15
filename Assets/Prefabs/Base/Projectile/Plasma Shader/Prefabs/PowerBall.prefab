@@ -217,14 +217,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PowerBallPickup
   value: 5
-  lifetime: 15
-  autoCollectTime: 3
+  lifetime: 3
+  autoCollectTime: 2
   launchUpSpeed: 9
   launchSideSpeed: 3
   gravity: 20
   floatAmplitude: 0.5
   floatSpeed: 2
   attractRadius: 3
-  attractSpeed: 8
-  autoCollectSpeed: 14
+  attractSpeed: 15
+  autoCollectSpeed: 20
   collectHeight: 1

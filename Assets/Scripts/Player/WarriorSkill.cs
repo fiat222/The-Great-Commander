@@ -16,7 +16,7 @@ public class WarriorSkill : MonoBehaviour
     public float damageMultiplier = 1.5f;
     public float skill1Cooldown = 5f;
     [Tooltip("ระยะเวลาที่ก้อนน้ำแข็งจะคงอยู่ก่อนหายไป")]
-    public float vfxLifetime = 3f;
+    public float vfxLifetime = 1f;
     [Tooltip("กราฟควบคุมความเร็วและระยะเวลาในการพุ่งไปข้างหน้าตอนใช้สกิล")]
     public AnimationCurve skillMoveCurve = AnimationCurve.Linear(0f, 15f, 0.5f, 0f);
 
@@ -128,9 +128,13 @@ public class WarriorSkill : MonoBehaviour
         if (!uiResolved) TryResolveUI();
         if (skillIconBg == null) return;
 
-        // WarriorSkill ใช้ specialAttackIcon (slot R)
+        // WarriorSkill ใช้ skillIcon (slot R)
         if (player.stats.skillIcon != null)
+        {
             skillIconBg.sprite = player.stats.skillIcon;
+            if (cooldownFillImage != null)
+                cooldownFillImage.sprite = player.stats.skillIcon;
+        }
     }
 
     // ==================== Input ====================

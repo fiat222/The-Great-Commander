@@ -10,8 +10,16 @@ public class BurningZone : MonoBehaviour
     [HideInInspector] public int damagePerSecond = 10;
     [HideInInspector] public float duration = 5f;
 
+    private System.Collections.Generic.HashSet<Collider> enemiesInZone = new();
     private float tickTimer = 0f;
     private float lifeTimer = 0f;
+
+    private void Start()
+    {
+        // ถ้ามีความต้องการให้รัศมีจาก ArcherSkill มามีผลกับ SphereCollider
+        var col = GetComponent<SphereCollider>();
+        if (col != null) col.radius = radius;
+    }
 
     private void Update()
     {
@@ -30,50 +38,59 @@ public class BurningZone : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Enemy") || other.CompareTag("EnemyHead"))
+        {
+            enemiesInZone.Add(other);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (enemiesInZone.Contains(other))
+        {
+            enemiesInZone.Remove(other);
+        }
+    }
+
     private void DealDamageInZone()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+        // ล้าง Collider ที่ถูก Destroy ไปแล้วออกจาก Set (เช่น ศัตรูตายไปแล้ว)
+        enemiesInZone.RemoveWhere(c => c == null);
 
-        // ใช้ HashSet กัน root ซ้ำ กรณี Enemy มีหลาย Collider / MeshCollider
         var hitRoots = new System.Collections.Generic.HashSet<GameObject>();
 
-        foreach (var hit in hits)
+        foreach (var enemyCollider in enemiesInZone)
         {
-            // หา root ขึ้นไปจาก collider ที่โดน
-            GameObject root = hit.transform.root.gameObject;
-
+            GameObject root = enemyCollider.transform.root.gameObject;
             if (hitRoots.Contains(root)) continue;
-
-            // เช็ค tag ที่ root หรือ collider ที่โดนตรงๆ
-            bool isEnemy = hit.CompareTag("Enemy") || root.CompareTag("Enemy");
-            if (!isEnemy) continue;
-
             hitRoots.Add(root);
 
-            // หา component ที่ root ก่อน ถ้าไม่มีค่อย GetComponentInChildren
-            var hp = root.GetComponent<HealthSystem>()
-                  ?? root.GetComponentInChildren<HealthSystem>();
+            // ดึงดาเมจที่ปัดเศษแล้ว
+            int dmgInt = Mathf.RoundToInt(damagePerSecond);
+
+            // ── ส่งดาเมจ (ตามลำดับความสำคัญเหมือนระบบส่วนกลาง) ────────────────────────
+            HealthSystem hp = root.GetComponent<HealthSystem>() ?? root.GetComponentInChildren<HealthSystem>();
             if (hp != null)
             {
-                hp.TakeDamage(damagePerSecond);
+                hp.TakeDamage(dmgInt);
                 ShowDamageNumber(root);
                 continue;
             }
 
-            var enemy = root.GetComponent<EnemyAI>()
-                     ?? root.GetComponentInChildren<EnemyAI>();
-            if (enemy != null)
+            EnemyAI enemyAI = root.GetComponent<EnemyAI>() ?? root.GetComponentInChildren<EnemyAI>();
+            if (enemyAI != null)
             {
-                enemy.TakeDamage(damagePerSecond);
+                enemyAI.TakeDamage(damagePerSecond);
                 ShowDamageNumber(root);
                 continue;
             }
 
-            var imp = root.GetComponent<ImpAI>()
-                   ?? root.GetComponentInChildren<ImpAI>();
-            if (imp != null)
+            ImpAI impAI = root.GetComponent<ImpAI>() ?? root.GetComponentInChildren<ImpAI>();
+            if (impAI != null)
             {
-                imp.TakeDamage(damagePerSecond);
+                impAI.TakeDamage(dmgInt);
                 ShowDamageNumber(root);
             }
         }
