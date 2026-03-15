@@ -59,8 +59,6 @@ public class GameManager : NetworkBehaviour
         NetworkVariableReadPermission.Everyone, 
         NetworkVariableWritePermission.Server);
 
-    // ✅ ลบ enemyStatsSOs ออกแล้ว เพราะ systemEnemyPool เป็น EnemyStatsSO[] แล้วครับ
-
     [Header("Enemy Sending System")]
     private EnemySpawner globalSpawner; 
     
@@ -68,7 +66,14 @@ public class GameManager : NetworkBehaviour
     public NetworkList<int> p0SentCounts; // Player 0 (Host)
     public NetworkList<int> p1SentCounts; // Player 1 (Client)
 
-    // Economy Settings ย้ายไปอยู่ใน EnemyStatsSO แล้วครับ
+    // ==================== ⭐ Wave Income System ====================
+    [Header("Wave Income")]
+    [Tooltip("เงินที่ให้ตอนเริ่มเกม (Wave 1)")]
+    public int startingMoney = 200;
+    [Tooltip("เงินฐานที่ให้ตอนเริ่ม Wave 2")]
+    public int baseWaveIncome = 100;
+    [Tooltip("เงินที่เพิ่มขึ้นทุก Wave (Wave2=100, Wave3=150, Wave4=200 ...)")]
+    public int incomeIncreasePerWave = 50;
 
     // Crosshair + Skill UI สำหรับปิด/เปิด ในแต่ละเฟส
     [SerializeField] private GameObject crosshairObject;
@@ -165,6 +170,9 @@ public class GameManager : NetworkBehaviour
         if (IsServer && currentWave.Value == 1)
         {
             GenerateSystemWave();
+
+            // ⭐ ให้เงินเริ่มต้น Wave 1 แก่ทุก Client
+            GiveIncomeClientRpc(startingMoney);
         }
 
         // ⭐ แจ้งเตือน UI ให้รีเฟรชข้อมูลทั้งหมดตอนเน็ตเวิร์คพร้อม (แก้บัคชุดข้อมูลตอน Join เข้าไปใหม่)
@@ -256,9 +264,13 @@ public class GameManager : NetworkBehaviour
             EnemyTracker.Instance?.ResetForNewWaveServerRpc();
             if (IsServer)
             {
+                // ⭐ เช็คว่า Player รอดจาก Combat ที่แล้วไหม → ถ้ารอดให้ Heal เต็ม
+                bool p0Survived = !p0Dead.Value;
+                bool p1Survived = !p1Dead.Value;
+
                 currentWave.Value++;
 
-                // ✅ ดึง SetWave จาก systemEnemyPool โดยตรง (ไม่ต้องมี enemyStatsSOs แยกต่างหากแล้ว)
+                // ✅ ดึง SetWave จาก systemEnemyPool โดยตรง
                 if (systemEnemyPool != null)
                     foreach (var so in systemEnemyPool)
                         if (so != null) so.SetWave(currentWave.Value);
@@ -272,6 +284,15 @@ public class GameManager : NetworkBehaviour
                 p1Ready.Value = false;
 
                 GenerateSystemWave(); // 🌊 สุ่มเวฟถัดไปทันที
+
+                // ⭐ ให้เงิน Wave Income แก่ทุก Client
+                int waveIncome = baseWaveIncome + (currentWave.Value - 2) * incomeIncreasePerWave;
+                waveIncome = Mathf.Max(0, waveIncome);
+                GiveIncomeClientRpc(waveIncome);
+                Debug.Log($"<color=cyan>[GameManager]</color> Wave {currentWave.Value} Income: {waveIncome} Gold");
+
+                // ⭐ Heal ผู้รอดชีวิตผ่าน ClientRpc
+                HealSurvivedPlayersClientRpc(p0Survived, p1Survived);
             }
             CleanupEnemies();
         }
@@ -300,6 +321,57 @@ public class GameManager : NetworkBehaviour
 
         OnPhaseChangedGlobal?.Invoke(newValue);
     }
+
+    // ==================== ⭐ Income & Heal RPCs ====================
+
+    /// <summary>ให้เงินแก่ทุก Client พร้อมกัน</summary>
+    [Rpc(SendTo.ClientsAndHost)]
+    private void GiveIncomeClientRpc(int amount)
+    {
+        if (PlacementManager.Instance != null)
+        {
+            PlacementManager.Instance.Money += amount;
+            PlacementManager.Instance.OnMoneyChanged?.Invoke(PlacementManager.Instance.Money);
+            Debug.Log($"<color=cyan>[GameManager]</color> Received Wave Income: +{amount} Gold (Total: {PlacementManager.Instance.Money})");
+        }
+    }
+
+    /// <summary>Heal Player ที่รอดชีวิตจาก Wave ที่แล้ว (เรียกตอนเข้า Planning)</summary>
+    [Rpc(SendTo.ClientsAndHost)]
+    private void HealSurvivedPlayersClientRpc(bool p0Survived, bool p1Survived)
+    {
+        ulong myId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : 0;
+        bool iSurvived = (myId == 0) ? p0Survived : p1Survived;
+
+        if (iSurvived)
+        {
+            HealLocalPlayer();
+            Debug.Log($"<color=green>[GameManager]</color> Player {myId} survived! HP restored to full.");
+        }
+    }
+
+    /// <summary>⭐ Heal Local Player เต็มหลอด (ใช้ได้ทั้งตอนรอดเวฟ และตอน Upgrade)</summary>
+    public static void HealLocalPlayer()
+    {
+        foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            // เรียก Heal เฉพาะตัวที่เป็น Owner ของเราเท่านั้น
+            if (pc.IsOwner)
+            {
+                pc.HealToFull();
+                return;
+            }
+        }
+        foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
+        {
+            if (ac.IsOwner)
+            {
+                ac.HealToFull();
+                return;
+            }
+        }
+    }
+
     private void CleanupEnemies()
     {
         if (!IsServer) return; // เฉพาะ Server เท่านั้นที่ Despawn ได้

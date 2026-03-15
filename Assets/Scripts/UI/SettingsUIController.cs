@@ -56,6 +56,24 @@ public class SettingsUIController : MonoBehaviour
         if (settingsPanel) settingsPanel.SetActive(false);
     }
 
+    private void Update()
+    {
+        // ⭐ กดปุ่ม ESC เพื่อเปิด/ปิด Settings
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (settingsPanel && settingsPanel.activeSelf)
+            {
+                // ถ้า Settings เปิดอยู่ → กด ESC เพื่อปิด
+                CancelAndCloseSettings();
+            }
+            else
+            {
+                // ถ้า Settings ปิดอยู่ → กด ESC เพื่อเปิด
+                OpenSettings();
+            }
+        }
+    }
+
     /// <summary>เรียกผ่านปุ่มรูปฟันเฟือง</summary>
     public void OpenSettings()
     {

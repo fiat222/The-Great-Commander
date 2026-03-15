@@ -159,7 +159,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 72ab0d3a987779844ab762a5f16ecc5f, type: 2}
+  - {fileID: 2100000, guid: 1019dec167ec4814495e43f051c0bf49, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9dfc7744c7c5d4449b13feccdce4638, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PowerBallPickup
-  value: 1
+  value: 5
   lifetime: 15
   autoCollectTime: 3
   launchUpSpeed: 9

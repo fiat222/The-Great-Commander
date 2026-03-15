@@ -132,6 +132,27 @@ public class CameraManager : MonoBehaviour
         SetSpectatorActive(true);
     }
 
+    /// <summary>
+    /// สั่งให้กล้อง Spectator กลับไปที่มุมมองเริ่มต้น (ตำแหน่งนริศ)
+    /// ใช้ตอนป้อมแตกเพื่อให้เห็นภาพรวมสนามรบตามรูปที่กำหนด
+    /// </summary>
+    public void FocusInitialView()
+    {
+        if (SpectatorController.Instance != null)
+        {
+            SpectatorController.Instance.ResetToInitialView();
+            SetSpectatorActive(true);
+        }
+        else if (spectatorCamera != null)
+        {
+            spectatorCamera.Follow = null;
+            spectatorCamera.LookAt = null;
+            spectatorCamera.transform.position = new Vector3(17.27f, 14.92f, -29.08f);
+            spectatorCamera.transform.rotation = Quaternion.Euler(16.59f, 180f, 0f);
+            SetSpectatorActive(true);
+        }
+    }
+
     public void SetPhaseCamera(GamePhase phase)
     {
         ResetAllPriorities();

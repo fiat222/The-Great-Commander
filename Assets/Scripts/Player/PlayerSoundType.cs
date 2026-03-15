@@ -20,6 +20,6 @@ namespace PlayerAudio
         ParrySuccess,
 
         Die,
-
+        Heal,
     }
 }
