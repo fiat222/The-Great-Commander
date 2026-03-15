@@ -932,12 +932,12 @@ public class Archer : MonoBehaviour
         if (GameManager.Instance != null && NetworkManager.Singleton != null)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;
-            Debug.Log($"<color=red>[Archer]</color> {gameObject.name} sending death notification for LocalClientId: {myId}");
-            GameManager.Instance.NotifyPlayerDiedServerRpc(myId);
+            Debug.Log($"<color=red>[Archer]</color> {gameObject.name} character died (Spectating). LocalClientId: {myId}");
+            // GameManager.Instance.NotifyPlayerDiedServerRpc(myId); // Removed: Only Base destruction triggers Game Over
         }
         else
         {
-            Debug.LogWarning($"<color=red>[Archer]</color> {gameObject.name} Failed to sync death: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
+            Debug.LogWarning($"<color=red>[Archer]</color> {gameObject.name} character died but failed to log state: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
         }
     }
 
