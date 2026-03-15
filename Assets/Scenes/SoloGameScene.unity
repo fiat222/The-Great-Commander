@@ -714,6 +714,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 87249427}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &90645252 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1664962932293492168, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+  m_PrefabInstance: {fileID: 1188675049}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &93943793
 GameObject:
   m_ObjectHideFlags: 0
@@ -10276,7 +10281,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96f3078b73b0ab742bb9760d626ebb40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CursorUI
-  customCursor: {fileID: 2800000, guid: a007422f9096adc4086e9e13ac066bbe, type: 3}
+  defaultCursor: {fileID: 2800000, guid: 51cb6ee928f89b64691ef4dfd57c03e9, type: 3}
+  hoverCursor: {fileID: 2800000, guid: 42ec8a0e710138343a271d732299cfb6, type: 3}
   hotSpot: {x: 0, y: 0}
   cursorMode: 0
   clickVFXPrefab: {fileID: 8974203713140315807, guid: 709b0bd6b0b625249a98409dd7a87343, type: 3}
@@ -12446,6 +12452,17 @@ PrefabInstance:
     - target: {fileID: 6178645775546944519, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 351
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 3015375061224403457}
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: GiveUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 5374544881388231136, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SoloEnemyTracker, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 7356345468350013663, guid: 6e12f02609f5ac54484a2f515273baee, type: 3}
       propertyPath: m_AnchorMax.y
@@ -23305,6 +23322,7 @@ RectTransform:
   - {fileID: 5213644675578827493}
   - {fileID: 4645604375767532816}
   - {fileID: 1729812559}
+  - {fileID: 1593213917}
   - {fileID: 355471129}
   - {fileID: 663039539}
   - {fileID: 1188675050}
@@ -24487,6 +24505,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 995d13a1b745b5c48bf33e4398df2da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacementManager
+--- !u!114 &3015375061224403457 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7384316338884164754, guid: e314f4c6d4368b44fb1bf7d0a2cabedd, type: 3}
+  m_PrefabInstance: {fileID: 6125755838329091479}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c182905e5ede1a4e86bf747af882e4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoloEnemyTracker
 --- !u!1 &3125783146983093930
 GameObject:
   m_ObjectHideFlags: 0
@@ -26894,6 +26923,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 48427683}
     m_Modifications:
     - target: {fileID: 318429452353604679, guid: e314f4c6d4368b44fb1bf7d0a2cabedd, type: 3}
+      propertyPath: loseUI
+      value: 
+      objectReference: {fileID: 663039541}
+    - target: {fileID: 318429452353604679, guid: e314f4c6d4368b44fb1bf7d0a2cabedd, type: 3}
       propertyPath: skillUI
       value: 
       objectReference: {fileID: 7271948866366592753}
@@ -26981,6 +27014,10 @@ PrefabInstance:
       propertyPath: centerPanel
       value: 
       objectReference: {fileID: 8262338432915571763}
+    - target: {fileID: 7384316338884164754, guid: e314f4c6d4368b44fb1bf7d0a2cabedd, type: 3}
+      propertyPath: settingCanvas
+      value: 
+      objectReference: {fileID: 90645252}
     - target: {fileID: 7384316338884164754, guid: e314f4c6d4368b44fb1bf7d0a2cabedd, type: 3}
       propertyPath: winBackToMenuButton
       value: 
