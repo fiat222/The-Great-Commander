@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cd70768fa7ac14f9f544d816e83fd8, type: 3}
   m_Name: Warrior
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
-  characterName: Character
-  icon: {fileID: 1593917029, guid: 5f8f58ead8f0a6c45a0cebc7cb7b7cbe, type: 3}
+  characterName: LANCELOT
+  icon: {fileID: 1149134900, guid: dc335f136898c824a81ff6028c424e96, type: 3}
   skillIcon: {fileID: 1409485720, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
   normalAttackIcon: {fileID: -859518793, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
   specialAttackIcon: {fileID: -357228385, guid: 5507c2d5ef0944346a0b0d6d460c0f60, type: 3}
-  baseHP: 180
+  baseHP: 120
   baseSpeed: 8
   baseDefense: 5
   baseDamage: 25

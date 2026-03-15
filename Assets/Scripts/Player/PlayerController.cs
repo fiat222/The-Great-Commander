@@ -3,6 +3,7 @@ using PlayerAudio;
 using Unity.Cinemachine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -81,8 +82,18 @@ public class PlayerController : MonoBehaviour
 
     // ==================== Health UI ====================
     [Header("Health UI")]
-    public int maxHP = 100;
     public Slider healthBar;
+    private int maxHP => stats != null ? stats.GetHP() : 100;
+
+    [Tooltip("TextMeshPro แสดงเลข HP เช่น 100/100 (ถ้าไม่ลากจะหาจาก Tag 'HPText' อัตโนมัติ)")]
+    public TextMeshProUGUI hpText;
+
+    // ==================== Player Identity UI ====================
+    [Header("Player Identity UI (Auto-resolved by Tag)")]
+    [Tooltip("Image สำหรับแสดง Icon ผู้เล่น (Tag: PlayerIcon) — ไม่ต้องลากก็ได้")]
+    public Image playerIconImage;
+    [Tooltip("TMP Text สำหรับแสดงชื่อผู้เล่น (Tag: PlayerName) — ไม่ต้องลากก็ได้")]
+    public TextMeshProUGUI playerNameText;
 
     // ==================== Runtime Stats ====================
     public float AttackDamage { get; private set; } = 15f;
@@ -98,7 +109,7 @@ public class PlayerController : MonoBehaviour
     private bool isDead;
     public bool IsDead => isDead;
     public bool IsDodging => isDodging;
-    private float flinchImmunityTimer; // ⭐ บัฟกันชะงักหลัง Parry สำเร็จ
+    private float flinchImmunityTimer;
     private Coroutine rotationCoroutine;
 
     public bool isMovementLocked { get; set; }
@@ -131,6 +142,27 @@ public class PlayerController : MonoBehaviour
                 Debug.LogWarning("[PlayerController] ไม่พบ GameObject ที่มี Tag 'HPBar'");
         }
 
+        if (hpText == null)
+        {
+            var obj = GameObject.FindWithTag("HPText");
+            if (obj != null) hpText = obj.GetComponent<TextMeshProUGUI>();
+        }
+
+        // --- Auto-resolve Player Identity UI ---
+        if (playerIconImage == null)
+        {
+            var obj = GameObject.FindWithTag("PlayerIcon");
+            if (obj != null) playerIconImage = obj.GetComponent<Image>();
+            else Debug.LogWarning("[PlayerController] ไม่พบ Tag 'PlayerIcon'");
+        }
+
+        if (playerNameText == null)
+        {
+            var obj = GameObject.FindWithTag("PlayerName");
+            if (obj != null) playerNameText = obj.GetComponent<TextMeshProUGUI>();
+            else Debug.LogWarning("[PlayerController] ไม่พบ Tag 'PlayerName'");
+        }
+
         if (parryAuraVFX != null) parryAuraVFX.SetActive(false);
 
         ApplyStats(isFirstInit: true);
@@ -144,21 +176,26 @@ public class PlayerController : MonoBehaviour
     {
         if (stats != null)
         {
-            int oldMaxHP = maxHP;  // เก็บค่าเดิมก่อน
+            int oldMaxHP = maxHP;
 
-            maxHP = stats.GetHP();
             moveSpeed = stats.GetSpeed() * 2.4f;
             AttackDamage = stats.GetDamage();
             Defense = stats.GetDefense();
 
             ApplySkillIcons();
 
-            // เพิ่ม currentHP ตาม diff ที่ max เพิ่มขึ้น
             if (!isFirstInit && oldMaxHP > 0)
             {
                 int diff = maxHP - oldMaxHP;
                 currentHP = Mathf.Min(currentHP + diff, maxHP);
             }
+
+            // --- ใส่ชื่อและ icon จาก SO ---
+            if (playerNameText != null && !string.IsNullOrEmpty(stats.characterName))
+                playerNameText.text = stats.characterName;
+
+            if (playerIconImage != null && stats.icon != null)
+                playerIconImage.sprite = stats.icon;
         }
 
         if (isFirstInit)
@@ -166,11 +203,20 @@ public class PlayerController : MonoBehaviour
 
         if (healthBar != null)
         {
+            healthBar.minValue = 0;
             healthBar.maxValue = maxHP;
-            healthBar.value = currentHP;
+            healthBar.value    = currentHP;
         }
 
+        UpdateHPText();
+
         Debug.Log($"[Player] Stats Lv{(stats != null ? stats.CurrentLevel : 0)} | HP:{currentHP}/{maxHP} Spd:{moveSpeed:F1} Def:{Defense:F1} Dmg:{AttackDamage:F1}");
+    }
+
+    private void UpdateHPText()
+    {
+        if (hpText != null)
+            hpText.text = $"{currentHP}/{maxHP}";
     }
 
     private void ApplySkillIcons()
@@ -180,7 +226,6 @@ public class PlayerController : MonoBehaviour
         SetIconByTag("SkillNormal",  stats.normalAttackIcon);
         SetIconByTag("SkillSpecial", stats.specialAttackIcon);
 
-        // แจ้ง WarriorSkill ให้รีเฟรช icon ด้วย (กรณี character เปลี่ยน)
         GetComponent<WarriorSkill>()?.ApplySkillIconFromSO();
     }
 
@@ -257,7 +302,6 @@ public class PlayerController : MonoBehaviour
             HandleSkillInputBuffer();
         }
 
-        // --- 🏹 ระบบ Buffer Resolution (Warrior) ---
         var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         
@@ -265,16 +309,12 @@ public class PlayerController : MonoBehaviour
         bool isPlayingAttack = sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
         bool inTransition = animator != null && animator.IsInTransition(0);
 
-        // ⭐ Resolve เมื่อมีคำสั่งค้างอยู่ และไม่ได้กำลังทำอย่างอื่น (ยกเว้นกลิ้งที่เกือบจบ)
         if (currentBufferedAction != BufferedAction.None && !isPlayingAttack && !inTransition)
         {
             if (isPlayingRoll)
             {
-                // ถ้ากลิ้งอยู่ ให้รอช่วงท้ายสุด (85%+) ค่อย Resolve ท่าแรกออกไป เพื่อให้หันหน้าให้เป๊ะขึ้น
                 if (sInfo.normalizedTime % 1f > 0.7f)
-                {
                     ResolveBufferedAction();
-                }
             }
             else
             {
@@ -286,13 +326,9 @@ public class PlayerController : MonoBehaviour
         UpdateWeaponEffect();
 
         if (!isDodging)
-        {
             Move();
-        }
         else
-        {
             ApplyGravityDuringDodge();
-        }
     }
 
     private void ApplyGravityOnly()
@@ -404,10 +440,7 @@ public class PlayerController : MonoBehaviour
         if (groundCheck != null)
         {
             Gizmos.color = isGrounded ? Color.green : Color.red;
-            // วาดวงกลมตามขนาด groundCheckRadius
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-            
-            // วาดเส้นแสดงระยะที่ยิงลงไป (groundDistance)
             Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * groundDistance);
         }
     }
@@ -437,7 +470,7 @@ public class PlayerController : MonoBehaviour
         }
         else { rollDirection = transform.forward; }
 
-        ResetCombo(); // ⭐ เริ่มกลิ้งควร Reset Combo เดิมทิ้งเสมอ
+        ResetCombo();
         StartCoroutine(DodgeRoutine());
     }
 
@@ -460,7 +493,6 @@ public class PlayerController : MonoBehaviour
 
     private void ResolveBufferedAction()
     {
-        // ⭐ กันเหนียว: ถ้าตอนนี้เริ่มเล่นท่าโจมตีไปแล้วจากแรงคลิกปกติ ไม่ต้อง Resolve ซ้ำซ้อน
         var sInfo = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
         var nInfo = animator != null ? animator.GetNextAnimatorStateInfo(0) : default;
         if (sInfo.IsTag("Attack") || nInfo.IsTag("Attack") || animator.IsInTransition(0))
@@ -477,7 +509,7 @@ public class PlayerController : MonoBehaviour
         switch (actionToRun)
         {
             case BufferedAction.Attack:
-                if (comboStep == 0) // ⭐ Resolve ท่าแรกเท่านั้น
+                if (comboStep == 0)
                 {
                     lastClickTime = Time.time;
                     TriggerAttack();
@@ -542,7 +574,6 @@ public class PlayerController : MonoBehaviour
 
             if (isBusy || isDodging)
             {
-                // ⭐ ตอนกลิ้ง/กระโดด ให้จองได้เฉพาะหากยังไม่มีคำสั่ง Attack ค้างอยู่ และยังไม่ได้เริ่ม Combo
                 if (comboStep == 0 && currentBufferedAction != BufferedAction.Attack)
                 {
                     currentBufferedAction = BufferedAction.Attack;
@@ -550,7 +581,6 @@ public class PlayerController : MonoBehaviour
                 }
                 else if (comboStep > 0)
                 {
-                    // หากฟันไปแล้ว (เช่น จังหวะ Recovery 70%+) ให้ส่งเข้า Buffer ปกติ
                     bufferCombo = true;
                 }
                 
@@ -560,8 +590,6 @@ public class PlayerController : MonoBehaviour
 
             lastClickTime = Time.time;
             
-            // ⭐ ตรวจสอบว่าอยู่ในท่าโจมตีจริงๆ หรือไม่ ถ้าไม่อยู่ (เช่น Idle/Run) ให้เริ่มท่า 1 ใหม่เสมอ
-            // ป้องกันปัญหาค้างจาก ComboStep เดิม (เช่น ฟันจบท่า 3 แล้วยืนเฉยๆ เลขยังเป็น 3 อยู่)
             if (comboStep == 0 || !isPlayingAttack) 
             {
                 comboStep = 0; 
@@ -594,14 +622,12 @@ public class PlayerController : MonoBehaviour
             {
                 currentBufferedAction = BufferedAction.Parry;
                 if (animator != null) animator.SetBool("hasBuffer", true);
-                lastClickTime = Time.time; // ⭐ อัพเดตเวลาด้วย
+                lastClickTime = Time.time;
                 return;
             }
 
             if (isGrounded)
-            {
                 TriggerParry();
-            }
         }
     }
 
@@ -670,7 +696,6 @@ public class PlayerController : MonoBehaviour
                 t = nInfo.normalizedTime % 1f;
 
             bool isRolling = sInfo.IsTag("Roll") || nInfo.IsTag("Roll");
-            // ⭐ แก้ไข: นอกจากการเช็คเป้าหมายแล้ว ต้องไม่สะท้อนแรงขณะกำลังเปลี่ยน Transition (ป้องกันแรงสะท้อนซ้ำซ้อนตอนจบ)
             if (t >= forceTime && !alreadyAppliedForce && sInfo.IsTag("Attack") && !isRolling && !animator.IsInTransition(0))
             {
                 PerformAttackDash();
@@ -678,15 +703,11 @@ public class PlayerController : MonoBehaviour
             }
 
             float window = comboStep == 3 ? finisherWindowTime : comboWindowTime;
-            // ⭐ สำคัญ: จะให้ Combo ต่อได้ ต้องอยู่ในท่า Attack เท่านั้น (ไม่ใช่ Roll)
             if (bufferCombo && t >= window && sInfo.IsTag("Attack")) 
-            {
                 TriggerAttack();
-            }
         }
         else
         {
-            // ⭐ หากไม่อยู่ในท่าโจมตี ให้ Reset เสมอ (ไม่ใช้ justTrigger บล็อก เพราะทำให้ Combo ค้างตอน spam)
             if (comboStep != 0 && !animator.IsInTransition(0)) ResetCombo();
         }
     }
@@ -772,17 +793,11 @@ public class PlayerController : MonoBehaviour
     {
         if (groundCheck == null) return;
 
-        // Use SphereCast for more robust slope detection
-        // groundCheckRadius: ความกว้างของวงกลม (Radius)
-        // groundDistance: ระยะที่ยิงลงไปตรวจเช็ค (Distance)
         float castRadius = groundCheckRadius;
         float castDistance = groundDistance; 
         Vector3 origin = groundCheck.position + Vector3.up * castRadius;
         
         isGrounded = Physics.SphereCast(origin, castRadius, Vector3.down, out _, castDistance, groundMask);
-
-        // Debug visualization (วาดเส้นสีใน Scene View เพื่อดูระยะเช็ค)
-        // Debug.DrawRay(origin, Vector3.down * (castDistance), isGrounded ? Color.green : Color.red);
     }
 
     // ==================== Animation Events ====================
@@ -840,6 +855,7 @@ public class PlayerController : MonoBehaviour
         {
             currentHP = 0;
             if (healthBar != null) healthBar.value = 0;
+            UpdateHPText();
             Debug.Log("<color=red>[Player]</color> โดนสั่งตายทันที (System Kill)!");
             Die();
             return;
@@ -858,11 +874,9 @@ public class PlayerController : MonoBehaviour
                 Destroy(vfx, 2f);
             }
 
-            // ⭐ ให้บัฟกันชะงัก 3 วินาที
             flinchImmunityTimer = 3f;
             if (parryAuraVFX != null) parryAuraVFX.SetActive(true);
             Debug.Log("<color=cyan>[Player]</color> ได้รับบัฟกันชะงัก (Flinch Immunity) 3 วินาที!");
-
             return;
         }
 
@@ -873,7 +887,6 @@ public class PlayerController : MonoBehaviour
         bool isCastingSkill = sInfo.IsTag("Skill") || nInfo.IsTag("Skill");
         bool hasFlinchImmunity = flinchImmunityTimer > 0;
 
-        // ⭐ เล่นเอฟเฟคโดนฟัน (VFX/Sound) เสมอแม้จะเป็น Super Armor
         if (playerAudio != null) playerAudio.PlaySound(PlayerSoundType.HitImpact);
 
         if (hitVFXPrefab != null)
@@ -919,13 +932,13 @@ public class PlayerController : MonoBehaviour
 
         if (isCastingSkill || hasFlinchImmunity)
         {
-            // ⭐ ลดดาเมจลง 60% (เหลือ 40%)
             actual = Mathf.Max(1, Mathf.RoundToInt(actual * 0.4f));
             armorType = isCastingSkill ? " (Super Armor From Skill)" : " (Super Armor From Parry Buff)";
         }
 
         currentHP = Mathf.Max(0, currentHP - actual);
         if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
 
         string buffInfo = !string.IsNullOrEmpty(armorType) ? $"<color=cyan>{armorType} [-60% Damage]</color> " : "";
         Debug.Log($"<color=orange>[Player]</color> {gameObject.name} took {actual} damage{buffInfo}. HP: {currentHP}/{maxHP}");
@@ -937,6 +950,7 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
         currentHP = Mathf.Min(currentHP + amount, maxHP);
         if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
         Debug.Log($"<color=lime>[Player]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
     }
 
@@ -953,7 +967,6 @@ public class PlayerController : MonoBehaviour
 
         SpectatorController.Instance?.EnterSpectate(transform);
 
-        // แจ้งการตายไปยังส่วนกลาง (GameManager)
         if (GameManager.Instance != null && NetworkManager.Singleton != null)
         {
             ulong myId = NetworkManager.Singleton.LocalClientId;
