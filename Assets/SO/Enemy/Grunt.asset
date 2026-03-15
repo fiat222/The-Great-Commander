@@ -16,7 +16,7 @@ MonoBehaviour:
   prefab: {fileID: 7232642560734904356, guid: fd92d43fd96d8f7489397de57770799b, type: 3}
   icon: {fileID: 21300000, guid: d39552e550dd13e46ba83ab3cdfabc07, type: 3}
   cost: 20
-  orbDrop: 0
+  orbDrop: 15
   attackRange: 6.7
   hitVFX: {fileID: 2944396702758532163, guid: 2dbceea635b1ef546b7931ec8d967189, type: 3}
   deathVFX: {fileID: 4809171458859421548, guid: 4e91ed1a8efe7044785b9bd97a47d87f, type: 3}

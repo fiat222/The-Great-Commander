@@ -70,6 +70,9 @@ public class UpgradeManager : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
 
+        // ⭐ Heal เต็มหลอดหลัง Upgrade
+        HealLocalPlayer();
+
         Debug.Log($"[UpgradeManager] Player Upgraded! Lv{stats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
@@ -110,6 +113,9 @@ public class UpgradeManager : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
 
+        // ⭐ Heal เต็มหลอดหลัง Upgrade Warrior
+        HealLocalPlayer();
+
         Debug.Log($"[UpgradeManager] Warrior Upgraded! Lv{warriorStats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
 
@@ -142,6 +148,9 @@ public class UpgradeManager : MonoBehaviour
 
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySound(AudioManager.SoundType.Upgrade);
+
+        // ⭐ Heal เต็มหลอดหลัง Upgrade Archer
+        HealLocalPlayer();
 
         Debug.Log($"[UpgradeManager] Archer Upgraded! Lv{archerStats.CurrentLevel} | เงินเหลือ: {CurrentMoney}");
     }
@@ -187,6 +196,34 @@ public class UpgradeManager : MonoBehaviour
                 UpgradeMinion(i);
                 return;
             }
+        }
+    }
+
+    // ==================== ⭐ Heal Utility ====================
+
+    /// <summary>
+    /// Heal Local Player เต็มหลอด — รองรับทั้ง Multiplayer (NetworkBehaviour.IsOwner)
+    /// และ Single Player (หา PlayerController/Archer ตัวแรกที่เจอ)
+    /// </summary>
+    private void HealLocalPlayer()
+    {
+        // ลองหาผ่าน GameManager (Multiplayer)
+        if (GameManager.Instance != null)
+        {
+            GameManager.HealLocalPlayer();
+            return;
+        }
+
+        // Solo: หาตัวแรกที่เจอในซีน
+        foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            pc.HealToFull();
+            return;
+        }
+        foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
+        {
+            ac.HealToFull();
+            return;
         }
     }
 }

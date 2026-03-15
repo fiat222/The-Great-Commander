@@ -80,8 +80,16 @@ public class UpgradeItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
         if (nameText != null)
             nameText.text = data.minionName;
 
-        if (iconImage != null && data.icon != null)
-            iconImage.sprite = data.icon;
+        // ⭐ แสดงรูป: ลองใช้ icon ก่อน ถ้าไม่มีให้ใช้ picture แทน
+        if (iconImage != null)
+        {
+            Sprite sprite = data.icon != null ? data.icon : data.picture;
+            if (sprite != null)
+            {
+                iconImage.sprite = sprite;
+                iconImage.enabled = true;
+            }
+        }
 
         if (highlightObj != null)
             highlightObj.SetActive(false);

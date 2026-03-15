@@ -41,7 +41,19 @@ public class SoloGameManager : MonoBehaviour
     public GameObject skillUI;
     public GameObject nextPhaseButton;
 
+    // ==================== ⭐ Wave Income System ====================
+    [Header("Wave Income")]
+    [Tooltip("เงินที่ให้ตอนเริ่มเกม (Wave 1)")]
+    public int startingMoney = 200;
+    [Tooltip("เงินฐานที่ให้ตอนเริ่ม Wave 2")]
+    public int baseWaveIncome = 100;
+    [Tooltip("เงินที่เพิ่มขึ้นทุก Wave (Wave2=100, Wave3=150, Wave4=200 ...)")]
+    public int incomeIncreasePerWave = 50;
+
     private bool isGameEnded = false;
+
+    // ⭐ ติดตามว่า Player ตายใน Wave ที่แล้วหรือไม่
+    private bool playerDiedLastWave = false;
 
     void Awake()
     {
@@ -56,6 +68,9 @@ public class SoloGameManager : MonoBehaviour
         UpdateWaveUI();
         UpdatePhaseUI();
         OnPhaseChangedGlobal?.Invoke(currentPhase);
+
+        // ⭐ ให้เงินเริ่มต้น Wave 1
+        GiveIncome(startingMoney);
     }
 
     void Update()
@@ -143,6 +158,8 @@ public class SoloGameManager : MonoBehaviour
     void StartCombat()
     {
         currentPhase = GamePhase.Combat;
+        // ⭐ รีเซ็ตสถานะตายก่อนเข้า Combat ใหม่
+        playerDiedLastWave = false;
         SpawnWave();
         UpdatePhaseUI();
         OnPhaseChangedGlobal?.Invoke(currentPhase);
@@ -150,14 +167,65 @@ public class SoloGameManager : MonoBehaviour
 
     void StartPlanning()
     {
+        bool survived = !playerDiedLastWave;
+
         currentPhase = GamePhase.Planning;
         currentWave++;
         planningTimer = planningDuration;
         CleanupEnemies();
         GenerateSystemWaveDraft(); // ⭐ สุ่มเวฟใหม่ไว้ล่วงหน้า
+
+        // ⭐ ให้เงิน Wave Income: Wave2=100, Wave3=150, Wave4=200 ...
+        int waveIncome = baseWaveIncome + (currentWave - 2) * incomeIncreasePerWave;
+        waveIncome = Mathf.Max(0, waveIncome);
+        GiveIncome(waveIncome);
+        Debug.Log($"<color=cyan>[SoloGameManager]</color> Wave {currentWave} Income: +{waveIncome} Gold");
+
+        // ⭐ ถ้าไม่ตายในรอบที่แล้ว → Heal เต็ม
+        if (survived)
+        {
+            HealLocalPlayer();
+            Debug.Log($"<color=green>[SoloGameManager]</color> Player survived! HP restored to full.");
+        }
+
         UpdateWaveUI();
         UpdatePhaseUI();
         OnPhaseChangedGlobal?.Invoke(currentPhase);
+    }
+
+    // ================= ⭐ INCOME & HEAL =================
+
+    /// <summary>ให้เงินผ่าน PlacementManager (Single Player)</summary>
+    private void GiveIncome(int amount)
+    {
+        if (PlacementManager.Instance != null)
+        {
+            PlacementManager.Instance.Money += amount;
+            PlacementManager.Instance.OnMoneyChanged?.Invoke(PlacementManager.Instance.Money);
+            Debug.Log($"<color=cyan>[SoloGameManager]</color> Income: +{amount} Gold (Total: {PlacementManager.Instance.Money})");
+        }
+    }
+
+    /// <summary>⭐ เรียกเมื่อ Player ตายเพื่อบันทึกสถานะ</summary>
+    public void NotifyPlayerDied()
+    {
+        playerDiedLastWave = true;
+        Debug.Log($"<color=red>[SoloGameManager]</color> Player died this wave.");
+    }
+
+    /// <summary>⭐ Heal Local Player เต็มหลอด (ทั้ง PlayerController และ Archer)</summary>
+    private void HealLocalPlayer()
+    {
+        foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            pc.HealToFull();
+            return;
+        }
+        foreach (var ac in FindObjectsByType<Archer>(FindObjectsSortMode.None))
+        {
+            ac.HealToFull();
+            return;
+        }
     }
 
     // ================= WAVE =================

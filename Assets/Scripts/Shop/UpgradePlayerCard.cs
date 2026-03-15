@@ -226,7 +226,7 @@ public class UpgradePlayerCard : MonoBehaviour, IPointerEnterHandler, IPointerEx
             levelText.text = $"Lv {stats.CurrentLevel} / {stats.maxLevel}";
 
         if (costText != null)
-            costText.text = isMax ? "MAX" : $"{cost} Orb";
+            costText.text = isMax ? "MAX" : $"{cost}";
 
         if (upgradeButton != null)
             upgradeButton.interactable = !isMax && currentMoney >= cost;

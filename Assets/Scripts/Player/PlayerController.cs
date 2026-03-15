@@ -108,6 +108,7 @@ public class PlayerController : MonoBehaviour
     public bool IsParrying => isParrying;
     private bool isDead;
     public bool IsDead => isDead;
+    public bool IsOwner => GetComponent<NetworkObject>()?.IsOwner ?? true;
     public bool IsDodging => isDodging;
     private float flinchImmunityTimer;
     private Coroutine rotationCoroutine;
@@ -954,13 +955,23 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"<color=lime>[Player]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
     }
 
+    /// <summary>ฮีลเต็มหลอด</summary>
+    public void HealToFull()
+    {
+        if (isDead) return;
+        currentHP = maxHP;
+        if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
+        Debug.Log($"<color=lime>[Player]</color> ฮีลเต็มหลอด! HP:{currentHP}/{maxHP}");
+    }
+
     public void Die()
     {
         if (isDead) return;
         isDead = true;
         
         if (parryAuraVFX != null) parryAuraVFX.SetActive(false);
-        Debug.Log($"<color=red>[Player]</color> {gameObject.name} Die() called! IsOwner={GetComponent<NetworkObject>()?.IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
+        Debug.Log($"<color=red>[Player]</color> {gameObject.name} Die() called! IsOwner={IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
         
         if (animator != null) animator.SetTrigger("Die");
         if (controller != null) controller.enabled = false;
@@ -976,6 +987,16 @@ public class PlayerController : MonoBehaviour
         else
         {
             Debug.LogWarning($"<color=red>[Player]</color> {gameObject.name} Failed to sync death: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
+        }
+    }
+
+    // ==================== Water Collision ====================
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Water"))
+        {
+            Debug.Log($"<color=red>[Player]</color> {gameObject.name} โดนน้ำ! ตายทันที!");
+            TakeDamage(999999);
         }
     }
 }
