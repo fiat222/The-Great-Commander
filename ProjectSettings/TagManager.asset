@@ -27,6 +27,7 @@ TagManager:
   - PlayerIcon
   - PlayerName
   - HPText
+  - Water
   layers:
   - Default
   - TransparentFX

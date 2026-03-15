@@ -115,6 +115,7 @@ public class Archer : MonoBehaviour
     private Vector3 verticalVelocity;
     private bool isGrounded;
     private bool isInvincible;
+    public bool IsOwner => GetComponent<NetworkObject>()?.IsOwner ?? true;
     private Coroutine rotationCoroutine;
 
     private bool isAiming;
@@ -906,11 +907,21 @@ public class Archer : MonoBehaviour
         Debug.Log($"<color=lime>[Archer]</color> ฮีล +{amount} | HP:{currentHP}/{maxHP}");
     }
 
+    /// <summary>ฮีลเต็มหลอด</summary>
+    public void HealToFull()
+    {
+        if (isDead) return;
+        currentHP = maxHP;
+        if (healthBar != null) healthBar.value = currentHP;
+        UpdateHPText();
+        Debug.Log($"<color=lime>[Archer]</color> ฮีลเต็มหลอด! HP:{currentHP}/{maxHP}");
+    }
+
     public void Die()
     {
         if (isDead) return;
         isDead = true;
-        Debug.Log($"<color=red>[Archer]</color> {gameObject.name} Die() called! IsOwner={GetComponent<NetworkObject>()?.IsOwner}, IsServer={NetworkManager.Singleton.IsServer}");
+        Debug.Log($"<color=red>[Archer]</color> {gameObject.name} Die() called! IsOwner={IsOwner}, IsServer={NetworkManager.Singleton?.IsServer}");
         if (animator != null) animator.SetTrigger("Die");
 
         SpectatorController.Instance?.EnterSpectate(transform);
@@ -924,6 +935,16 @@ public class Archer : MonoBehaviour
         else
         {
             Debug.LogWarning($"<color=red>[Archer]</color> {gameObject.name} Failed to sync death: GameManager={GameManager.Instance}, NetMgr={NetworkManager.Singleton}");
+        }
+    }
+
+    // ==================== Water Collision ====================
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Water"))
+        {
+            Debug.Log($"<color=red>[Archer]</color> {gameObject.name} โดนน้ำ! ตายทันที!");
+            TakeDamage(999999);
         }
     }
 

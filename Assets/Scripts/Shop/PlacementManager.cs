@@ -15,7 +15,7 @@ public class PlacementManager : MonoBehaviour
 
     private MinionData currentMinionData;   // ⭐ ตัวที่กำลังจะวาง
 
-    public int Money = 200;
+    public int Money = 0;
 
     // ===== SELL OVERLAY =====
     [SerializeField] private GameObject sellCursorOverlay;
@@ -28,6 +28,7 @@ public class PlacementManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        Money = 0; // ⭐ รีเซ็ตให้ 0 ทุกครั้ง (ให้ GameManager/SoloGameManager เป็นคนกำหนด)
     }
 
     void OnEnable()
@@ -57,6 +58,8 @@ public class PlacementManager : MonoBehaviour
             gridVisual.CreateGridMesh();
             gridVisual.gameObject.SetActive(false); // ปิดไว้ก่อน
         }
+
+        Debug.Log($"<color=cyan>[PlacementManager]</color> Start() - Money: {Money}");
     }
 
     void Update()
