@@ -192,9 +192,9 @@ public class MainMenuUI : MonoBehaviour
         {
             SetClientError("Enter Code"); return;
         }
-        if (code.Length != 7)
+        if (code.Length != 9)
         {
-            SetClientError("Room Code must be 7 characters"); return;
+            SetClientError("Room Code must be 9 characters"); return;
         }
 
         bool ok = StartNetworkTest.Instance.JoinRoom(code);

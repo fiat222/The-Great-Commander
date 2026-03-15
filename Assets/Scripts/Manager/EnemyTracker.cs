@@ -48,6 +48,11 @@ public class EnemyTracker : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        Debug.Log("<color=cyan>[EnemyTracker]</color> Awake! Checking UI references...");
+        Debug.Log($"  - centerPanel: {(centerPanel != null ? centerPanel.name : "NULL")}, active: {(centerPanel != null ? centerPanel.activeSelf : "N/A")}");
+        Debug.Log($"  - youWinUI: {(youWinUI != null ? youWinUI.name : "NULL")}, active: {(youWinUI != null ? youWinUI.activeSelf : "N/A")}");
+        Debug.Log($"  - youLostUI: {(youLostUI != null ? youLostUI.name : "NULL")}, active: {(youLostUI != null ? youLostUI.activeSelf : "N/A")}");
+        
         SetUI(centerPanel, false);
         SetUI(killOpponentButton, false);
         SetUI(youWinUI, false);
@@ -239,10 +244,44 @@ public class EnemyTracker : NetworkBehaviour
 
     private void EvaluatePlayerDeathUI()
     {
+        if (_gameResultShown) return;
+        
         ulong myId = NetworkManager.Singleton.LocalClientId;
         if (GameManager.Instance == null) return;
+        
         bool opponentDead = (myId == 0) ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
-        if (opponentDead && killOpponentButton != null) SetUI(killOpponentButton, false);
+        bool iAmDead = (myId == 0) ? GameManager.Instance.p0Dead.Value : GameManager.Instance.p1Dead.Value;
+        
+        Debug.Log($"<color=cyan>[EnemyTracker]</color> EvaluatePlayerDeathUI - MyID: {myId}, ImDead: {iAmDead}, OpponentDead: {opponentDead}");
+        
+        if (opponentDead && killOpponentButton != null) 
+        {
+            SetUI(killOpponentButton, false);
+        }
+        
+        // ⭐ ตรวจสอบเงื่อนไขจบเกม
+        // ถ้าตัวเองตาย → แสดง Lose UI
+        if (iAmDead && !opponentDead)
+        {
+            Debug.Log("<color=red>[EnemyTracker]</color> I am dead and opponent alive! → LOSE");
+            if (!_gameResultShown)
+            {
+                _gameResultShown = true;
+                StopAllCoroutines();
+                ShowResultUI(false); // FALSE = Show Lose UI
+            }
+        }
+        // ถ้าฝ่ายตรงข้ามตาย (และตัวเองยังไม่ตาย) → แสดง Win UI
+        else if (!iAmDead && opponentDead)
+        {
+            Debug.Log("<color=green>[EnemyTracker]</color> Opponent dead and I'm alive! → WIN");
+            if (!_gameResultShown)
+            {
+                _gameResultShown = true;
+                StopAllCoroutines();
+                ShowResultUI(true); // TRUE = Show Win UI
+            }
+        }
     }
 
     [ClientRpc]
@@ -330,10 +369,28 @@ public class EnemyTracker : NetworkBehaviour
     /// </summary>
     private void ShowResultUI(bool iWon)
     {
+        Debug.Log($"<color=cyan>[EnemyTracker]</color> ShowResultUI called - iWon: {iWon}");
+        
         if (youWinUI != null) youWinUI.SetActive(iWon);
         if (youLostUI != null) youLostUI.SetActive(!iWon);
         if (centerPanel != null) centerPanel.SetActive(false);
         if (killOpponentButton != null) killOpponentButton.SetActive(false);
+
+        // ⭐ ยกขึ้นมาหน้าสุด เพื่อไม่ให้ UI อื่นบัง
+        GameObject resultUI = iWon ? youWinUI : youLostUI;
+        if (resultUI != null && resultUI.transform.parent != null)
+        {
+            resultUI.transform.SetAsLastSibling();
+            Debug.Log($"<color=cyan>[EnemyTracker]</color> Result UI moved to front: {resultUI.name}");
+        }
+        else if (resultUI != null && resultUI.transform.parent == null)
+        {
+            Debug.LogWarning($"<color=yellow>[EnemyTracker]</color> Result UI parent is null: {resultUI.name}");
+        }
+        else if (resultUI == null)
+        {
+            Debug.LogError($"<color=red>[EnemyTracker ERROR]</color> Result UI is NULL! {(iWon ? "youWinUI" : "youLostUI")} not assigned.");
+        }
 
         GameManager.Instance?.OnGameEnded();
 
@@ -346,6 +403,8 @@ public class EnemyTracker : NetworkBehaviour
     /// </summary>
     private IEnumerator PlayLoseCinematicThenUI()
     {
+        Debug.Log("<color=red>[EnemyTracker]</color> ===== PlayLoseCinematicThenUI STARTED =====");
+        
         // หา BaseHealth ที่เป็นฐานของฝั่งเรา (เลือกตัวที่อยู่ใกล้ Player ของเรามากที่สุด)
         BaseHealth myBase = null;
         var bases = Object.FindObjectsByType<BaseHealth>(FindObjectsSortMode.None);
@@ -428,8 +487,9 @@ public class EnemyTracker : NetworkBehaviour
         }
 
         // แสดงผลแพ้พร้อมเล่นเสียง/ล็อคเกม
+        Debug.Log("<color=red>[EnemyTracker]</color> About to call ShowResultUI(false)");
         ShowResultUI(false);
-        Debug.Log("<color=cyan>[EnemyTracker]</color> Game Result Shown with Lose Cinematic.");
+        Debug.Log("<color=red>[EnemyTracker]</color> ===== PlayLoseCinematicThenUI FINISHED =====");
     }
 
     [ClientRpc]
