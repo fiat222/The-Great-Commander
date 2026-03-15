@@ -192,23 +192,8 @@ public class BaseHealth : NetworkBehaviour
     {
         float delay = 0f;
 
-        // 1) เอฟเฟกต์ทำลายฐานหลัก (ดึงค่าจาก HealthSystem ถ้ามี)
         if (healthUI != null)
         {
-            if (healthUI.deathVfxPrefab != null)
-            {
-                GameObject vfxInstance = Instantiate(
-                    healthUI.deathVfxPrefab,
-                    transform.position,
-                    Quaternion.identity
-                );
-
-                if (healthUI.deathVfxDuration > 0f)
-                {
-                    Destroy(vfxInstance, healthUI.deathVfxDuration);
-                }
-            }
-
             if (healthUI.gameOverDelay > 0f)
                 delay = healthUI.gameOverDelay;
         }
@@ -217,14 +202,40 @@ public class BaseHealth : NetworkBehaviour
             delay = DefaultGameOverDelaySolo;
         }
 
-        // 2) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ) — ทำเสมอใน Solo (และใน Network ฝั่งแพ้จะทำที่ EnemyTracker)
+        // 1) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ) — ทำเป็นอันดับแรก
         if (CameraManager.Instance != null)
         {
             CameraManager.Instance.FocusInitialView();
         }
-        else if (isSolo)
+
+        // 2) รอกล้องแพนไปถึง (ใช้เวลาจาก healthUI ถ้ามี)
+        float arriveDelay = (healthUI != null) ? healthUI.cameraArriveDelay : 0.8f;
+        if (arriveDelay > 0f)
         {
-            Debug.LogWarning("[BaseHealth] Solo: CameraManager ไม่พบใน Scene — กล้องจะไม่จับฐาน. ใส่ CameraManager และ Spectator Camera ใน SoloGameScene");
+            yield return new WaitForSeconds(arriveDelay);
+        }
+
+        // 3) เล่นเอฟเฟกต์ระเบิด (VFX)
+        if (healthUI != null && healthUI.deathVfxPrefab != null)
+        {
+            GameObject vfxInstance = Instantiate(
+                healthUI.deathVfxPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+
+            if (healthUI.deathVfxDuration > 0f)
+            {
+                Destroy(vfxInstance, healthUI.deathVfxDuration);
+            }
+        }
+
+        // (ลบทิ้งเพราะย้ายไปไว้ข้างบนแล้ว)
+
+        // 3) ทำเหตุการณ์ป้อมค่อยๆ จมลง (Sink Animation)
+        if (healthUI != null)
+        {
+            yield return healthUI.ExecuteSinkAnimation(transform);
         }
 
         if (delay > 0f)

@@ -21,6 +21,8 @@ public class HealthSystem : MonoBehaviour
     public float deathVfxDuration = 2f;
     [Tooltip("ดีเลย์ก่อนแสดง Game Over หลังฐานหลักตาย")]
     public float gameOverDelay = 2.5f;
+    [Tooltip("เวลาที่รอกล้องแพนไปถึงจุดหมายก่อนเริ่มระเบิด/จม (Cinematic)")]
+    public float cameraArriveDelay = 0.8f;
     [Tooltip("ติ๊กถูกถ้าฐานหลักนี้ควรทำให้เกมจบเมื่อ HP หมด")]
     public bool triggerGameOverOnDeath = true;
     [Tooltip("ถ้าติ๊ก ป้อมจะค่อย ๆ จมลงตอนถูกทำลาย (เอฟเฟกต์พัง)")]
@@ -200,6 +202,27 @@ public class HealthSystem : MonoBehaviour
         SyncUIInstant();
     }
 
+    /// <summary>
+    /// เล่นแอนิเมชันจมลงของวัตถุที่กำหนด (Best Practice: แยก Logic ออกมาให้เรียกใช้ได้จากหลายที่)
+    /// </summary>
+    public IEnumerator ExecuteSinkAnimation(Transform target)
+    {
+        if (target == null || !sinkOnDeath || sinkDuration <= 0f || Mathf.Abs(sinkDistance) <= 0.01f)
+            yield break;
+
+        Vector3 startPos = target.position;
+        Vector3 endPos   = startPos + Vector3.down * sinkDistance;
+        float elapsed    = 0f;
+
+        while (elapsed < sinkDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / sinkDuration);
+            target.position = Vector3.Lerp(startPos, endPos, t);
+            yield return null;
+        }
+    }
+
     private void Die()
     {
         isDead = true;
@@ -256,7 +279,19 @@ public class HealthSystem : MonoBehaviour
     /// </summary>
     private IEnumerator MainBaseDeathSequence()
     {
-        // 1) เอฟเฟกต์ทำลายฐานหลัก
+        // 1) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ) ก่อนเป็นอันดับแรก
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.FocusInitialView();
+        }
+
+        // 2) รอกล้องแพนไปถึงจุดหมาย (Cinematic Feel)
+        if (cameraArriveDelay > 0f)
+        {
+            yield return new WaitForSeconds(cameraArriveDelay);
+        }
+
+        // 3) เล่นเอฟเฟกต์ทำลายฐานหลัก (ระเบิดหลังจากกล้องมาถึงแล้ว)
         if (deathVfxPrefab != null)
         {
             GameObject vfxInstance = Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
@@ -266,27 +301,8 @@ public class HealthSystem : MonoBehaviour
             }
         }
 
-        // 2) โฟกัสกล้อง Spectator ไปที่มุมมองเริ่มต้น (หุ่นนริศ)
-        if (CameraManager.Instance != null)
-        {
-            CameraManager.Instance.FocusInitialView();
-        }
-
         // 3) ทำเอฟเฟกต์ให้ป้อมค่อย ๆ จมลง (เหมือนพังลง) ถ้าถูกเปิดใช้งาน
-        if (sinkOnDeath && sinkDuration > 0f && Mathf.Abs(sinkDistance) > 0.01f)
-        {
-            Vector3 startPos = transform.position;
-            Vector3 endPos   = startPos + Vector3.down * sinkDistance;
-            float elapsed    = 0f;
-
-            while (elapsed < sinkDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / sinkDuration);
-                transform.position = Vector3.Lerp(startPos, endPos, t);
-                yield return null;
-            }
-        }
+        yield return ExecuteSinkAnimation(transform);
 
         // 4) รอให้ผู้เล่นชมฉากสักพักก่อนจบเกม (ดีเลย์ Game Over)
         if (gameOverDelay > 0f)

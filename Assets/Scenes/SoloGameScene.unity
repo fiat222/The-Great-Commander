@@ -19700,7 +19700,8 @@ MonoBehaviour:
   isMainBase: 1
   deathVfxPrefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
   deathVfxDuration: 2
-  gameOverDelay: 2.5
+  gameOverDelay: 1
+  cameraArriveDelay: 2
   triggerGameOverOnDeath: 1
   sinkOnDeath: 1
   sinkDistance: 17
