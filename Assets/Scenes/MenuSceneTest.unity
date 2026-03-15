@@ -560,7 +560,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -309, y: 39}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &55389668
@@ -908,9 +908,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: -542.6667}
+  m_AnchoredPosition: {x: 384, y: -489}
   m_SizeDelta: {x: 450, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &80377160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1019,7 +1019,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuButtonHover
   backgroundImage: {fileID: 80377161}
   highlightColor: {r: 1, g: 1, b: 1, a: 0.8980392}
-  fadeSpeed: 8
+  fadeSpeed: 20
   enableScale: 1
   hoverScale: 1.1
   scaleSpeed: 10
@@ -7980,11 +7980,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1393857545}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -797, y: 342}
-  m_SizeDelta: {x: 200, y: 50}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 101.66016, y: -30.900024}
+  m_SizeDelta: {x: 1144.5076, y: 354.18213}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &684855283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14085,9 +14085,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: -642.6667}
+  m_AnchoredPosition: {x: 384, y: -600}
   m_SizeDelta: {x: 450, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &1165942435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14196,7 +14196,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuButtonHover
   backgroundImage: {fileID: 1165942436}
   highlightColor: {r: 1, g: 1, b: 1, a: 0.8980392}
-  fadeSpeed: 8
+  fadeSpeed: 20
   enableScale: 1
   hoverScale: 1.1
   scaleSpeed: 10
@@ -27951,9 +27951,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: -441}
+  m_AnchoredPosition: {x: 384, y: -382}
   m_SizeDelta: {x: 450, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &1980650870
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28062,7 +28062,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuButtonHover
   backgroundImage: {fileID: 1980650871}
   highlightColor: {r: 1, g: 1, b: 1, a: 0.8980392}
-  fadeSpeed: 8
+  fadeSpeed: 20
   enableScale: 1
   hoverScale: 1.1
   scaleSpeed: 10
