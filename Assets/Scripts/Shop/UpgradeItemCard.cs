@@ -58,6 +58,8 @@ public class UpgradeItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
             PlacementManager.Instance.OnMoneyChanged += OnMoneyChanged;
 
         OnAnyUpgradeCardSelected += CheckHighlightStatus;
+
+        RefreshUI();
     }
 
     private void OnDisable()
@@ -103,7 +105,7 @@ public class UpgradeItemCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
         if (UpgradeManager.Instance != null)
         {
-            UpgradeManager.Instance.UpgradeMinion(_index);
+            UpgradeManager.Instance.UpgradeMinion(_data);
             ShowLevelUpPopup();
         }
     }

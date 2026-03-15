@@ -67,6 +67,10 @@ public class SoloGameManager : MonoBehaviour
 
     void Start()
     {
+        // ⭐ Reset Stats ทุกครั้งกี่เริ่มเกมใหม่ (Solo)
+        if (UpgradeManager.Instance != null)
+            UpgradeManager.Instance.ResetAllStats();
+
         globalSpawner = FindFirstObjectByType<EnemySpawner_Single>();
         planningTimer = planningDuration;
         GenerateSystemWaveDraft(); // ⭐ สร้างเวฟเตรียมไว้เลยตั้งแต่รอบ Planning

@@ -253,7 +253,10 @@ public class HealthSystem : MonoBehaviour
             SoloGameManager.Instance.OnGameEnded();
         else if (GameManager.Instance != null)
             GameManager.Instance.OnGameEnded();
-        else if (EnemyTracker.Instance != null)
-            EnemyTracker.Instance.ShowGameResultClientRpc(0); // ส่ง 0 เป็นค่า default
+        else if (EnemyTracker.Instance != null && SoloGameManager.Instance != null)
+        {
+            // ทำงานเฉพาะ Solo เท่านั้น
+            EnemyTracker.Instance.ShowGameResultClientRpc(0);
+        }
     }
 }

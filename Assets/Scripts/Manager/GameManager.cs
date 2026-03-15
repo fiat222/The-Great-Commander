@@ -117,6 +117,10 @@ public class GameManager : NetworkBehaviour
 
     void Start()
     {
+        // ⭐ Reset Stats ทุกครั้งกี่เริ่มเกมใหม่ (Multiplayer)
+        if (UpgradeManager.Instance != null)
+            UpgradeManager.Instance.ResetAllStats();
+
         Debug.Log($"[Minimap] Start! IsServer={IsServer} IsClient={IsClient} IsHost={IsHost}");
     }
 
@@ -234,6 +238,8 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator LoadMenuAfterDisconnect()
     {
+        ForceUnlockCursor(); // ⭐ ปลดล็อคเมาส์ก่อนกลับเมนู
+        
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.Shutdown();
             
@@ -626,13 +632,11 @@ private void UpdatePhaseUI(GamePhase phase)
             else p1SentCounts[typeIndex]++;
 
             // ถ้าซื้อตอน Combat -> สปอนทันทีลงหัวฝ่ายตรงข้าม
-            ulong targetId = (clientId == 0) ? (ulong)1 : (ulong)0;
+            ulong targetId = (clientId == 0) ? 1UL : 0UL;
             
             if (globalSpawner != null)
             {
                 globalSpawner.SpawnEnemiesRpc(1, typeIndex, targetId);
-                // แจ้ง Tracker ให้เพิ่มจำนวนมอนสเตอร์แบบ Realtime
-                EnemyTracker.Instance?.NotifyMidCombatSpawnRpc(targetId, 1, typeIndex);
             }
         }
     }
@@ -699,21 +703,18 @@ public void SetPlayerReadyServerRpc(bool ready, RpcParams rpcParams = default)
     [Rpc(SendTo.Server, RequireOwnership = false)]
     public void NotifyPlayerDiedServerRpc(ulong clientId)
     {
-        Debug.Log($"<color=cyan>[GameManager]</color> ======= NotifyPlayerDiedServerRpc called for ClientID: {clientId} =======");
-        Debug.Log($"  IsServer: {IsServer}, LocalClientId: {NetworkManager.Singleton.LocalClientId}");
+        Debug.Log($"<color=cyan>[GameManager]</color> NotifyPlayerDiedServerRpc! Loser ID: {clientId}");
         
         if (clientId == 0) 
         {
             p0Dead.Value = true;
-            Debug.Log($"<color=red>[GameManager]</color> Player 0 DIED! p0Dead=TRUE");
+            Debug.Log("<color=red>[GameManager]</color> Global Death: Player 0 (Host) LOSES, Player 1 WINS");
         }
         else 
         {
             p1Dead.Value = true;
-            Debug.Log($"<color=red>[GameManager]</color> Player 1 DIED! p1Dead=TRUE");
+            Debug.Log("<color=red>[GameManager]</color> Global Death: Player 1 (Client) LOSES, Player 0 WINS");
         }
-        
-        Debug.Log($"<color=cyan>[GameManager]</color> Current State: p0Dead={p0Dead.Value}, p1Dead={p1Dead.Value}");
     }
 
     // ==================== [Safety Utility] ====================
