@@ -182,14 +182,17 @@ public class BaseHealth : NetworkBehaviour
     /// <summary>
     /// ลำดับตอนฐานหลักตาย:
     /// 1) เล่นเอฟเฟกต์ระเบิด/พัง (ถ้ามีตั้งใน HealthSystem)
-    /// 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก
+    /// 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก (Solo/Network ฝั่งแพ้ — ทำเสมอถ้ามี CameraManager)
     /// 3) รอให้ผู้เล่นชมฉากสักพัก
     /// 4) เรียก Game Over ตามโหมด (Solo / Network)
     /// </summary>
+    private const float DefaultGameOverDelaySolo = 2.5f;
+
     private System.Collections.IEnumerator PlayBaseDeathSequence(bool isSolo, ulong loserClientId)
     {
-        // 1) เอฟเฟกต์ทำลายฐานหลัก (ดึงค่าจาก HealthSystem ถ้ามี)
         float delay = 0f;
+
+        // 1) เอฟเฟกต์ทำลายฐานหลัก (ดึงค่าจาก HealthSystem ถ้ามี)
         if (healthUI != null)
         {
             if (healthUI.deathVfxPrefab != null)
@@ -206,17 +209,22 @@ public class BaseHealth : NetworkBehaviour
                 }
             }
 
-            // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก
-            if (CameraManager.Instance != null)
-            {
-                CameraManager.Instance.FocusSpectator(transform);
-            }
-
-            // 3) รอให้ผู้เล่นชมฉากก่อน (ใช้ค่า delay จาก HealthSystem ถ้ามี)
             if (healthUI.gameOverDelay > 0f)
-            {
                 delay = healthUI.gameOverDelay;
-            }
+        }
+        else if (isSolo)
+        {
+            delay = DefaultGameOverDelaySolo;
+        }
+
+        // 2) โฟกัสกล้อง Spectator ไปที่ฐานหลัก — ทำเสมอใน Solo (และใน Network ฝั่งแพ้จะทำที่ EnemyTracker)
+        if (CameraManager.Instance != null)
+        {
+            CameraManager.Instance.FocusSpectator(transform);
+        }
+        else if (isSolo)
+        {
+            Debug.LogWarning("[BaseHealth] Solo: CameraManager ไม่พบใน Scene — กล้องจะไม่จับฐาน. ใส่ CameraManager และ Spectator Camera ใน SoloGameScene");
         }
 
         if (delay > 0f)
