@@ -50,6 +50,7 @@ public class MenuButtonHover : MonoBehaviour,
     private Color clearColor;
     private Vector3 textOriginalScale;
     private Vector3 textTargetScale;
+    private bool isSelected; // เพิ่มสถานะว่าถูกเลือกอยู่หรือไม่
 
     private void Awake()
     {
@@ -84,6 +85,28 @@ public class MenuButtonHover : MonoBehaviour,
     }
 
     // ─────────────────────────────────────────
+    //  Public Methods
+    // ─────────────────────────────────────────
+    
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+        
+        if (isSelected)
+        {
+            targetBGColor = highlightColor;
+            if (enableColorChange && buttonText != null) buttonText.color = hoverColor;
+            if (enableScale && buttonText != null) textTargetScale = textOriginalScale * hoverScale;
+        }
+        else
+        {
+            targetBGColor = clearColor;
+            if (enableColorChange && buttonText != null) buttonText.color = normalColor;
+            if (enableScale && buttonText != null) textTargetScale = textOriginalScale;
+        }
+    }
+
+    // ─────────────────────────────────────────
     //  Pointer Events
     // ─────────────────────────────────────────
 
@@ -100,6 +123,9 @@ public class MenuButtonHover : MonoBehaviour,
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        // ถ้าถูกเลือกอยู่ ไม่ต้องคืนค่ากลับเป็นสีปกติ
+        if (isSelected) return;
+
         targetBGColor = clearColor;
 
         if (enableColorChange && buttonText != null)
@@ -124,6 +150,7 @@ public class MenuButtonHover : MonoBehaviour,
     private void OnDisable()
     {
         // Reset เมื่อปิด Panel
+        isSelected = false;
         targetBGColor = clearColor;
 
         if (backgroundImage != null)

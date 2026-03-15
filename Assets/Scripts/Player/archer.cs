@@ -356,11 +356,14 @@ public class Archer : MonoBehaviour
 
     private void HandleTargetLockInput()
     {
+        // Cancel Tab for camera locking as per user request
+        /*
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (isLockedOn) UnlockTarget();
             else FindNearestTarget();
         }
+        */
         if (isLockedOn && currentTarget == null) UnlockTarget();
         if (isLockedOn && currentTarget != null &&
             Vector3.Distance(transform.position, currentTarget.position) > lockRange + 2f)
