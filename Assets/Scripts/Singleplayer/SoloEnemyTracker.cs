@@ -48,6 +48,11 @@ public class SoloEnemyTracker : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        Debug.Log("<color=cyan>[SoloEnemyTracker]</color> Awake! Checking UI references...");
+        Debug.Log($"  - centerPanel: {(centerPanel != null ? centerPanel.name : "NULL")}, active: {(centerPanel != null ? centerPanel.activeSelf : "N/A")}");
+        Debug.Log($"  - youWinUI: {(youWinUI != null ? youWinUI.name : "NULL")}, active: {(youWinUI != null ? youWinUI.activeSelf : "N/A")}");
+        Debug.Log($"  - youLostUI: {(youLostUI != null ? youLostUI.name : "NULL")}, active: {(youLostUI != null ? youLostUI.activeSelf : "N/A")}");
+        
         SetUI(centerPanel, false);
         SetUI(youWinUI, false);
         SetUI(youLostUI, false);
@@ -133,7 +138,21 @@ public class SoloEnemyTracker : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
         SetUI(centerPanel, false);
+        
+        // ⭐ เปลี่ยนไปเฟส Planning ก่อน เพื่อให้ IsGameWon ได้เช็คคำว่า
         SoloGameManager.Instance?.ChangePhase();
+        
+        // ⭐ ตรวจสอบว่าชนะเกมหรือไม่ (จบทุก Wave แล้ว)
+        if (SoloGameManager.Instance != null && SoloGameManager.Instance.IsGameWon)
+        {
+            Debug.Log($"<color=yellow>[SoloEnemyTracker]</color> Game Won! All waves completed.");
+            yield return new WaitForSeconds(0.5f);
+            ShowWin();
+        }
+        else if (SoloGameManager.Instance != null)
+        {
+            Debug.Log($"<color=cyan>[SoloEnemyTracker]</color> Wave cleared. Current Wave: {SoloGameManager.Instance.CurrentWave}");
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -157,18 +176,48 @@ public class SoloEnemyTracker : MonoBehaviour
 
     public void NotifyPlayerDied()
     {
-        if (_gameResultShown) return;
+        if (_gameResultShown)
+        {
+            Debug.Log("<color=yellow>[SoloEnemyTracker]</color> NotifyPlayerDied called but _gameResultShown is already true, returning.");
+            return;
+        }
+        
         _gameResultShown = true;
+        Debug.Log("<color=red>[SoloEnemyTracker]</color> ===== NotifyPlayerDied CALLED =====");
 
         if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
         StopAllCoroutines();
 
+        Debug.Log("<color=red>[SoloEnemyTracker]</color> Player Lost! Showing lose UI.");
+        Debug.Log($"  - youLostUI exists: {youLostUI != null}");
+        
         SetUI(centerPanel, false);
+        Debug.Log("  - centerPanel hidden");
+        
         SetUI(youLostUI, true);
+        Debug.Log($"  - youLostUI active set to true. Current state: {(youLostUI != null ? youLostUI.activeSelf : "N/A")}");
+        
         SetUI(youWinUI, false);
+        Debug.Log("  - youWinUI hidden");
+        
+        // ⭐ ยกขึ้นมาหน้าสุด เพื่อไม่ให้ UI อื่นบัง
+        if (youLostUI != null && youLostUI.transform.parent != null)
+        {
+            youLostUI.transform.SetAsLastSibling();
+            Debug.Log("<color=red>[SoloEnemyTracker]</color> You Lost UI moved to front (sibling index: " + youLostUI.transform.GetSiblingIndex() + ")");
+        }
+        else if (youLostUI == null)
+        {
+            Debug.LogError("<color=red>[SoloEnemyTracker ERROR]</color> youLostUI is NULL! Please assign it in Inspector.");
+        }
+        else
+        {
+            Debug.LogWarning("<color=yellow>[SoloEnemyTracker]</color> youLostUI.transform.parent is NULL!");
+        }
 
         AudioManager.Instance?.PlayLose();
         SoloGameManager.Instance?.OnGameEnded();
+        Debug.Log("<color=red>[SoloEnemyTracker]</color> ===== NotifyPlayerDied FINISHED =====");
     }
 
     public void ShowWin()
@@ -179,9 +228,22 @@ public class SoloEnemyTracker : MonoBehaviour
         if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
         StopAllCoroutines();
 
+        Debug.Log("<color=green>[SoloEnemyTracker]</color> Player Won! Showing win UI.");
+        
         SetUI(centerPanel, false);
         SetUI(youWinUI, true);
         SetUI(youLostUI, false);
+        
+        // ⭐ ยกขึ้นมาหน้าสุด เพื่อไม่ให้ UI อื่นบัง
+        if (youWinUI != null && youWinUI.transform.parent != null)
+        {
+            youWinUI.transform.SetAsLastSibling();
+            Debug.Log("<color=green>[SoloEnemyTracker]</color> You Win UI moved to front!");
+        }
+        else if (youWinUI == null)
+        {
+            Debug.LogError("<color=green>[SoloEnemyTracker ERROR]</color> youWinUI is NULL! Please assign it in Inspector.");
+        }
 
         AudioManager.Instance?.PlayWin();
         SoloGameManager.Instance?.OnGameEnded();
@@ -205,6 +267,23 @@ public class SoloEnemyTracker : MonoBehaviour
 
     private static void SetUI(GameObject ui, bool active)
     {
+        if (ui == null)
+        {
+            Debug.LogError("<color=red>[SoloEnemyTracker SetUI ERROR]</color> UI GameObject is NULL!");
+            return;
+        }
+        
+        bool wasActive = ui.activeSelf;
         SoloGameManager.SafeSetActive(ui, active);
+        bool isNowActive = ui.activeSelf;
+        
+        Debug.Log($"<color=cyan>[SoloEnemyTracker SetUI]</color> {ui.name}: {wasActive} → {isNowActive} (requested: {active})");
+        
+        // 检查父对象是否激活
+        if (active && !isNowActive && ui.transform.parent != null)
+        {
+            bool parentActive = ui.transform.parent.gameObject.activeSelf;
+            Debug.LogWarning($"<color=yellow>[SoloEnemyTracker SetUI]</color> Parent '{ui.transform.parent.name}' is {(parentActive ? "active" : "INACTIVE")}!");
+        }
     }
 }

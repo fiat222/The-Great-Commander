@@ -14,6 +14,7 @@ public class SoloGameManager : MonoBehaviour
     public TextMeshProUGUI waveText;
 
     public GamePhase CurrentPhase => currentPhase;
+    public int CurrentWave => currentWave;
     private GamePhase currentPhase = GamePhase.Planning;
 
     [Header("Planning Phase")]
@@ -22,6 +23,9 @@ public class SoloGameManager : MonoBehaviour
 
     [Header("Wave")]
     private int currentWave = 1;
+    [Header("Victory Condition")]
+    [Tooltip("จำนวน Wave สูงสุดเพื่อชนะเกม")]
+    public int maxWave = 10;
 
     // Cursor
     private bool isManualUnlock = true;
@@ -29,6 +33,7 @@ public class SoloGameManager : MonoBehaviour
 
     public int ExpectedEnemyCount { get; private set; }
     public string systemWaveDraft { get; private set; } = "";
+    public bool IsGameWon => currentPhase == GamePhase.Planning && currentWave > maxWave;
 
     [Header("Enemy Pool")]
     public EnemyStatsSO[] enemyStatsSOs;
@@ -186,6 +191,12 @@ public class SoloGameManager : MonoBehaviour
         {
             HealLocalPlayer();
             Debug.Log($"<color=green>[SoloGameManager]</color> Player survived! HP restored to full.");
+        }
+        
+        // ⭐ ตรวจสอบว่าชนะเกมหรือไม่
+        if (IsGameWon)
+        {
+            Debug.Log($"<color=yellow>[SoloGameManager]</color> Victory condition met! Wave {currentWave} > Max Wave {maxWave}. EnemyTracker will show win UI.");
         }
 
         UpdateWaveUI();

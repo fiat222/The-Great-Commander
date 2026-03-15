@@ -7,8 +7,8 @@ using System.Net.Sockets;
 using System.Linq;
 
 // [TEST VERSION] ระบบ Room Code แบบ LAN
-// Room Code = IP Address ที่เข้ารหัสเป็น Base36 (7 ตัวอักษร)
-// ไม่ยุ่งกับ StartNetwork.cs ตัวเดิม
+// Room Code = IP + Salt เข้ารหัสเป็น Base36 (7 ตัวอักษร)
+// สุ่มใหม่ทุกครั้งที่ Host กด Create Room แม้ IP เดิม
 public class StartNetworkTest : MonoBehaviour
 {
     public static StartNetworkTest Instance { get; private set; }
@@ -18,11 +18,12 @@ public class StartNetworkTest : MonoBehaviour
     [SerializeField] private string solocharacterSelectSceneName = "SoloCharactor";
     [SerializeField] private ushort port = 7777;
 
-    /// <summary>True = Solo Play (Host-only), False = Duo Play (Networked 2 players)</summary>
     public static bool IsSolo { get; private set; }
 
     private const string BASE36_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private const int CODE_LENGTH = 7;
+    private const int IP_CODE_LENGTH = 7;   // encode IP (32-bit) = log36(2^32) ≈ 6.2
+    private const int SALT_CODE_LENGTH = 2; // encode salt (0–1295)
+    private const int TOTAL_LENGTH = IP_CODE_LENGTH + SALT_CODE_LENGTH; // 7 ตัว
 
     private void Awake()
     {
@@ -33,7 +34,6 @@ public class StartNetworkTest : MonoBehaviour
 
     // PUBLIC API
 
-    // Solo Play: ไม่ใช้ Netcode — โหลด SoloCharactor Scene โดยตรง
     public void StartSolo()
     {
         IsSolo = true;
@@ -41,12 +41,14 @@ public class StartNetworkTest : MonoBehaviour
         SceneManager.LoadScene(solocharacterSelectSceneName, LoadSceneMode.Single);
     }
 
-    // Host: StartHost แล้วรอ Client เชื่อมต่อ
-    // Room Code 7 ตัวที่ Client ต้องพิมพ์
+    // Host: สุ่ม salt → encode IP+salt → StartHost
     public string CreateRoom()
     {
         IsSolo = false;
         string localIP = GetLocalIPAddress();
+
+        int salt = Random.Range(0, 36 * 36); // 0–1295
+        string code = EncodeIPToCode(localIP, salt);
 
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         transport.SetConnectionData(localIP, port);
@@ -54,13 +56,11 @@ public class StartNetworkTest : MonoBehaviour
         NetworkManager.Singleton.StartHost();
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
-        string code = EncodeIPToCode(localIP);
-        Debug.Log($"<color=cyan>[RoomTest]</color> Created! IP={localIP} Code={code}");
+        Debug.Log($"<color=cyan>[RoomTest]</color> Created! IP={localIP} Salt={salt} Code={code}");
         return code;
     }
 
-    // Client: ถอดรหัส Room Code → IP แล้ว StartClient
-    // คืน false ถ้า code ไม่ถูกต้อง
+    // Client: decode code → IP แล้ว StartClient
     public bool JoinRoom(string roomCode)
     {
         string ip = DecodeCodeToIP(roomCode.Trim().ToUpper());
@@ -78,7 +78,6 @@ public class StartNetworkTest : MonoBehaviour
         return true;
     }
 
-    //ยกเลิก connection แล้วกลับ Main Panel
     public void CancelConnection()
     {
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
@@ -86,34 +85,48 @@ public class StartNetworkTest : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
     }
 
-    // ENCODING HELPERS
+    // ENCODING
 
-    // IP → Base36 Code (7 ตัว) เช่น "192.168.1.5" → "0VB4005"
-    public string EncodeIPToCode(string ipAddress)
+    // IP + salt → Base36 Code (9 ตัว) เช่น "192.168.1.5" + salt=42 → "0VB40052A"
+    public string EncodeIPToCode(string ipAddress, int salt)
     {
         try
         {
             string[] parts = ipAddress.Split('.');
             if (parts.Length != 4) return null;
+
             uint ipNum = 0;
             foreach (var p in parts) ipNum = (ipNum << 8) | uint.Parse(p);
-            return ToBase36(ipNum).PadLeft(CODE_LENGTH, '0');
+
+            // XOR ip กับ salt เพื่อให้ code ต่างกันทุกครั้ง
+            uint encoded = ipNum ^ ((uint)salt << 2);
+
+            string ipPart   = ToBase36(encoded).PadLeft(IP_CODE_LENGTH, '0');
+            string saltPart = ToBase36((uint)salt).PadLeft(SALT_CODE_LENGTH, '0');
+            return ipPart + saltPart;
         }
         catch { return null; }
     }
 
-    // Base36 Code → IP เช่น "0VB4005" → "192.168.1.5" — คืน null ถ้า code ผิด
+    // Base36 Code (9 ตัว) → IP — คืน null ถ้า code ผิด
     public string DecodeCodeToIP(string code)
     {
         try
         {
-            uint ipNum = FromBase36(code.ToUpper());
+            if (code.Length != TOTAL_LENGTH) return null;
+
+            string ipPart   = code.Substring(0, IP_CODE_LENGTH);
+            string saltPart = code.Substring(IP_CODE_LENGTH, SALT_CODE_LENGTH);
+
+            uint salt    = FromBase36(saltPart);
+            uint encoded = FromBase36(ipPart);
+            uint ipNum   = encoded ^ (salt << 2);
+
             return $"{(ipNum >> 24) & 0xFF}.{(ipNum >> 16) & 0xFF}.{(ipNum >> 8) & 0xFF}.{ipNum & 0xFF}";
         }
         catch { return null; }
     }
 
-    //ดึง LAN IP ของเครื่อง
     public string GetLocalIPAddress()
     {
         try
@@ -128,7 +141,6 @@ public class StartNetworkTest : MonoBehaviour
 
     // PRIVATE
 
-    //เมื่อ Client เชื่อมต่อสำเร็จ — ถ้ามี 2 คนแล้วให้โหลด CharacterSelectScene
     private void OnClientConnected(ulong clientId)
     {
         if (NetworkManager.Singleton.ConnectedClients.Count >= 2)

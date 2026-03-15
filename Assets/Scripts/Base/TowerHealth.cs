@@ -138,12 +138,18 @@ public class TowerHealth : MonoBehaviour
             // Solo Mode
             if (SoloEnemyTracker.Instance != null)
             {
+                Debug.Log("<color=yellow>[TowerHealth]</color> Tower destroyed! Notifying SoloEnemyTracker...");
                 SoloEnemyTracker.Instance.NotifyPlayerDied();
             }
             else if (SoloGameManager.Instance != null)
             {
                 // เผื่อกรณีที่ไม่มี Tracker แต่ยังอยากให้เกมจบ และปลดล็อคเมาส์
+                Debug.LogWarning("<color=yellow>[TowerHealth]</color> SoloEnemyTracker not found! Calling SoloGameManager.OnGameEnded() directly.");
                 SoloGameManager.Instance.OnGameEnded();
+            }
+            else
+            {
+                Debug.LogError("<color=red>[TowerHealth ERROR]</color> Neither SoloEnemyTracker nor SoloGameManager found!");
             }
             // ในโหมด Network ฐานหลักจะใช้ BaseHealth + EnemyTracker อยู่แล้ว จึงไม่เรียกซ้ำจาก TowerHealth
         }
