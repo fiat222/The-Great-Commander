@@ -332,8 +332,10 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 64
-  maxHP: 100
   healthBar: {fileID: 0}
+  hpText: {fileID: 0}
+  playerIconImage: {fileID: 0}
+  playerNameText: {fileID: 0}
 --- !u!136 &8189086302731242032
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -369,7 +371,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98c1000bb406f514692c534b33df0839, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcherSkill
-  cooldown: 10
+  cooldown: 30
   damageMultiplier: 2.5
   arrowCount: 50
   aoeRadius: 15
@@ -517,7 +519,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3811231902
+  GlobalObjectIdHash: 2323391265
   InScenePlacedSourceGlobalObjectIdHash: 2323391265
   DeferredDespawnTick: 0
   Ownership: 1

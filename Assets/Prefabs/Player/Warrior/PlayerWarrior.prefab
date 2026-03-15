@@ -2763,7 +2763,7 @@ MonoBehaviour:
   skillSpawnPoint: {fileID: 7715521012262527842}
   vfxRotationOffset: {x: 0, y: -90, z: 0}
   damageMultiplier: 1.5
-  skill1Cooldown: 1
+  skill1Cooldown: 30
   vfxLifetime: 2
   skillMoveCurve:
     serializedVersion: 2
