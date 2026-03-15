@@ -63,6 +63,7 @@ namespace DT.GridSystem
 		}
 
 
+#if UNITY_EDITOR
 		/// <summary>
 		/// Draws gizmos in the Unity Editor to visualize the 3D grid and its objects on the XZ plane.
 		/// </summary>
@@ -86,5 +87,6 @@ namespace DT.GridSystem
 				}
 			}
 		}
+#endif
 	}
 }

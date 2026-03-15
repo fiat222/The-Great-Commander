@@ -62,6 +62,7 @@ namespace DT.GridSystem
 		}
 
 
+#if UNITY_EDITOR
 		/// <summary>
 		/// Draws gizmos in the Unity Editor to visualize the grid layout and the objects stored in the grid.
 		/// </summary>
@@ -86,5 +87,6 @@ namespace DT.GridSystem
 				}
 			}
 		}
+#endif
 	}
 }
