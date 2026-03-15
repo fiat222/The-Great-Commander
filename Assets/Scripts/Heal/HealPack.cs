@@ -43,6 +43,13 @@ public class HealPack : MonoBehaviour
         // แสดงตัวเลข
         DamageNumberSpawner.Show(healAmount, transform.position + Vector3.up);
 
+        // เล่นเสียงฮีล
+        var audioComp = other.GetComponentInParent<PlayerAudio.PlayerAudioComponent>();
+        if (audioComp != null)
+        {
+            audioComp.PlaySound(PlayerAudio.PlayerSoundType.Heal);
+        }
+
         // หยุด idle VFX
         if (idleVFX != null) idleVFX.Stop();
 
