@@ -3481,10 +3481,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1453880973059182537}
     m_Modifications:
+    - target: {fileID: 1095083464100415684, guid: b3a00858d74af5142b2c2ba7c9741c4d, type: 3}
+      propertyPath: duration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1095083464100415684, guid: b3a00858d74af5142b2c2ba7c9741c4d, type: 3}
+      propertyPath: rotateDegrees
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2328077743826360623, guid: b3a00858d74af5142b2c2ba7c9741c4d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 2328077743826360623, guid: b3a00858d74af5142b2c2ba7c9741c4d, type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: -5412851672052785038, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 4689356006685124841, guid: b3a00858d74af5142b2c2ba7c9741c4d, type: 3}
       propertyPath: m_Name
       value: YouWin
@@ -5153,8 +5165,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
-  m_sharedMaterial: {fileID: -5412851672052785038, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7713,9 +7725,21 @@ PrefabInstance:
     m_TransformParent: {fileID: 1453880973059182537}
     m_Modifications:
     - target: {fileID: 1843051206284932652, guid: c3b166d9984e0cd43b7a92f862a121ee, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 1843051206284932652, guid: c3b166d9984e0cd43b7a92f862a121ee, type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: -5412851672052785038, guid: 304814e330d23c2498a21aa8662ddd68, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 2089263689931736184, guid: c3b166d9984e0cd43b7a92f862a121ee, type: 3}
+      propertyPath: duration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2089263689931736184, guid: c3b166d9984e0cd43b7a92f862a121ee, type: 3}
+      propertyPath: rotateDegrees
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2264536649580330744, guid: c3b166d9984e0cd43b7a92f862a121ee, type: 3}
       propertyPath: m_Name
       value: YouLost
@@ -10079,7 +10103,7 @@ PrefabInstance:
     - target: {fileID: 4237816653399531071, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 4237816653399531071, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_fontSizeBase
       value: 2.5
@@ -10087,7 +10111,7 @@ PrefabInstance:
     - target: {fileID: 4237816653399531071, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 4237816653399531071, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 0
@@ -10095,7 +10119,7 @@ PrefabInstance:
     - target: {fileID: 4623022010346074145, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 9173124104130045355, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_text
       value: 
@@ -10103,11 +10127,11 @@ PrefabInstance:
     - target: {fileID: 9173124104130045355, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 9173124104130045355, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 9173124104130045355, guid: 71faa19656d9bdd43bff9f924d3ceffb, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 0
@@ -19095,13 +19119,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1690342871}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5.68, z: 0}
+  m_LocalRotation: {x: 0, y: 0.98953843, z: -0.14426985, w: 0}
+  m_LocalPosition: {x: 17.27, y: 14.92, z: -29.08}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 16.59, y: 180, z: 0}
 --- !u!1 &1693622628
 GameObject:
   m_ObjectHideFlags: 0
@@ -19679,7 +19703,7 @@ MonoBehaviour:
   gameOverDelay: 2.5
   triggerGameOverOnDeath: 1
   sinkOnDeath: 1
-  sinkDistance: 4
+  sinkDistance: 17
   sinkDuration: 2
   healthCanvas: {fileID: 7885451689514353457}
   healthBarFill: {fileID: 1824825577}

@@ -107,6 +107,40 @@ public class SpectatorController : MonoBehaviour
 
     public bool IsSpectating => isSpectating;
 
+    /// <summary>
+    /// อัปเดต yaw/pitch ให้ตรงกับ rotation ปัจจุบันของกล้อง 
+    /// (ใช้ตอนโดนบังคับเปลี่ยนมุมกล้องจากภายนอก เพื่อไม่ให้เมาส์ดีด)
+    /// </summary>
+    public void SyncViewFromTransform()
+    {
+        yaw = camTransform.eulerAngles.y;
+        pitch = camTransform.eulerAngles.x;
+        // ปรับ pitch ให้เป็นช่วง -180 ถึง 180 เพื่อให้ Clamp ทำงานถูก
+        if (pitch > 180) pitch -= 360;
+    }
+
+    /// <summary>
+    /// บังคับกล้องไปที่มุมมองเริ่มต้นตามที่ระบุในภาพ
+    /// </summary>
+    public void ResetToInitialView()
+    {
+        if (spectatorVcam != null)
+        {
+            spectatorVcam.Follow = null;
+            spectatorVcam.LookAt = null;
+        }
+
+        camTransform.position = new Vector3(17.27f, 14.92f, -29.08f);
+        camTransform.rotation = Quaternion.Euler(16.59f, 180f, 0f);
+
+        SyncViewFromTransform();
+        
+        if (!isSpectating)
+        {
+            EnterSpectate();
+        }
+    }
+
     private void Update()
     {
         if (!isSpectating) return;
