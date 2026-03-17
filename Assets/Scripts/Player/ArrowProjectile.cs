@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using PlayerAudio;
 
 public class ArrowProjectile : MonoBehaviour
@@ -92,21 +92,41 @@ public class ArrowProjectile : MonoBehaviour
                 ? new Vector3(displayCol.bounds.center.x, displayCol.bounds.max.y, displayCol.bounds.center.z)
                 : other.bounds.center;
 
-            HealthSystem hp = target.GetComponent<HealthSystem>();
-            if (hp != null)
+            // ── ส่งดาเมจ โดยเรียงลำดับความสำคัญของ Component ──────────────────────
+            // เราเช็ค AI scripts ก่อน เพราะ AI มักจะมี HealthSystem อยู่ด้วยเพื่อโชว์ UI 
+            // แต่ตัวจัดการ HP จริงๆ คือ AI script เอง
+
+            EnemyAI enemyAI = target.GetComponent<EnemyAI>();
+            ImpAI impAI = target.GetComponent<ImpAI>();
+            MinionAI minionAI = target.GetComponent<MinionAI>();
+            ArcherAI archerAI = target.GetComponent<ArcherAI>();
+
+            if (enemyAI != null)
             {
-                hp.TakeDamage(finalDamage);
+                enemyAI.TakeDamage(finalDamage);
+            }
+            else if (impAI != null)
+            {
+                impAI.TakeDamage(finalDamage);
+            }
+            else if (minionAI != null)
+            {
+                minionAI.TakeDamage(finalDamage);
+            }
+            else if (archerAI != null)
+            {
+                archerAI.TakeDamage(finalDamage);
             }
             else
             {
-                EnemyAI enemyAI = target.GetComponent<EnemyAI>();
-                if (enemyAI != null)
-                    enemyAI.TakeDamage(finalDamage);
-                else
-                {
-                    ImpAI impAI = target.GetComponent<ImpAI>();
-                    if (impAI != null) impAI.TakeDamage(finalDamage);
-                }
+                // ถ้าไม่ใช่กลุ่ม AI ให้ลองเช็คกลุ่ม Base/Tower หรือ HealthSystem ทั่วไป
+                BaseHealth baseHP = target.GetComponent<BaseHealth>();
+                TowerHealth towerHP = target.GetComponent<TowerHealth>();
+                HealthSystem genericHP = target.GetComponent<HealthSystem>();
+
+                if (baseHP != null) baseHP.TakeDamage(finalDamage);
+                else if (towerHP != null) towerHP.TakeDamage(finalDamage);
+                else if (genericHP != null) genericHP.TakeDamage(finalDamage);
             }
 
             DamageNumberSpawner.Show(finalDamage, spawnPos);

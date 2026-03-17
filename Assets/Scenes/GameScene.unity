@@ -18105,7 +18105,7 @@ MonoBehaviour:
   killOpponentButton: {fileID: 7993893149753430962}
   youWinUI: {fileID: 2067419971}
   youLostUI: {fileID: 334694124}
-  countdownDuration: 5
+  countdownDuration: 15
   deathLightningVFX: {fileID: 2705533495200665743, guid: e84c40719cee66744925cce01bef28fc, type: 3}
 --- !u!114 &1492005548
 MonoBehaviour:

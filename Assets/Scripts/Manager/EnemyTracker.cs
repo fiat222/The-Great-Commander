@@ -211,13 +211,29 @@ public class EnemyTracker : NetworkBehaviour
         if (p0Done || p1Done)
         {
             if (countdownRunning) return;
+
+            // ⭐ เช็คก่อนว่า "เป้าหมาย" (คนที่ยังไม่เคลียร์) ยังมีชีวิตอยู่ไหม? ถ้าตายแล้วไม่ต้องขึ้นปุ่ม
             bool winnerIsP0 = p0Done && !p1Done;
+            bool targetDead = winnerIsP0 ? GameManager.Instance.p1Dead.Value : GameManager.Instance.p0Dead.Value;
+            
+            if (targetDead)
+            {
+                Debug.Log("<color=yellow>[EnemyTracker]</color> One side cleared, but opponent is already DEAD. Not showing Kill button.");
+                return;
+            }
+
             ShowKillOpponentButtonClientRpc(winnerIsP0);
         }
         else
         {
+            // ⭐ กรณีที่ไม่มีใครเคลียร์เลย (เช่น โดนส่งมอนสเตอร์มาขัดจังหวะ) 
+            // ให้สั่งหยุดการนับถอยหลังทั่วทั้งเซิร์ฟเวอร์
             HideKillOpponentButtonClientRpc();
-            countdownRunning = false;
+            if (countdownRunning)
+            {
+                countdownRunning = false;
+                CancelCountdownClientRpc();
+            }
         }
     }
 
@@ -225,8 +241,16 @@ public class EnemyTracker : NetworkBehaviour
     public void NotifyMidCombatSpawnRpc(ulong targetedClientId, int count, int typeIndex)
     {
         if (!IsServer) return;
+
+        Debug.Log($"<color=orange>[EnemyTracker]</color> Mid-combat spawn detected for Client {targetedClientId}. Resetting clear status.");
+
         if (targetedClientId == 0) p0Cleared.Value = false;
         else p1Cleared.Value = false;
+
+        // ⭐ รีเซ็ตสถานะการจบเวฟเพื่อให้ระบบเริ่ม Evaluate ใหม่ และหยุดการนับถ่อยหลัง 15 วิ (ถ้ามี)
+        countdownRunning = false;
+        phaseChangeQueued = false;
+        
         NotifyMidCombatSpawnClientRpc(targetedClientId, count, typeIndex);
         EvaluateOnServer();
     }
@@ -234,12 +258,43 @@ public class EnemyTracker : NetworkBehaviour
     [ClientRpc]
     private void NotifyMidCombatSpawnClientRpc(ulong targetedClientId, int count, int typeIndex)
     {
+        // ⭐ สำคัญ: เมื่อมีการส่งมอนสเตอร์ให้กัน (ไม่ว่าจะเครื่องไหน)
+        // ให้หยุดการนับถ่อยหลัง 15 วิที่กำลังรันอยู่ในฉากทุกเครื่องทันที!
+        if (activeCoroutine != null)
+        {
+            StopCoroutine(activeCoroutine);
+            activeCoroutine = null;
+            SetUI(centerPanel, false);
+            Debug.Log("<color=orange>[EnemyTracker]</color> Mid-combat spawn detected -> Stopping Countdown (Sync)!");
+        }
+
         if (NetworkManager.Singleton.LocalClientId == targetedClientId)
         {
-            if (!localHasCountedStart) { localRemainingEnemies = count; localHasCountedStart = true; }
-            else { localRemainingEnemies += count; }
+            if (!localHasCountedStart) 
+            { 
+                localRemainingEnemies = count; 
+                localHasCountedStart = true; 
+            }
+            else 
+            { 
+                localRemainingEnemies += count; 
+            }
+
+            Debug.Log($"<color=orange>[EnemyTracker]</color> New mid-combat enemy for ME! Total Remaining: {localRemainingEnemies}");
             GameManager.OnEnemyIncoming?.Invoke(typeIndex);
         }
+    }
+
+    [ClientRpc]
+    private void CancelCountdownClientRpc()
+    {
+        Debug.Log("<color=orange>[EnemyTracker]</color> Server requested Countdown Cancel.");
+        if (activeCoroutine != null)
+        {
+            StopCoroutine(activeCoroutine);
+            activeCoroutine = null;
+        }
+        SetUI(centerPanel, false);
     }
 
     private void EvaluateOnClient() { }
@@ -368,7 +423,7 @@ public class EnemyTracker : NetworkBehaviour
         
         if (youWinUI != null) youWinUI.SetActive(iWon);
         if (youLostUI != null) youLostUI.SetActive(!iWon);
-        if (centerPanel != null) centerPanel.SetActive(false);
+        if (centerPanel != null) centerPanel.SetActive(false); // ✅ ปิดหน้าต่างนับถอยหลังด้วยเมื่อจบเกม
         if (killOpponentButton != null) killOpponentButton.SetActive(false);
 
         // ⭐ ยกขึ้นมาหน้าสุด เพื่อไม่ให้ UI อื่นบัง
