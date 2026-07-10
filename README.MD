@@ -57,7 +57,6 @@
 
 ## 👥 ทีมพัฒนา (The Team)
 *   thanapon 
-*   thunmeena 
 *   rusnanee 
 *   sunpipop 
 
